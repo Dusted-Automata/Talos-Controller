@@ -11,7 +11,7 @@
 #define U0T UNITREE_LEGGED_SDK
 
 enum class GaitType : uint8_t { Idle, Trot, Climb_stair, Trot_obstacle };
-enum class Robot_Mode : uint8_t {
+enum class Go1_mode : uint8_t {
   Idle,                    // idle, default stand
   Force_stand,             // force stand (controlled by dBodyHeight + ypr)
   Target_velocity_walking, // target velocity walking (controlled by velocity +
@@ -28,32 +28,30 @@ enum class Robot_Mode : uint8_t {
   Jump_yaw, // jumpYaw, only left direction. Note, to use this mode, you need to
             // set
   Straight_hand //  straightHand. Note, to use this mode, you need to set mode =
-                //  1 first.
+                //  1 first
 };
 
-class Quadruped {
+class Go1_quadruped {
 public:
-  Quadruped()
+  Go1_quadruped()
       : safe(UT::LeggedType::Go1),
         udp(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082) {
     UT::HighCmd cmd = {0};
     udp.InitCmdData(cmd);
   }
 
-  void control_loop();
+  UT::Safety safe;
+  UT::UDP udp;
+  UT::HighState state = {0};
+  UT::LowState low_state = {0};
 
-  int motiontime = 0;
-  float dt = 0.002;
-  Robot_Mode mode = Robot_Mode::Force_stand;
+  Go1_mode mode = Go1_mode::Force_stand;
   GaitType gait_type = GaitType::Trot;
   uint8_t speed_level = 0;
   float foot_raise_height;
   float body_height;
 
-  UT::Safety safe;
-  UT::UDP udp;
-  UT::HighState state = {0};
-  UT::LowState low_state = {0};
+  void control_loop();
 
   // Eigen::Matrix4d go1_config_matrix[4];
   const double trunk_length = 0.3762 / 2;
@@ -72,31 +70,41 @@ public:
 // 	udp.Send();
 // }
 //
-void Quadruped::control_loop() {}
+
+void Go1_quadruped::control_loop() {}
+
+struct Ecef {
+  int x;
+  int y;
+  int z;
+};
+
+void run_through(const std::array<Ecef, 5>) {}
 
 int main(void) {
-  std::cout << "Robot level set to: HIGH" << std::endl
-            << "WARNING: Make sure the robot is standing on the ground."
-            << std::endl
-            << "Press Enter to continue..." << std::endl;
-  std::cin.ignore();
-
-  Quadruped robot;
-
-  UT::LoopFunc loop_control("control_loop", robot.dt,
-                            boost::bind(&Quadruped::control_loop, &robot));
-  UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
-                            boost::bind(&UT::UDP::Recv, &robot.udp));
-  UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,
-                            boost::bind(&UT::UDP::Send, &robot.udp));
-
-  loop_udpSend.start();
-  loop_udpRecv.start();
-  loop_control.start();
-
-  while (1) {
-    sleep(10);
-  }
-
-  return 0;
+  // std::cout << "Robot level set to: HIGH" << std::endl
+  //           << "WARNING: Make sure the robot is standing on the ground."
+  //           << std::endl
+  //           << "Press Enter to continue..." << std::endl;
+  // std::cin.ignore();
+  //
+  // Go1_quadruped robot;
+  //
+  // UT::LoopFunc loop_control("control_loop", robot.dt,
+  //                           boost::bind(&Go1_quadruped::control_loop,
+  //                           &robot));
+  // UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
+  //                           boost::bind(&UT::UDP::Recv, &robot.udp));
+  // UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,
+  //                           boost::bind(&UT::UDP::Send, &robot.udp));
+  //
+  // loop_udpSend.start();
+  // loop_udpRecv.start();
+  // loop_control.start();
+  //
+  // while (1) {
+  //   sleep(10);
+  // }
+  //
+  // return 0;
 }
