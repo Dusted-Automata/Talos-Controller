@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
-project(unitree_legged_sdk)
+project(Controller)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # check arch and os
@@ -25,12 +25,14 @@ if(${catkin_FOUND})
     LIBRARIES ${PROJECT_SOURCE_DIR}/lib/cpp/${ARCH}/libunitree_legged_sdk.a
   )
 endif()
+find_package(Eigen3 REQUIRED)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # one pc one process
-add_executable(controller controller.cpp)
+add_executable(controller go1.cpp robot.cpp pid.cpp)
 target_link_libraries(controller ${EXTRA_LIBS})
+target_include_directories(controller PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 
 # install
