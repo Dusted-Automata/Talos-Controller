@@ -1,20 +1,5 @@
 #include <Eigen/Dense>
 
-struct Pose2d {
-  double x, y, theta;
-};
-
-struct Velocity2D {
-  // velocity[0], yawspeed I think in HighCmd
-  double linear, angular;
-};
-
-struct ControlState {
-  Eigen::Vector4d position;
-  Eigen::Vector4d velocity;
-  float time;
-};
-
 // struct ControlCommand {
 //   Eigen::Vector4d effort;
 //   float timestamp;

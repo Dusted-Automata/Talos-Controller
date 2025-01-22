@@ -1,65 +1,95 @@
 // #include "robot.hpp"
+#include <cmath>
+#include <iostream>
+#include <vector>
+
+struct Pose3d {
+  double x, y, theta;
+};
+
+struct Velocity2d {
+  // velocity[0], yawspeed I think in HighCmd
+  double linear, angular;
+};
+
+struct Motion_Constraints {
+  double max_velocity;
+  double max_acceleration;
+  double max_deceleration;
+  double max_jerk;
+  double corner_velocity;
+};
 //
 // void createTrajectories(std::array<Pose2d, 10> waypoints) {
 //   std::cout << waypoints;
 // }
 
-#include <cmath>
-#include <iostream>
-#include <vector>
-
-struct Point2D {
-  double x;
-  double y;
+struct Trajectory_Point {
+  Pose3d pose;
+  double dt;
+  Velocity2d velocity;
 };
 
-// Generate a smooth path through waypoints using cubic spline interpolation
-std::vector<Point2D> generateTrajectory(const std::vector<Point2D> &waypoints,
-                                        double resolution = 0.1) {
-  std::vector<Point2D> trajectory;
+struct Ecef_Coord {
+  double x, y, z;
+};
 
-  if (waypoints.size() < 2) {
-    return trajectory;
+double calculate_theta(double dx, double dy) {
+  // allow minimum turning radius constraints
+  // cubic splines for smoother paths
+  // accelleration limits for rotational motion
+  double Theta = atan2(dy, dx);
+  return Theta;
+}
+
+double calculate_velocity() { return 0.0; };
+
+Pose3d cubic_interpolation(double dx, double dy, Ecef_Coord start,
+                           Ecef_Coord end, double t) {
+  double h00 = 2 * t * t * t - 3 * t * t + 1;
+  double h10 = t * t * t - 2 * t * t + t;
+  double h01 = -2 * t * t * t + 3 * t * t;
+  double h11 = t * t * t - t * t;
+
+  Pose3d point = {};
+  point.x = h00 * start.x + h10 * dx + h01 * end.x + h11 * dx;
+  point.y = h00 * start.y + h10 * dy + h01 * end.y + h11 * dy;
+  return point;
+};
+
+std::vector<Trajectory_Point>
+generate_trajectory(std::vector<Trajectory_Point> &trajectories,
+                    const std::vector<Ecef_Coord> &coordinates,
+                    double resolution = 0.1) {
+
+  if (coordinates.size() < 2) {
+    return trajectories;
   }
 
-  // Generate points along each segment
-  for (size_t i = 0; i < waypoints.size() - 1; i++) {
-    Point2D start = waypoints[i];
-    Point2D end = waypoints[i + 1];
-
-    // Calculate segment length
+  for (int i = 0; i < coordinates.size() - 1; i++) {
+    Ecef_Coord start = coordinates[i];
+    Ecef_Coord end = coordinates[i + 1];
     double dx = end.x - start.x;
     double dy = end.y - start.y;
     double distance = std::sqrt(dx * dx + dy * dy);
-
-    // Number of points to generate along this segment
     int points = static_cast<int>(distance / resolution);
 
-    // Generate points along the segment
     for (int j = 0; j <= points; j++) {
       double t = static_cast<double>(j) / points;
-      Point2D point;
-
-      // Cubic interpolation for smoother paths
-      double h00 = 2 * t * t * t - 3 * t * t + 1;
-      double h10 = t * t * t - 2 * t * t + t;
-      double h01 = -2 * t * t * t + 3 * t * t;
-      double h11 = t * t * t - t * t;
-
-      point.x = h00 * start.x + h10 * dx + h01 * end.x + h11 * dx;
-      point.y = h00 * start.y + h10 * dy + h01 * end.y + h11 * dy;
-
-      trajectory.push_back(point);
+      Pose3d point = cubic_interpolation(dx, dy, start, end, t);
+      point.theta = calculate_theta(dx, dy);
+      Trajectory_Point tp = {.pose = point, .dt = j * resolution};
+      trajectories.push_back(tp);
     }
   }
 
-  return trajectory;
+  return trajectories;
 }
 
 // Optional: Add velocity profile to the trajectory
 std::vector<double>
-generateVelocityProfile(const std::vector<Point2D> &trajectory,
-                        double maxVelocity, double maxAcceleration) {
+generate_velocity_profile(const std::vector<Trajectory_Point> &trajectory,
+                          double maxVelocity, double maxAcceleration) {
   std::vector<double> velocities(trajectory.size());
 
   // Simple trapezoidal velocity profile
@@ -82,21 +112,22 @@ generateVelocityProfile(const std::vector<Point2D> &trajectory,
 // Example usage
 int main() {
   // Create some example waypoints
-  std::vector<Point2D> waypoints = {
+  std::vector<Ecef_Coord> waypoints = {
       {0.0, 0.0}, {1.0, 1.0}, {2.0, 0.0}, {3.0, 2.0}};
 
   // Generate trajectory
-  std::vector<Point2D> trajectory = generateTrajectory(waypoints, 0.1);
+  std::vector<Trajectory_Point> trajectories = {};
+  generate_trajectory(trajectories, waypoints, 0.1);
 
   // Optional: Generate velocity profile
   std::vector<double> velocities =
-      generateVelocityProfile(trajectory, 1.0, 0.5);
+      generate_velocity_profile(trajectories, 1.0, 0.5);
 
   // Print trajectory points
-  for (size_t i = 0; i < trajectory.size(); i++) {
-    std::cout << "Point " << i << ": (" << trajectory[i].x << ", "
-              << trajectory[i].y << ") "
-              << "Velocity: " << velocities[i] << std::endl;
+  for (size_t i = 0; i < trajectories.size(); i++) {
+    std::cout << "Point " << i << ": (" << trajectories[i].pose.x << ", "
+              << trajectories[i].pose.y << ") "
+              << "Velocity: " << trajectories[i].velocity.linear << std::endl;
   }
 
   return 0;

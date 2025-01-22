@@ -30,7 +30,7 @@ find_package(Eigen3 REQUIRED)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # one pc one process
-add_executable(controller go1.cpp robot.cpp pid.cpp)
+add_executable(controller go1.cpp robot.cpp pid.cpp trajectory.cpp)
 target_link_libraries(controller ${EXTRA_LIBS})
 target_include_directories(controller PRIVATE ${EIGEN3_INCLUDE_DIR})
 
