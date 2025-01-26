@@ -1,5 +1,6 @@
 // #include "robot.hpp"
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -60,11 +61,13 @@ Pose3d cubic_interpolation(double dx, double dy, Ecef_Coord start,
 std::vector<Trajectory_Point>
 generate_trajectory(std::vector<Trajectory_Point> &trajectories,
                     const std::vector<Ecef_Coord> &coordinates,
-                    double resolution = 0.1) {
+                    double resolution = 0.02) {
 
   if (coordinates.size() < 2) {
     return trajectories;
   }
+
+  double dt = 0.0;
 
   for (int i = 0; i < coordinates.size() - 1; i++) {
     Ecef_Coord start = coordinates[i];
@@ -76,9 +79,10 @@ generate_trajectory(std::vector<Trajectory_Point> &trajectories,
 
     for (int j = 0; j <= points; j++) {
       double t = static_cast<double>(j) / points;
+      dt += resolution;
       Pose3d point = cubic_interpolation(dx, dy, start, end, t);
       point.theta = calculate_theta(dx, dy);
-      Trajectory_Point tp = {.pose = point, .dt = j * resolution};
+      Trajectory_Point tp = {.pose = point, .dt = dt};
       trajectories.push_back(tp);
     }
   }
@@ -109,6 +113,39 @@ generate_velocity_profile(const std::vector<Trajectory_Point> &trajectory,
   return velocities;
 }
 
+static bool saveToFile(const std::string &filename,
+                       const std::vector<Ecef_Coord> &data) {
+  std::ofstream outFile(filename);
+  if (!outFile.is_open()) {
+    std::cerr << "Unable to open file for writing: " << filename << std::endl;
+    return false;
+  }
+
+  for (const auto &line : data) {
+    outFile << line.x << "," << line.y << std::endl;
+  }
+
+  outFile.close();
+  return true;
+}
+
+static bool saveToFile(const std::string &filename,
+                       const std::vector<Trajectory_Point> &data) {
+  std::ofstream outFile(filename);
+  if (!outFile.is_open()) {
+    std::cerr << "Unable to open file for writing: " << filename << std::endl;
+    return false;
+  }
+
+  for (const auto &line : data) {
+    outFile << line.dt << "," << line.pose.x << "," << line.pose.y << ","
+            << line.pose.theta << std::endl;
+  }
+
+  outFile.close();
+  return true;
+}
+
 // Example usage
 int main() {
   // Create some example waypoints
@@ -123,12 +160,16 @@ int main() {
   std::vector<double> velocities =
       generate_velocity_profile(trajectories, 1.0, 0.5);
 
+  saveToFile("waypoints", waypoints);
+  saveToFile("trajectories", trajectories);
+
   // Print trajectory points
-  for (size_t i = 0; i < trajectories.size(); i++) {
-    std::cout << "Point " << i << ": (" << trajectories[i].pose.x << ", "
-              << trajectories[i].pose.y << ") "
-              << "Velocity: " << trajectories[i].velocity.linear << std::endl;
-  }
+  // for (size_t i = 0; i < trajectories.size(); i++) {
+  //   std::cout << "Point " << i << ": (" << trajectories[i].pose.x << ", "
+  //             << trajectories[i].pose.y << ") "
+  //             << "Velocity: " << trajectories[i].velocity.linear <<
+  //             std::endl;
+  // }
 
   return 0;
 }
