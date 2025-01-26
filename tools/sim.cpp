@@ -1,4 +1,6 @@
 
+#include "../trajectory.cpp"
+
 #include "raylib.h"
 #include "raymath.h"
 #include <stdio.h>
@@ -80,6 +82,9 @@ int main() {
 
     // Draw origin point
     SimRobot();
+
+    // {0.0, 0.0}, {1.0, 1.0}, {2.0, 0.0}, {3.0, 2.0}};
+    DrawCircleV({3.0, 0.0}, 2, BLUE);
 
     EndMode2D();
 
