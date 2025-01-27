@@ -5,7 +5,7 @@
 #include <vector>
 
 struct Pose3d {
-  double x, y, theta;
+  float x, y, theta;
 };
 
 struct Velocity2d {
@@ -32,7 +32,7 @@ struct Trajectory_Point {
 };
 
 struct Ecef_Coord {
-  double x, y, z;
+  float x, y, z;
 };
 
 double calculate_theta(double dx, double dy) {
@@ -146,30 +146,46 @@ static bool saveToFile(const std::string &filename,
   return true;
 }
 
-// Example usage
-int main() {
-  // Create some example waypoints
-  std::vector<Ecef_Coord> waypoints = {
-      {0.0, 0.0}, {1.0, 1.0}, {2.0, 0.0}, {3.0, 2.0}};
+static bool saveToFile(const std::string &filename,
+                       const std::vector<double> &data) {
+  std::ofstream outFile(filename);
+  if (!outFile.is_open()) {
+    std::cerr << "Unable to open file for writing: " << filename << std::endl;
+    return false;
+  }
 
-  // Generate trajectory
-  std::vector<Trajectory_Point> trajectories = {};
-  generate_trajectory(trajectories, waypoints, 0.1);
+  for (const auto &line : data) {
+    outFile << line << std::endl;
+  }
 
-  // Optional: Generate velocity profile
-  std::vector<double> velocities =
-      generate_velocity_profile(trajectories, 1.0, 0.5);
-
-  saveToFile("waypoints", waypoints);
-  saveToFile("trajectories", trajectories);
-
-  // Print trajectory points
-  // for (size_t i = 0; i < trajectories.size(); i++) {
-  //   std::cout << "Point " << i << ": (" << trajectories[i].pose.x << ", "
-  //             << trajectories[i].pose.y << ") "
-  //             << "Velocity: " << trajectories[i].velocity.linear <<
-  //             std::endl;
-  // }
-
-  return 0;
+  outFile.close();
+  return true;
 }
+
+// Example usage
+// int main() {
+//   // Create some example waypoints
+//   std::vector<Ecef_Coord> waypoints = {
+//       {0.0, 0.0}, {1.0, 1.0}, {2.0, 0.0}, {3.0, 2.0}};
+//
+//   // Generate trajectory
+//   std::vector<Trajectory_Point> trajectories = {};
+//   generate_trajectory(trajectories, waypoints, 0.1);
+//
+//   // Optional: Generate velocity profile
+//   std::vector<double> velocities =
+//       generate_velocity_profile(trajectories, 1.0, 0.5);
+//
+//   saveToFile("waypoints", waypoints);
+//   saveToFile("trajectories", trajectories);
+//
+//   // Print trajectory points
+//   // for (size_t i = 0; i < trajectories.size(); i++) {
+//   //   std::cout << "Point " << i << ": (" << trajectories[i].pose.x << ", "
+//   //             << trajectories[i].pose.y << ") "
+//   //             << "Velocity: " << trajectories[i].velocity.linear <<
+//   //             std::endl;
+//   // }
+//
+//   return 0;
+// }
