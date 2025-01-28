@@ -16,7 +16,8 @@ void SimRobot(Ecef_Coord &robotPos, std::vector<Ecef_Coord> &waypoints,
   // val = ((int)(val * 90) % 360);
   // float x = PI * ((int)val % 360);
   int index = std::floor(dt / 0.02);
-  float vel = velocities[index] * 0.02;
+  // float vel = velocities[index] * 0.02;
+  float vel = velocities[index] * GetFrameTime();
   if (index < trajectories.size()) {
     float th = trajectories[index].pose.theta;
     robotPos.x += cos(th) * (vel);
@@ -63,14 +64,23 @@ int main() {
 
   float dt = 0;
 
+  config robot_config = {.hz = 50,
+                         .motion_constraints = {.max_velocity = 2.0,
+                                                .max_acceleration = 0.5,
+                                                .max_deceleration = 0.5,
+                                                .max_jerk = 0.0,
+                                                .corner_velocity = 0.0}
+
+  };
+
   std::vector<Ecef_Coord> waypoints = {
       {0.0, 0.0}, {10.0, -10.0}, {20.0, 0.0}, {30.0, -20.0}};
 
   std::vector<Trajectory_Point> trajectories = {};
-  generate_trajectory(trajectories, waypoints, 0.02);
+  generate_geometric_trajectory(trajectories, waypoints, robot_config);
 
   std::vector<double> velocities =
-      generate_velocity_profile(trajectories, 1.0, 0.5);
+      generate_velocity_profile(trajectories, robot_config);
 
   Ecef_Coord robotPos = {0.0, 0.0};
 
