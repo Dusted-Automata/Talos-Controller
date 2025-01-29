@@ -25,11 +25,11 @@ void SimRobot(Ecef_Coord &robotPos, std::vector<Ecef_Coord> &waypoints,
 
     char robot[500];
     sprintf(robot, "x: %.2f y: %.2f index: %i theta: %f velocity: %f",
-            robotPos.x, robotPos.y, index, th, vel);
+            robotPos.x, robotPos.y, index, th, velocities[index]);
 
     DrawText(robot, 10, 40, 20, BLACK);
   }
-  DrawCircleV({robotPos.x, robotPos.y}, 0.1, RED);
+  DrawCircleV({robotPos.x, robotPos.y}, 1.0, RED);
 }
 
 void DrawAbsoluteGrid(Camera2D camera, float gridStep) {
@@ -57,11 +57,6 @@ int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Absolute Coordinate System");
   SetTargetFPS(60);
 
-  Camera2D camera = {0};
-  camera.target = (Vector2){0, 0};
-  camera.offset = (Vector2){SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
-  camera.zoom = 1.0f;
-
   float dt = 0;
 
   config robot_config = {.hz = 50,
@@ -74,7 +69,10 @@ int main() {
   };
 
   std::vector<Ecef_Coord> waypoints = {
-      {0.0, 0.0}, {10.0, -10.0}, {20.0, 0.0}, {30.0, -20.0}};
+      {{4100175.625135626, 476368.7899695045, 4846344.356704135},
+       {4100209.6729529747, 476361.2681338759, 4846316.478097512},
+       {4100218.5394949187, 476445.5598077707, 4846300.796185957},
+       {4100241.72195791, 476441.0557096391, 4846281.753675706}}};
 
   std::vector<Trajectory_Point> trajectories = {};
   generate_geometric_trajectory(trajectories, waypoints, robot_config);
@@ -82,17 +80,20 @@ int main() {
   std::vector<double> velocities =
       generate_velocity_profile(trajectories, robot_config);
 
-  Ecef_Coord robotPos = {0.0, 0.0};
+  Ecef_Coord robotPos = waypoints[0];
+
+  Camera2D camera = {.target = {waypoints[0].x, waypoints[0].y}};
+  // camera.target = (Vector2){waypoints[0].x, waypoints[0].y};
+  camera.offset = (Vector2){SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
+  camera.zoom = 1.0f;
 
   while (!WindowShouldClose()) {
-    // Camera movement
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
       Vector2 delta = GetMouseDelta();
       delta = Vector2Scale(delta, -1.0f / camera.zoom);
       camera.target = Vector2Add(camera.target, delta);
     }
 
-    // Zoom
     float wheel = GetMouseWheelMove();
     if (wheel != 0) {
       Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
@@ -104,17 +105,13 @@ int main() {
       camera.zoom = Clamp(camera.zoom, 0.125f, 64.0f);
     }
 
-    // Drawing
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
     BeginMode2D(camera);
 
-    // Draw absolute grid
     float gridStep = 5.0f;
     DrawAbsoluteGrid(camera, gridStep);
-
-    // Draw origin point
 
     for (int i = 0; i < waypoints.size(); i++) {
       DrawCircle(waypoints[i].x, waypoints[i].y, 2, BLUE);
@@ -130,7 +127,6 @@ int main() {
 
     EndMode2D();
 
-    // Draw mouse coordinates in world space
     Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
     char coordText[500];
     sprintf(coordText, "World: (%.1f, %.1f) Zoom: %.2f Time: %f",
@@ -152,5 +148,6 @@ int main() {
   saveToFile("waypoints", waypoints);
   saveToFile("trajectories", trajectories);
   saveToFile("velocities", velocities);
+  saveToFile("time", trajectories.size());
   return 0;
 }
