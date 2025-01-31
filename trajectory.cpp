@@ -4,8 +4,27 @@
 #include <iostream>
 #include <vector>
 
-struct Pose4f {
-  double x, y, z, theta;
+struct Vector3d {
+  double x, y, z;
+};
+typedef Vector3d Ecef_Coord;
+
+struct Angular_Velocity {
+  double roll, pitch, yaw;
+};
+struct Linear_Velocity {
+  double forward, lateral, vertical;
+};
+struct Transform_Matrix {
+  Vector3d x;
+  Vector3d y;
+  Vector3d z;
+  Vector3d translation;
+};
+
+struct Pose {
+  Vector3d point;
+  Transform_Matrix matrix; // Change this to Quaternion maybe
 };
 
 struct Velocity2d {
@@ -22,23 +41,20 @@ struct Motion_Constraints {
   double corner_velocity;
 };
 
-struct config {
+struct Robot_Config {
   int hz;
   Motion_Constraints motion_constraints;
 };
-//
-// void createTrajectories(std::array<Pose2d, 10> waypoints) {
-//   std::cout << waypoints;
-// }
 
 struct Trajectory_Point {
-  Pose4f pose;
+  Pose pose;
   double dt;
   Velocity2d velocity;
 };
 
-struct Ecef_Coord {
-  double x, y, z;
+struct Trajectory_Plan {
+  std::vector<Trajectory_Point> trajectory_points;
+  std::vector<int> coordinate_indices;
 };
 
 double calculate_theta(double dx, double dy) {
@@ -49,26 +65,38 @@ double calculate_theta(double dx, double dy) {
   return Theta;
 }
 
-Pose4f cubic_interpolation(double dx, double dy, Ecef_Coord start,
-                           Ecef_Coord end, double t) {
-  double h00 = 2 * t * t * t - 3 * t * t + 1;
-  double h10 = t * t * t - 2 * t * t + t;
-  double h01 = -2 * t * t * t + 3 * t * t;
-  double h11 = t * t * t - t * t;
+// Pose cubic_interpolation(double dx, double dy, Ecef_Coord start, Ecef_Coord
+// end,
+//                          double t) {
+//   double h00 = 2 * t * t * t - 3 * t * t + 1;
+//   double h10 = t * t * t - 2 * t * t + t;
+//   double h01 = -2 * t * t * t + 3 * t * t;
+//   double h11 = t * t * t - t * t;
+//
+//   Pose point = {};
+//   point.x = h00 * start.x + h10 * dx + h01 * end.x + h11 * dx;
+//   point.y = h00 * start.y + h10 * dy + h01 * end.y + h11 * dy;
+//   return point;
+// };
 
-  Pose4f point = {};
-  point.x = h00 * start.x + h10 * dx + h01 * end.x + h11 * dx;
-  point.y = h00 * start.y + h10 * dy + h01 * end.y + h11 * dy;
-  return point;
+double calculate_velocity(double progress, const Robot_Config &config) {
+  if (progress < 0.2) {
+    return config.motion_constraints.max_velocity * (progress / 0.2);
+  } else if (progress > 0.8) {
+    return config.motion_constraints.max_velocity * ((1.0 - progress) / 0.2);
+  } else {
+    return 1.0;
+  }
 };
 
 std::vector<Trajectory_Point>
-generate_geometric_trajectory(std::vector<Trajectory_Point> &trajectories,
-                              const std::vector<Ecef_Coord> &coordinates,
-                              config &robot_config) {
+generate_geometric_trajectory(const std::vector<Ecef_Coord> &coordinates,
+                              const Robot_Config &robot_config) {
+
+  std::vector<Trajectory_Point> path = {};
 
   if (coordinates.size() < 2) {
-    return trajectories;
+    return path;
   }
 
   double resolution = 1.0 / robot_config.hz;
@@ -89,49 +117,91 @@ generate_geometric_trajectory(std::vector<Trajectory_Point> &trajectories,
       double z = current.z * (1 - t) + next.z * t;
 
       double theta = calculate_theta(dx, dy);
-      Pose4f point = {.x = x, .y = y, .z = z, .theta = theta};
-      Trajectory_Point tp = {.pose = point};
-      trajectories.push_back(tp);
+      Vector3d point = {.x = x, .y = y, .z = z};
+      Pose pose = {.point = point};
+      Trajectory_Point tp = {.pose = pose};
     }
   }
 
-  return trajectories;
+  return path;
 }
 
-double calculate_velocity() { return 0.0; };
+std::vector<Trajectory_Point>
+generate_trajectory(const std::vector<Ecef_Coord> &coordinates,
+                    const Robot_Config &config) {
+  std::vector<Trajectory_Point> path = {};
+
+  if (coordinates.size() < 2) {
+    return path;
+  }
+
+  double resolution = 1.0 / config.hz;
+
+  for (int i = 0; i < coordinates.size() - 1; i++) {
+    Ecef_Coord current = coordinates[i];
+    Ecef_Coord next = coordinates[i + 1];
+    double dx = next.x - current.x;
+    double dy = next.y - current.y;
+    double distance = std::sqrt(dx * dx + dy * dy);
+    int points = static_cast<int>(distance / resolution);
+
+    for (int j = 0; j <= points; j++) {
+      double t = static_cast<double>(j) / points;
+      // Pose3d point = cubic_interpolation(dx, dy, start, end, t);
+      double x = current.x * (1 - t) + next.x * t;
+      double y = current.y * (1 - t) + next.y * t;
+      double z = current.z * (1 - t) + next.z * t;
+
+      double theta = calculate_theta(dx, dy);
+
+      double progress = static_cast<double>(j) / points;
+      Velocity2d velocity = {.linear = calculate_velocity(progress, config)};
+
+      Vector3d point = {.x = x, .y = y, .z = z};
+      Pose pose = {.point = point};
+      Trajectory_Point tp = {.pose = pose, .velocity = velocity};
+      path.push_back(tp);
+    }
+  }
+
+  return path;
+}
+
 std::vector<double>
-generate_velocity_profile(const std::vector<Trajectory_Point> &trajectory,
-                          config &robot_config) {
-  std::vector<double> velocities(trajectory.size());
+generate_velocity_profile(std::vector<Trajectory_Point> &path,
+                          Robot_Config &robot_config) {
+  std::vector<double> velocities(path.size());
 
   double distance_vel = 0.0;
   double distance_traj = 0.0;
   double dx, dy;
   // trapezoidal velocity profile
-  for (size_t i = 0; i < trajectory.size(); i++) {
-    double progress = static_cast<double>(i) / trajectory.size();
-    if (i < trajectory.size() - 1) {
-      dx = trajectory[i + 1].pose.x - trajectory[i].pose.x;
-      dy = trajectory[i + 1].pose.y - trajectory[i].pose.y;
-      distance_traj += std::sqrt(dx * dx + dy * dy);
-    }
-
-    if (i > 0) {
-      distance_vel += velocities[i - 1] * (1.0 / robot_config.hz);
-    }
-
-    if (progress < 0.2) {
-      velocities[i] =
-          robot_config.motion_constraints.max_velocity * (progress / 0.2);
-    } else if (progress > 0.8) {
-      velocities[i] = robot_config.motion_constraints.max_velocity *
-                      ((1.0 - progress) / 0.2);
-    } else {
-      if (distance_vel < distance_traj) {
-        velocities[i] = robot_config.motion_constraints.max_velocity;
+  for (int i = 0; path.size(); i++) {
+    for (size_t j = 0; j < path.size(); j++) {
+      double progress = static_cast<double>(j) / path.size();
+      if (j < path.size() - 1) {
+        dx = path[j + 1].pose.point.x - path[j].pose.point.x;
+        dy = path[j + 1].pose.point.y - path[j].pose.point.y;
+        distance_traj += std::sqrt(dx * dx + dy * dy);
       }
-      double displacement = std::sqrt(dx * dx + dy * dy);
-      velocities[i] = displacement / (1.0 / robot_config.hz);
+
+      if (j > 0) {
+        distance_vel += velocities[j - 1] * (1.0 / robot_config.hz);
+      }
+
+      if (progress < 0.2) {
+        velocities[j] =
+            robot_config.motion_constraints.max_velocity * (progress / 0.2);
+      } else if (progress > 0.8) {
+        velocities[j] = robot_config.motion_constraints.max_velocity *
+                        ((1.0 - progress) / 0.2);
+      } else {
+        if (distance_vel < distance_traj) {
+          velocities[j] = robot_config.motion_constraints.max_velocity;
+        }
+        double displacement = std::sqrt(dx * dx + dy * dy);
+        velocities[j] = displacement / (1.0 / robot_config.hz);
+      }
     }
   }
 
@@ -170,9 +240,9 @@ static bool saveToFile(const std::string &filename,
 
   for (const auto &line : data) {
     outFile << std::fixed;
-    outFile << 1 << " " << 0 << " " << 0 << " " << line.pose.x << " ";
-    outFile << 0 << " " << 1 << " " << 0 << " " << line.pose.y << " ";
-    outFile << 0 << " " << 0 << " " << 1 << " " << line.pose.z;
+    outFile << 1 << " " << 0 << " " << 0 << " " << line.pose.point.x << " ";
+    outFile << 0 << " " << 1 << " " << 0 << " " << line.pose.point.y << " ";
+    outFile << 0 << " " << 0 << " " << 1 << " " << line.pose.point.z;
     outFile << std::endl;
   }
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <Eigen/Dense>
 
-struct Pose4f {
+struct Pose {
   double x, y, theta;
 };
 

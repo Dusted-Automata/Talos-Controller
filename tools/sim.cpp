@@ -8,29 +8,29 @@
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
 
-void SimRobot(Ecef_Coord &robotPos, std::vector<Ecef_Coord> &waypoints,
-              std::vector<Trajectory_Point> &trajectories,
-              std::vector<double> &velocities, double dt) {
-
-  float val = GetTime();
-  // val = ((int)(val * 90) % 360);
-  // float x = PI * ((int)val % 360);
-  int index = std::floor(dt / 0.02);
-  // float vel = velocities[index] * 0.02;
-  float vel = velocities[index] * GetFrameTime();
-  if (index < trajectories.size()) {
-    float th = trajectories[index].pose.theta;
-    robotPos.x += cos(th) * (vel);
-    robotPos.y += sin(th) * (vel);
-
-    char robot[500];
-    sprintf(robot, "x: %.2f y: %.2f index: %i theta: %f velocity: %f",
-            robotPos.x, robotPos.y, index, th, velocities[index]);
-
-    DrawText(robot, 10, 40, 20, BLACK);
-  }
-  DrawCircleV({robotPos.x, robotPos.y}, 1.0, RED);
-}
+// void SimRobot(Ecef_Coord &robotPos, std::vector<Ecef_Coord> &waypoints,
+//               std::vector<Trajectory_Point> &trajectories,
+//               std::vector<double> &velocities, double dt) {
+//
+//   float val = GetTime();
+//   // val = ((int)(val * 90) % 360);
+//   // float x = PI * ((int)val % 360);
+//   int index = std::floor(dt / 0.02);
+//   // float vel = velocities[index] * 0.02;
+//   float vel = velocities[index] * GetFrameTime();
+//   if (index < trajectories.size()) {
+//     float th = trajectories[index].pose.theta;
+//     robotPos.x += cos(th) * (vel);
+//     robotPos.y += sin(th) * (vel);
+//
+//     char robot[500];
+//     sprintf(robot, "x: %.2f y: %.2f index: %i  velocity: %f",
+//             robotPos.x, robotPos.y, index, velocities[index]);
+//
+//     DrawText(robot, 10, 40, 20, BLACK);
+//   }
+//   DrawCircleV({robotPos.x, robotPos.y}, 1.0, RED);
+// }
 
 void DrawAbsoluteGrid(Camera2D camera, float gridStep) {
   Vector2 zero = {0, 0};
@@ -59,12 +59,12 @@ int main() {
 
   float dt = 0;
 
-  config robot_config = {.hz = 50,
-                         .motion_constraints = {.max_velocity = 2.0,
-                                                .max_acceleration = 0.5,
-                                                .max_deceleration = 0.5,
-                                                .max_jerk = 0.0,
-                                                .corner_velocity = 0.0}
+  Robot_Config robot_config = {.hz = 50,
+                               .motion_constraints = {.max_velocity = 2.0,
+                                                      .max_acceleration = 0.5,
+                                                      .max_deceleration = 0.5,
+                                                      .max_jerk = 0.0,
+                                                      .corner_velocity = 0.0}
 
   };
 
@@ -74,15 +74,15 @@ int main() {
        {4100218.5394949187, 476445.5598077707, 4846300.796185957},
        {4100241.72195791, 476441.0557096391, 4846281.753675706}}};
 
-  std::vector<Trajectory_Point> trajectories = {};
-  generate_geometric_trajectory(trajectories, waypoints, robot_config);
+  std::vector<Trajectory_Point> trajectories =
+      generate_geometric_trajectory(waypoints, robot_config);
 
   std::vector<double> velocities =
       generate_velocity_profile(trajectories, robot_config);
 
   Ecef_Coord robotPos = waypoints[0];
 
-  Camera2D camera = {.target = {waypoints[0].x, waypoints[0].y}};
+  Camera2D camera = {.target = {(float)waypoints[0].x, (float)waypoints[0].y}};
   // camera.target = (Vector2){waypoints[0].x, waypoints[0].y};
   camera.offset = (Vector2){SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
   camera.zoom = 1.0f;
@@ -118,12 +118,14 @@ int main() {
     }
 
     for (int i = 0; i < trajectories.size() - 1; i++) {
-      DrawLineV({trajectories[i].pose.x, trajectories[i].pose.y},
-                {trajectories[i + 1].pose.x, trajectories[i + 1].pose.y},
+      DrawLineV({(float)trajectories[i].pose.point.x,
+                 (float)trajectories[i].pose.point.y},
+                {(float)trajectories[i + 1].pose.point.x,
+                 (float)trajectories[i + 1].pose.point.y},
                 GREEN);
     }
 
-    SimRobot(robotPos, waypoints, trajectories, velocities, GetTime());
+    // SimRobot(robotPos, waypoints, trajectories, velocities, GetTime());
 
     EndMode2D();
 
@@ -135,10 +137,10 @@ int main() {
     char testText[50];
     sprintf(testText, "sin: %.2f cos: %.2f", sin(0.7854), cos(0.7854));
     DrawText(testText, 10, 40, 20, BLACK);
-    char robotTraj[50];
-    sprintf(testText, "traj: %f len: %zu", trajectories[1000].pose.theta,
-            trajectories.size());
-    DrawText(testText, 10, 70, 20, BLACK);
+    // char robotTraj[50];
+    // sprintf(testText, "traj: %f len: %zu", trajectories[1000].pose.theta,
+    //         trajectories.size());
+    // DrawText(testText, 10, 70, 20, BLACK);
 
     EndDrawing();
     dt = GetTime();
