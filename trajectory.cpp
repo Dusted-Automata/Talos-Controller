@@ -74,19 +74,19 @@ generate_geometric_trajectory(std::vector<Trajectory_Point> &trajectories,
   double resolution = 1.0 / robot_config.hz;
 
   for (int i = 0; i < coordinates.size() - 1; i++) {
-    Ecef_Coord start = coordinates[i];
-    Ecef_Coord end = coordinates[i + 1];
-    double dx = end.x - start.x;
-    double dy = end.y - start.y;
+    Ecef_Coord current = coordinates[i];
+    Ecef_Coord next = coordinates[i + 1];
+    double dx = next.x - current.x;
+    double dy = next.y - current.y;
     double distance = std::sqrt(dx * dx + dy * dy);
     int points = static_cast<int>(distance / resolution);
 
     for (int j = 0; j <= points; j++) {
       double t = static_cast<double>(j) / points;
       // Pose3d point = cubic_interpolation(dx, dy, start, end, t);
-      double x = start.x * (1 - t) + end.x * t;
-      double y = start.y * (1 - t) + end.y * t;
-      double z = start.z * (1 - t) + end.z * t;
+      double x = current.x * (1 - t) + next.x * t;
+      double y = current.y * (1 - t) + next.y * t;
+      double z = current.z * (1 - t) + next.z * t;
 
       double theta = calculate_theta(dx, dy);
       Pose4f point = {.x = x, .y = y, .z = z, .theta = theta};
