@@ -86,6 +86,7 @@ double calculate_velocity(double progress, const Robot_Config &config) {
   }
 };
 
+// High level Path planning (Maybe, check back later)
 std::vector<Trajectory_Point>
 generate_geometric_trajectory(const std::vector<Ecef_Coord> &waypoints,
                               const Robot_Config &robot_config) {
@@ -168,46 +169,46 @@ generate_trajectory(const std::vector<Ecef_Coord> &coordinates,
   return path;
 }
 
-std::vector<double>
-generate_velocity_profile(std::vector<Trajectory_Point> &path,
-                          Robot_Config &robot_config) {
-  std::vector<double> velocities(path.size());
-
-  double distance_vel = 0.0;
-  double distance_traj = 0.0;
-  double dx, dy;
-  // trapezoidal velocity profile
-  for (int i = 0; path.size(); i++) {
-    for (size_t j = 0; j < path.size(); j++) {
-      double progress = static_cast<double>(j) / path.size();
-      if (j < path.size() - 1) {
-        dx = path[j + 1].pose.point.x() - path[j].pose.point.x();
-        dy = path[j + 1].pose.point.y() - path[j].pose.point.y();
-        distance_traj += std::sqrt(dx * dx + dy * dy);
-      }
-
-      if (j > 0) {
-        distance_vel += velocities[j - 1] * (1.0 / robot_config.hz);
-      }
-
-      if (progress < 0.2) {
-        velocities[j] =
-            robot_config.motion_constraints.max_velocity * (progress / 0.2);
-      } else if (progress > 0.8) {
-        velocities[j] = robot_config.motion_constraints.max_velocity *
-                        ((1.0 - progress) / 0.2);
-      } else {
-        if (distance_vel < distance_traj) {
-          velocities[j] = robot_config.motion_constraints.max_velocity;
-        }
-        double displacement = std::sqrt(dx * dx + dy * dy);
-        velocities[j] = displacement / (1.0 / robot_config.hz);
-      }
-    }
-  }
-
-  return velocities;
-}
+// std::vector<double>
+// generate_velocity_profile(std::vector<Trajectory_Point> &path,
+//                           Robot_Config &robot_config) {
+//   std::vector<double> velocities(path.size());
+//
+//   double distance_vel = 0.0;
+//   double distance_traj = 0.0;
+//   double dx, dy;
+//   // trapezoidal velocity profile
+//   for (int i = 0; path.size(); i++) {
+//     for (size_t j = 0; j < path.size(); j++) {
+//       double progress = static_cast<double>(j) / path.size();
+//       if (j < path.size() - 1) {
+//         dx = path[j + 1].pose.point.x() - path[j].pose.point.x();
+//         dy = path[j + 1].pose.point.y() - path[j].pose.point.y();
+//         distance_traj += std::sqrt(dx * dx + dy * dy);
+//       }
+//
+//       if (j > 0) {
+//         distance_vel += velocities[j - 1] * (1.0 / robot_config.hz);
+//       }
+//
+//       if (progress < 0.2) {
+//         velocities[j] =
+//             robot_config.motion_constraints.max_velocity * (progress / 0.2);
+//       } else if (progress > 0.8) {
+//         velocities[j] = robot_config.motion_constraints.max_velocity *
+//                         ((1.0 - progress) / 0.2);
+//       } else {
+//         if (distance_vel < distance_traj) {
+//           velocities[j] = robot_config.motion_constraints.max_velocity;
+//         }
+//         double displacement = std::sqrt(dx * dx + dy * dy);
+//         velocities[j] = displacement / (1.0 / robot_config.hz);
+//       }
+//     }
+//   }
+//
+//   return velocities;
+// }
 
 static bool saveToFile(const std::string &filename,
                        const std::vector<Ecef_Coord> &data) {
