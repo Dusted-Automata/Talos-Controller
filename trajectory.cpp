@@ -1,13 +1,18 @@
 // #include "robot.hpp"
+#include <Eigen/Dense>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <vector>
 
-struct Vector3d {
-  double x, y, z;
-};
+using Eigen::Matrix4d;
+using Eigen::Vector3d;
 typedef Vector3d Ecef_Coord;
+
+struct Pose {
+  Vector3d point;
+  Matrix4d Transformation_Matrix; // Change this to Quaternion maybe
+};
 
 struct Angular_Velocity {
   double roll, pitch, yaw;
@@ -15,22 +20,9 @@ struct Angular_Velocity {
 struct Linear_Velocity {
   double forward, lateral, vertical;
 };
-struct Transform_Matrix {
-  Vector3d x;
-  Vector3d y;
-  Vector3d z;
-  Vector3d translation;
-};
-
-struct Pose {
-  Vector3d point;
-  Transform_Matrix matrix; // Change this to Quaternion maybe
-};
-
 struct Velocity2d {
-  // velocity[0], yawspeed I think in HighCmd
-  double linear;  // (m/s)
-  double angular; // (rad/s)
+  Linear_Velocity linear;   // (m/s)
+  Angular_Velocity angular; // (rad/s)
 };
 
 struct Motion_Constraints {
@@ -44,6 +36,11 @@ struct Motion_Constraints {
 struct Robot_Config {
   int hz;
   Motion_Constraints motion_constraints;
+  // TODO: Make a real frame and transformation data structure
+  Matrix4d robot_frame{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+  Matrix4d world_frame{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+  Matrix4d transform_world_to_robot{
+      {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
 };
 
 struct Trajectory_Point {
@@ -90,34 +87,38 @@ double calculate_velocity(double progress, const Robot_Config &config) {
 };
 
 std::vector<Trajectory_Point>
-generate_geometric_trajectory(const std::vector<Ecef_Coord> &coordinates,
+generate_geometric_trajectory(const std::vector<Ecef_Coord> &waypoints,
                               const Robot_Config &robot_config) {
 
   std::vector<Trajectory_Point> path = {};
 
-  if (coordinates.size() < 2) {
+  if (waypoints.size() < 2) {
     return path;
   }
 
   double resolution = 1.0 / robot_config.hz;
 
-  for (int i = 0; i < coordinates.size() - 1; i++) {
-    Ecef_Coord current = coordinates[i];
-    Ecef_Coord next = coordinates[i + 1];
-    double dx = next.x - current.x;
-    double dy = next.y - current.y;
+  for (int i = 0; i < waypoints.size() - 1; i++) {
+    Ecef_Coord current = waypoints[i];
+    Ecef_Coord next = waypoints[i + 1];
+    double dx = next.x() - current.x();
+    double dy = next.y() - current.y();
     double distance = std::sqrt(dx * dx + dy * dy);
     int points = static_cast<int>(distance / resolution);
 
     for (int j = 0; j <= points; j++) {
       double t = static_cast<double>(j) / points;
       // Pose3d point = cubic_interpolation(dx, dy, start, end, t);
-      double x = current.x * (1 - t) + next.x * t;
-      double y = current.y * (1 - t) + next.y * t;
-      double z = current.z * (1 - t) + next.z * t;
+      double x = current.x() * (1 - t) + next.x() * t;
+      double y = current.y() * (1 - t) + next.y() * t;
+      double z = current.z() * (1 - t) + next.z() * t;
 
       double theta = calculate_theta(dx, dy);
-      Vector3d point = {.x = x, .y = y, .z = z};
+      // Vector3d point = {.x = x, .y = y, .z = z};
+      // Vector3d point;
+      // point << x, y, z;
+      Vector3d point(x, y, z);
+
       Pose pose = {.point = point};
       Trajectory_Point tp = {.pose = pose};
     }
@@ -140,24 +141,24 @@ generate_trajectory(const std::vector<Ecef_Coord> &coordinates,
   for (int i = 0; i < coordinates.size() - 1; i++) {
     Ecef_Coord current = coordinates[i];
     Ecef_Coord next = coordinates[i + 1];
-    double dx = next.x - current.x;
-    double dy = next.y - current.y;
+    double dx = next.x() - current.x();
+    double dy = next.y() - current.y();
     double distance = std::sqrt(dx * dx + dy * dy);
     int points = static_cast<int>(distance / resolution);
 
     for (int j = 0; j <= points; j++) {
       double t = static_cast<double>(j) / points;
       // Pose3d point = cubic_interpolation(dx, dy, start, end, t);
-      double x = current.x * (1 - t) + next.x * t;
-      double y = current.y * (1 - t) + next.y * t;
-      double z = current.z * (1 - t) + next.z * t;
+      double x = current.x() * (1 - t) + next.x() * t;
+      double y = current.y() * (1 - t) + next.y() * t;
+      double z = current.z() * (1 - t) + next.z() * t;
 
       double theta = calculate_theta(dx, dy);
 
       double progress = static_cast<double>(j) / points;
-      Velocity2d velocity = {.linear = calculate_velocity(progress, config)};
+      Velocity2d velocity = {.linear = {calculate_velocity(progress, config)}};
 
-      Vector3d point = {.x = x, .y = y, .z = z};
+      Vector3d point(x, y, z);
       Pose pose = {.point = point};
       Trajectory_Point tp = {.pose = pose, .velocity = velocity};
       path.push_back(tp);
@@ -180,8 +181,8 @@ generate_velocity_profile(std::vector<Trajectory_Point> &path,
     for (size_t j = 0; j < path.size(); j++) {
       double progress = static_cast<double>(j) / path.size();
       if (j < path.size() - 1) {
-        dx = path[j + 1].pose.point.x - path[j].pose.point.x;
-        dy = path[j + 1].pose.point.y - path[j].pose.point.y;
+        dx = path[j + 1].pose.point.x() - path[j].pose.point.x();
+        dy = path[j + 1].pose.point.y() - path[j].pose.point.y();
         distance_traj += std::sqrt(dx * dx + dy * dy);
       }
 
@@ -217,7 +218,7 @@ static bool saveToFile(const std::string &filename,
   }
 
   for (const auto &line : data) {
-    outFile << line.x << "," << line.y << std::endl;
+    outFile << line.x() << "," << line.y() << std::endl;
   }
 
   outFile.close();
@@ -240,9 +241,9 @@ static bool saveToFile(const std::string &filename,
 
   for (const auto &line : data) {
     outFile << std::fixed;
-    outFile << 1 << " " << 0 << " " << 0 << " " << line.pose.point.x << " ";
-    outFile << 0 << " " << 1 << " " << 0 << " " << line.pose.point.y << " ";
-    outFile << 0 << " " << 0 << " " << 1 << " " << line.pose.point.z;
+    outFile << 1 << " " << 0 << " " << 0 << " " << line.pose.point.x() << " ";
+    outFile << 0 << " " << 1 << " " << 0 << " " << line.pose.point.y() << " ";
+    outFile << 0 << " " << 0 << " " << 1 << " " << line.pose.point.z();
     outFile << std::endl;
   }
 
@@ -281,41 +282,39 @@ static bool saveToFile(const std::string &filename, const int amount) {
 };
 
 // Example usage
-// int main() {
-//   // Create some example waypoints
-//   std::vector<Ecef_Coord> waypoints = {
-//       {{4100175.625135626, 476368.7899695045, 4846344.356704135},
-//        {4100209.6729529747, 476361.2681338759, 4846316.478097512},
-//        {4100218.5394949187, 476445.5598077707, 4846300.796185957},
-//        {4100241.72195791, 476441.0557096391, 4846281.753675706}}};
-//
-//   config robot_config = {.hz = 50,
-//                          .motion_constraints = {.max_velocity = 2.0,
-//                                                 .max_acceleration = 0.5,
-//                                                 .max_deceleration = 0.5,
-//                                                 .max_jerk = 0.0,
-//                                                 .corner_velocity = 0.0}
-//
-//   };
-//
-//   // Generate trajectory
-//   std::vector<Trajectory_Point> trajectories = {};
-//   generate_geometric_trajectory(trajectories, waypoints, robot_config);
-//
-//   // Optional: Generate velocity profile
-//   std::vector<double> velocities =
-//       generate_velocity_profile(trajectories, robot_config);
-//
-//   saveToFile("waypoints", waypoints);
-//   saveToFile("trajectories", trajectories);
-//
-//   // Print trajectory points
-//   // for (size_t i = 0; i < trajectories.size(); i++) {
-//   //   std::cout << "Point " << i << ": (" << trajectories[i].pose.x << ",
-//   //             << trajectories[i].pose.y << ") "
-//   //             << "Velocity: " << trajectories[i].velocity.linear <<
-//   //             std::endl;
-//   // }
-//
-//   return 0;
-// }
+int main() {
+  // Create some example waypoints
+  std::vector<Ecef_Coord> waypoints = {
+      {4100175.625135626, 476368.7899695045, 4846344.356704135},
+      {4100209.6729529747, 476361.2681338759, 4846316.478097512},
+      {4100218.5394949187, 476445.5598077707, 4846300.796185957},
+      {4100241.72195791, 476441.0557096391, 4846281.753675706}};
+
+  Robot_Config config = {.hz = 50,
+                         .motion_constraints = {.max_velocity = 2.0,
+                                                .max_acceleration = 0.5,
+                                                .max_deceleration = 0.5,
+                                                .max_jerk = 0.0,
+                                                .corner_velocity = 0.0}
+
+  };
+
+  std::vector<Trajectory_Point> trajectories =
+      generate_geometric_trajectory(waypoints, config);
+
+  std::vector<double> velocities =
+      generate_velocity_profile(trajectories, config);
+
+  saveToFile("waypoints", waypoints);
+  saveToFile("trajectories", trajectories);
+
+  // Print trajectory points
+  // for (size_t i = 0; i < trajectories.size(); i++) {
+  //   std::cout << "Point " << i << ": (" << trajectories[i].pose.x << ",
+  //             << trajectories[i].pose.y << ") "
+  //             << "Velocity: " << trajectories[i].velocity.linear <<
+  //             std::endl;
+  // }
+
+  return 0;
+}

@@ -69,10 +69,10 @@ int main() {
   };
 
   std::vector<Ecef_Coord> waypoints = {
-      {{4100175.625135626, 476368.7899695045, 4846344.356704135},
-       {4100209.6729529747, 476361.2681338759, 4846316.478097512},
-       {4100218.5394949187, 476445.5598077707, 4846300.796185957},
-       {4100241.72195791, 476441.0557096391, 4846281.753675706}}};
+      {4100175.625135626, 476368.7899695045, 4846344.356704135},
+      {4100209.6729529747, 476361.2681338759, 4846316.478097512},
+      {4100218.5394949187, 476445.5598077707, 4846300.796185957},
+      {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
   std::vector<Trajectory_Point> trajectories =
       generate_geometric_trajectory(waypoints, robot_config);
@@ -82,7 +82,8 @@ int main() {
 
   Ecef_Coord robotPos = waypoints[0];
 
-  Camera2D camera = {.target = {(float)waypoints[0].x, (float)waypoints[0].y}};
+  Camera2D camera = {
+      .target = {(float)waypoints[0].x(), (float)waypoints[0].y()}};
   // camera.target = (Vector2){waypoints[0].x, waypoints[0].y};
   camera.offset = (Vector2){SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
   camera.zoom = 1.0f;
@@ -114,14 +115,14 @@ int main() {
     DrawAbsoluteGrid(camera, gridStep);
 
     for (int i = 0; i < waypoints.size(); i++) {
-      DrawCircle(waypoints[i].x, waypoints[i].y, 2, BLUE);
+      DrawCircle(waypoints[i].x(), waypoints[i].y(), 2, BLUE);
     }
 
     for (int i = 0; i < trajectories.size() - 1; i++) {
-      DrawLineV({(float)trajectories[i].pose.point.x,
-                 (float)trajectories[i].pose.point.y},
-                {(float)trajectories[i + 1].pose.point.x,
-                 (float)trajectories[i + 1].pose.point.y},
+      DrawLineV({(float)trajectories[i].pose.point.x(),
+                 (float)trajectories[i].pose.point.y()},
+                {(float)trajectories[i + 1].pose.point.x(),
+                 (float)trajectories[i + 1].pose.point.y()},
                 GREEN);
     }
 
