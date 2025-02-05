@@ -88,6 +88,7 @@ double calculate_velocity(double progress, const Robot_Config &config) {
   }
 };
 
+// High level Path planning (Maybe, check back later)
 std::vector<Trajectory_Point>
 generate_geometric_trajectory(const std::vector<Ecef_Coord> &waypoints,
                               const Robot_Config &robot_config) {
