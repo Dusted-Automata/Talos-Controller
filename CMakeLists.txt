@@ -34,7 +34,8 @@ add_executable(controller go1.cpp robot.cpp pid.cpp trajectory.cpp)
 add_executable(sim ./tools/sim.cpp)
 target_link_libraries(controller ${EXTRA_LIBS})
 target_include_directories(controller PRIVATE ${EIGEN3_INCLUDE_DIR})
-target_link_libraries(sim -lraylib -lGL -lm)
+target_link_libraries(sim -lraylib -lGL -lm -lpthread -ldl -lrt )
+target_include_directories(sim PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 
 # install
