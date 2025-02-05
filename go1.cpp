@@ -120,7 +120,7 @@ int main(void) {
             << "Press Enter to continue..." << std::endl;
   std::cin.ignore();
 
-  Go1_Quadruped robot;
+  // Go1_Quadruped robot;
 
   // std::vector<Ecef_Coord> waypoints = {
   //     {4100175.625135626, 476368.7899695045, 4846344.356704135},
@@ -133,6 +133,7 @@ int main(void) {
 
   Robot_Config config = {.hz = 50,
                          .motion_constraints = {.max_velocity = 0.2,
+                                                .standing_turn_velocity = 2.0,
                                                 .max_acceleration = 0.5,
                                                 .max_deceleration = 0.5,
                                                 .max_jerk = 0.0,
@@ -145,21 +146,21 @@ int main(void) {
 
   saveToFile("trajectories", trajectories);
 
-  UT::LoopFunc loop_control(
-      "control_loop", robot.dt,
-      boost::bind(&Go1_Quadruped::control_loop, &robot, trajectories));
-  UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
-                            boost::bind(&Go1_Quadruped::UDPRecv, &robot));
-  UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,
-                            boost::bind(&Go1_Quadruped::UDPSend, &robot));
+  // UT::LoopFunc loop_control(
+  //     "control_loop", robot.dt,
+  //     boost::bind(&Go1_Quadruped::control_loop, &robot, trajectories));
+  // UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
+  //                           boost::bind(&Go1_Quadruped::UDPRecv, &robot));
+  // UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,
+  //                           boost::bind(&Go1_Quadruped::UDPSend, &robot));
+  //
+  // loop_udpSend.start();
+  // loop_udpRecv.start();
+  // loop_control.start();
 
-  loop_udpSend.start();
-  loop_udpRecv.start();
-  loop_control.start();
-
-  while (1) {
-    sleep(10);
-  }
+  // while (1) {
+  //   sleep(10);
+  // }
 
   return 0;
 }

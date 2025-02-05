@@ -130,6 +130,16 @@ generate_geometric_trajectory(const std::vector<Ecef_Coord> &waypoints,
   return path;
 }
 
+// void rotate(Matrix4d &matrix, double theta) {
+//   // Create rotation matrix directly
+//   Eigen::Matrix2d rotation;
+//   rotation << std::cos(theta), -std::sin(theta), std::sin(theta),
+//       std::cos(theta);
+//
+//   // In-place multiplication
+//   matrix = rotation * matrix;
+// }
+
 std::vector<Trajectory_Point>
 generate_trajectory(const std::vector<Ecef_Coord> &coordinates,
                     const Robot_Config &config) {
@@ -149,6 +159,49 @@ generate_trajectory(const std::vector<Ecef_Coord> &coordinates,
                                            difference.y() * difference.y());
     int points = static_cast<int>(horizontal_distance / resolution);
 
+    double azimuth_rad = atan2(difference.y(), difference.x());
+    double azimuth_degrees = fmod(azimuth_rad / M_PI * 180, 360);
+    std::cout << config.robot_frame.block(0, 0, 3, 3) << std::endl;
+    // rotate(config.robot_frame, azimuth_degrees);
+
+    // Ensure azimuth is between 0 and 360 degrees
+    // Calculate elevation angle (vertical angle from x-y plane)
+    double elevation = std::atan2(difference.z(), horizontal_distance);
+    double elevation_degrees = fmod(elevation / M_PI * 180, 360);
+    // std::cout << azimuth_degrees << std::endl;
+    // std::cout << elevation_degrees << std::endl;
+
+    int turn_points = static_cast<int>(
+        azimuth_rad /
+        (config.motion_constraints.standing_turn_velocity * resolution));
+    // int turn_points =
+    // static_cast<int>(config.motion_constraints.standing_turn_velocity /
+    // resolution);
+    // double test =
+    //     azimuth_rad -
+    //     (config.motion_constraints.standing_turn_velocity * resolution);
+    std::cout << "turn_points: " << turn_points
+              << " azimuth_deg: " << azimuth_degrees
+              << " azimuth_rad: " << azimuth_rad << std::endl;
+    for (int j = 0; j < abs(turn_points); j++) {
+      double t = (double)j / points;
+      Angular_Velocity angular;
+      angular.yaw = config.motion_constraints.standing_turn_velocity;
+      // if (t < 0.2) {
+      //   angular.yaw = config.motion_constraints.max_velocity * (t / 0.2);
+      // } else if (t > 0.8) {
+      //   angular.yaw =
+      //       config.motion_constraints.max_velocity * ((1.0 - t) / 0.2);
+      // } else {
+      //   angular.yaw = 1.0;
+      // }
+
+      Velocity2d velocity = {.angular = angular};
+      Pose pose = {.point = coordinates[i]};
+      Trajectory_Point tp = {.pose = pose, .velocity = velocity};
+      path.push_back(tp);
+    }
+
     for (int j = 0; j <= points; j++) {
       double t = static_cast<double>(j) / points;
       // Pose3d point = cubic_interpolation(dx, dy, start, end, t);
@@ -160,39 +213,6 @@ generate_trajectory(const std::vector<Ecef_Coord> &coordinates,
 
       Vector3d point(x, y, z);
       Pose pose = {.point = point};
-      Trajectory_Point tp = {.pose = pose, .velocity = velocity};
-      path.push_back(tp);
-    }
-
-    double azimuth = atan2(difference.y(), difference.x());
-    double azimuth_degrees = fmod(azimuth / M_PI * 180, 360);
-
-    // Ensure azimuth is between 0 and 360 degrees
-    // Calculate elevation angle (vertical angle from x-y plane)
-    double elevation = std::atan2(difference.z(), horizontal_distance);
-    double elevation_degrees = fmod(elevation / M_PI * 180, 360);
-    // std::cout << azimuth_degrees << std::endl;
-    // std::cout << elevation_degrees << std::endl;
-
-    int turn_points = static_cast<int>(azimuth_degrees / resolution);
-    std::cout << turn_points << std::endl;
-    for (int j = 0; j < abs(turn_points); j++) {
-      // double theta = calculate_theta(difference.x(), difference.y());
-      double t = (double)j / points;
-      Angular_Velocity angular;
-      angular.yaw = 0.02;
-      // if (t < 0.2) {
-      //   angular.yaw = config.motion_constraints.max_velocity * (t / 0.2);
-      // } else if (t > 0.8) {
-      //   angular.yaw =
-      //       config.motion_constraints.max_velocity * ((1.0 - t) / 0.2);
-      // } else {
-      //   angular.yaw = 1.0;
-      // }
-
-      Velocity2d velocity = {.angular = angular};
-
-      Pose pose = {.point = path[path.size() - 1].pose.point};
       Trajectory_Point tp = {.pose = pose, .velocity = velocity};
       path.push_back(tp);
     }
@@ -337,9 +357,7 @@ static bool saveToFile(const std::string &filename, const int amount) {
   return true;
 };
 
-// Example usage
 // int main() {
-//   // Create some example waypoints
 //   std::vector<Ecef_Coord> waypoints = {
 //       {4100175.625135626, 476368.7899695045, 4846344.356704135},
 //       {4100209.6729529747, 476361.2681338759, 4846316.478097512},
