@@ -5,4 +5,7 @@ build:
 run:
 	./build/sim
 
+controller:
+	./build/controller
+
 .PHONY : run

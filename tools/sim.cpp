@@ -8,29 +8,28 @@
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
 
-// void SimRobot(Ecef_Coord &robotPos, std::vector<Ecef_Coord> &waypoints,
-//               std::vector<Trajectory_Point> &trajectories,
-//               std::vector<double> &velocities, double dt) {
-//
-//   float val = GetTime();
-//   // val = ((int)(val * 90) % 360);
-//   // float x = PI * ((int)val % 360);
-//   int index = std::floor(dt / 0.02);
-//   // float vel = velocities[index] * 0.02;
-//   float vel = velocities[index] * GetFrameTime();
-//   if (index < trajectories.size()) {
-//     float th = trajectories[index].pose.theta;
-//     robotPos.x += cos(th) * (vel);
-//     robotPos.y += sin(th) * (vel);
-//
-//     char robot[500];
-//     sprintf(robot, "x: %.2f y: %.2f index: %i  velocity: %f",
-//             robotPos.x, robotPos.y, index, velocities[index]);
-//
-//     DrawText(robot, 10, 40, 20, BLACK);
-//   }
-//   DrawCircleV({robotPos.x, robotPos.y}, 1.0, RED);
-// }
+void SimRobot(Ecef_Coord &robotPos, std::vector<Ecef_Coord> &waypoints,
+              std::vector<Trajectory_Point> &trajectories, double dt) {
+
+  float val = GetTime();
+  // val = ((int)(val * 90) % 360);
+  // float x = PI * ((int)val % 360);
+  int index = std::floor(dt / 0.02);
+  // float vel = velocities[index] * 0.02;
+  float vel = trajectories[index].velocity.linear.forward * GetFrameTime();
+  if (index < trajectories.size()) {
+    float th = trajectories[index].velocity.angular.yaw;
+    robotPos.x() += cos(th) * (vel);
+    robotPos.y() += sin(th) * (vel);
+
+    char robot[500];
+    sprintf(robot, "x: %.2f y: %.2f index: %i  velocity: %f", robotPos.x(),
+            robotPos.y(), index, vel);
+
+    DrawText(robot, 10, 40, 20, BLACK);
+  }
+  DrawCircleV({(float)robotPos.x(), (float)robotPos.y()}, 1.0, RED);
+}
 
 void DrawAbsoluteGrid(Camera2D camera, float gridStep) {
   Vector2 zero = {0, 0};
@@ -68,18 +67,23 @@ int main() {
 
   };
 
-  std::vector<Ecef_Coord> waypoints = {
-      {4100175.625135626, 476368.7899695045, 4846344.356704135},
-      {4100209.6729529747, 476361.2681338759, 4846316.478097512},
-      {4100218.5394949187, 476445.5598077707, 4846300.796185957},
-      {4100241.72195791, 476441.0557096391, 4846281.753675706}};
+  // std::vector<Ecef_Coord> waypoints = {
+  //     {4100175.625135626, 476368.7899695045, 4846344.356704135},
+  //     {4100209.6729529747, 476361.2681338759, 4846316.478097512},
+  //     {4100218.5394949187, 476445.5598077707, 4846300.796185957},
+  //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
+
+  std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0},
+                                       {10.0, -10.0, 0.0},
+                                       {-10.0, -20.0, 0.0},
+                                       {10.0, 10.0, 0.0}};
 
   std::vector<Trajectory_Point> trajectories =
-      generate_geometric_trajectory(waypoints, robot_config);
+      generate_trajectory(waypoints, robot_config);
 
-  std::vector<double> velocities =
-      generate_velocity_profile(trajectories, robot_config);
-
+  // std::vector<double> velocities =
+  //     generate_velocity_profile(trajectories, robot_config);
+  //
   Ecef_Coord robotPos = waypoints[0];
 
   Camera2D camera = {
@@ -126,7 +130,7 @@ int main() {
                 GREEN);
     }
 
-    // SimRobot(robotPos, waypoints, trajectories, velocities, GetTime());
+    SimRobot(robotPos, waypoints, trajectories, GetTime());
 
     EndMode2D();
 
@@ -150,7 +154,7 @@ int main() {
   CloseWindow();
   saveToFile("waypoints", waypoints);
   saveToFile("trajectories", trajectories);
-  saveToFile("velocities", velocities);
+  // saveToFile("velocities", velocities);
   saveToFile("time", trajectories.size());
   return 0;
 }
