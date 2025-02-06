@@ -1,4 +1,4 @@
-#include "include/unitree_legged_sdk/unitree_legged_sdk.h"
+#include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
 #include <iostream>
 #include <math.h>
 #include <stdint.h>
