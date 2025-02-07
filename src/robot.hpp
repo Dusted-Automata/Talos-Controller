@@ -1,15 +1,6 @@
 #pragma once
 #include <Eigen/Dense>
 
-struct Pose {
-  double x, y, theta;
-};
-
-struct Velocity2d {
-  // velocity[0], yawspeed I think in HighCmd
-  double linear, angular;
-};
-
 struct ControlState {
   Eigen::Vector4d position;
   Eigen::Vector4d velocity;

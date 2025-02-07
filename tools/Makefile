@@ -1,5 +1,5 @@
 build:
-	cc sim.c -lraylib -lGL -lm
+	gcc sim.cpp -lraylib -lGL -lm
 .PHONY : build
 
 run:

@@ -1,34 +1,56 @@
 
-#include "../trajectory.cpp"
+#include "../src/trajectory.cpp"
 
+#include "Eigen/src/Core/Matrix.h"
 #include "raylib.h"
 #include "raymath.h"
 #include <stdio.h>
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
+#define ROBOT_SIZE 20.0
 
-void SimRobot(Ecef_Coord &robotPos, std::vector<Ecef_Coord> &waypoints,
+Vector3d baseArrow = Vector3d(1.0, 0.0, 0.0);
+void SimRobot(Ecef_Coord &robotPos, Vector3d arrowVector,
+              std::vector<Ecef_Coord> &waypoints,
               std::vector<Trajectory_Point> &trajectories, double dt) {
-
-  float val = GetTime();
-  // val = ((int)(val * 90) % 360);
-  // float x = PI * ((int)val % 360);
   int index = std::floor(dt / 0.02);
-  // float vel = velocities[index] * 0.02;
-  float vel = trajectories[index].velocity.linear.forward * GetFrameTime();
+  Vector3d movement;
+
   if (index < trajectories.size()) {
-    float th = trajectories[index].velocity.angular.yaw;
-    robotPos.x() += cos(th) * (vel);
-    robotPos.y() += sin(th) * (vel);
+    Eigen::Matrix3d block =
+        trajectories[index].pose.Transformation_Matrix.block(0, 0, 3, 3);
+
+    Vector3d translation =
+        trajectories[index].pose.Transformation_Matrix.block(0, 3, 3, 1);
+    movement = block * (trajectories[index].velocity.linear +
+                        trajectories[index].velocity.angular);
+    arrowVector = (baseArrow + translation);
+    Linear_Velocity vel = movement * (double)GetFrameTime();
+    robotPos.x() += vel.x();
+    robotPos.y() -= vel.y();
 
     char robot[500];
-    sprintf(robot, "x: %.2f y: %.2f index: %i  velocity: %f", robotPos.x(),
-            robotPos.y(), index, vel);
+    sprintf(robot, "x: %.2f y: %.2f index: %i  velocity.x: %f velocity.y: %f",
+            robotPos.x(), robotPos.y(), index, vel.x(), vel.y());
 
     DrawText(robot, 10, 40, 20, BLACK);
   }
-  DrawCircleV({(float)robotPos.x(), (float)robotPos.y()}, 1.0, RED);
+  DrawCircleV({(float)arrowVector.x(), (float)arrowVector.y()}, 0.3, ORANGE);
+
+  double yaw = atan2(-trajectories[index].pose.Transformation_Matrix(1, 0),
+                     trajectories[index].pose.Transformation_Matrix(0, 0));
+  Rectangle robot = {static_cast<float>(robotPos.x()),
+                     static_cast<float>(robotPos.y()), 2.0, 1.0};
+  Vector2 origin = {2.0 / 2.0, 1.0 / 2.0};
+  DrawRectanglePro(robot, origin, yaw * (180 / M_PI), RED);
+  DrawLineV({(float)robotPos.x(), (float)robotPos.y()},
+            {static_cast<float>(robotPos.x() + movement.x()),
+             static_cast<float>(robotPos.y() - movement.y())},
+            GREEN);
+  DrawCircleV({static_cast<float>(robotPos.x() + movement.x()),
+               static_cast<float>(robotPos.y() - movement.y())},
+              0.1, GREEN);
 }
 
 void DrawAbsoluteGrid(Camera2D camera, float gridStep) {
@@ -58,12 +80,14 @@ int main() {
 
   float dt = 0;
 
-  Robot_Config robot_config = {.hz = 50,
-                               .motion_constraints = {.max_velocity = 2.0,
-                                                      .max_acceleration = 0.5,
-                                                      .max_deceleration = 0.5,
-                                                      .max_jerk = 0.0,
-                                                      .corner_velocity = 0.0}
+  Robot_Config robot_config = {
+      .hz = 50,
+      .motion_constraints = {.max_velocity = 2.0,
+                             .standing_turn_velocity = 2.0,
+                             .max_acceleration = 0.5,
+                             .max_deceleration = 0.5,
+                             .max_jerk = 0.0,
+                             .corner_velocity = 0.0}
 
   };
 
@@ -74,9 +98,10 @@ int main() {
   //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
   std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0},
-                                       {10.0, -10.0, 0.0},
-                                       {-10.0, -20.0, 0.0},
-                                       {10.0, 10.0, 0.0}};
+                                       {10.0, 0.0, 0.0},
+                                       {10.0, 10.0, 0.0},
+                                       {0.0, 10.0, 0.0},
+                                       {0.0, 0.0, 0.0}};
 
   std::vector<Trajectory_Point> trajectories =
       generate_trajectory(waypoints, robot_config);
@@ -85,6 +110,7 @@ int main() {
   //     generate_velocity_profile(trajectories, robot_config);
   //
   Ecef_Coord robotPos = waypoints[0];
+  Vector3d arrowVector = waypoints[0];
 
   Camera2D camera = {
       .target = {(float)waypoints[0].x(), (float)waypoints[0].y()}};
@@ -130,7 +156,7 @@ int main() {
                 GREEN);
     }
 
-    SimRobot(robotPos, waypoints, trajectories, GetTime());
+    SimRobot(robotPos, arrowVector, waypoints, trajectories, GetTime());
 
     EndMode2D();
 

@@ -1,14 +1,18 @@
 #include "trajectory.cpp"
 
 int main() {
+  // std::vector<Ecef_Coord> waypoints = {
+  //     {4100175.625135626, 476368.7899695045, 4846344.356704135},
+  //     {4100209.6729529747, 476361.2681338759, 4846316.478097512},
+  //     {4100218.5394949187, 476445.5598077707, 4846300.796185957},
+  //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
+
   std::vector<Ecef_Coord> waypoints = {
-      {4100175.625135626, 476368.7899695045, 4846344.356704135},
-      {4100209.6729529747, 476361.2681338759, 4846316.478097512},
-      {4100218.5394949187, 476445.5598077707, 4846300.796185957},
-      {4100241.72195791, 476441.0557096391, 4846281.753675706}};
+      {0.0, 0.0, 0.0}, {4.0, -2.0, 0.0}, {4.0, 2.0, 0.0}, {0.0, 0.0, 0.0}};
 
   Robot_Config config = {.hz = 50,
                          .motion_constraints = {.max_velocity = 2.0,
+                                                .standing_turn_velocity = 2.0,
                                                 .max_acceleration = 0.5,
                                                 .max_deceleration = 0.5,
                                                 .max_jerk = 0.0,
@@ -22,9 +26,9 @@ int main() {
   // std::vector<double> velocities =
   //     generate_velocity_profile(trajectories, config);
   //
-  saveToFile("waypoints", waypoints);
-  saveToFileTrajectories("trajectories", trajectories);
-  saveToFile("velocities", trajectories);
+  // saveToFile("waypoints", waypoints);
+  // saveToFileTrajectories("trajectories", trajectories);
+  // saveToFile("velocities", trajectories);
 
   // Print trajectory points
   // for (size_t i = 0; i < trajectories.size(); i++) {
@@ -33,6 +37,12 @@ int main() {
   //             << "Velocity: " << trajectories[i].velocity.linear <<
   //             std::endl;
   // }
+
+  // Eigen::Matrix3d R;
+  // double angle = M_PI / 2;
+  // R = Eigen::AngleAxisd(angle, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+  // Eigen::Affine3d transform = Eigen::Affine3d::Identity();
+  // std::cout << "Rotation matrix : \n " << transform.affine() << std::endl;
 
   return 0;
 }
