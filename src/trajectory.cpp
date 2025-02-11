@@ -173,8 +173,8 @@ public:
         Vector3d linear((motion_constraints.max_velocity * t), 0.0, 0.0);
         // TODO:
         // need to add dt !!
-        new_trajectory_point(trajectory, robot_frame, next_point, linear, {},
-                             0.0);
+        new_trajectory_point(trajectory, robot_frame, next_point, linear,
+                             {0.0, 0.0, 0.0}, 0.0);
       }
 
       current = trajectory.back().pose.point;
@@ -183,10 +183,11 @@ public:
       double distance_deceleration =
           compute_displacement(motion_constraints.max_velocity, 0,
                                velocity_profile.acceleration_rate);
-      Ecef_Coord next_point = next - (distance_deceleration * unit_vector);
+      Ecef_Coord next_point = next + (distance_deceleration * unit_vector);
       Vector3d linear((motion_constraints.max_velocity), 0.0, 0.0);
       double dt = 0.0;
-      new_trajectory_point(trajectory, robot_frame, next_point, linear, {}, dt);
+      new_trajectory_point(trajectory, robot_frame, next_point, linear,
+                           {0.0, 0.0, 0.0}, dt);
 
       current = trajectory.back().pose.point;
       // RAMP DOWN
@@ -194,12 +195,12 @@ public:
       for (int j = 0; j <= sampling_rate; j++) {
         double t = static_cast<double>(j) / sampling_rate;
         Ecef_Coord next_point =
-            current + ((t * distance_deceleration) * unit_vector);
+            current - ((t * distance_deceleration) * unit_vector);
         Vector3d linear((motion_constraints.max_velocity * (1 - t)), 0.0, 0.0);
         // TODO:
         // need to add dt !!
-        new_trajectory_point(trajectory, robot_frame, next_point, linear, {},
-                             0.0);
+        new_trajectory_point(trajectory, robot_frame, next_point, linear,
+                             {0.0, 0.0, 0.0}, 0.0);
       }
 
       // trajectory_turn();
@@ -210,11 +211,13 @@ public:
 
       current = trajectory.back().pose.point;
       Angular_Velocity angular;
+      angular.setZero();
       angular.z() = motion_constraints.standing_turn_velocity;
       robot_frame.rotate(Eigen::AngleAxisd((azimuth_rad), Vector3d::UnitZ()));
       Velocity2d velocity = {.linear = {}, .angular = angular};
       Affine3d transformation = robot_frame;
       Pose pose = {.point = current, .transformation_matrix = transformation};
+      std::cout << pose.point.transpose() << std::endl;
       double turn_duration =
           azimuth_rad / motion_constraints.standing_turn_velocity;
       Trajectory_Point tp = {

@@ -19,7 +19,8 @@ int main() {
                                                 .corner_velocity = 0.0}
 
   };
-  Velocity_Profile vel_profile = {};
+  Velocity_Profile vel_profile = {.acceleration_rate = 10.0,
+                                  .deceleration_rate = 10.0};
   // PIDGains linear_gains = {1.0, 0.0, 0.0};
   // PIDController linear_pid(linear_gains);
   // PIDGains angular_gains = {1.0, 0.0, 0.0};
