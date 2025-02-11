@@ -19,10 +19,10 @@ void SimRobot(Ecef_Coord &robotPos, Vector3d arrowVector,
 
   if (index < trajectories.size()) {
     Eigen::Matrix3d block =
-        trajectories[index].pose.Transformation_Matrix.block(0, 0, 3, 3);
+        trajectories[index].pose.transformation_matrix.block(0, 0, 3, 3);
 
     Vector3d translation =
-        trajectories[index].pose.Transformation_Matrix.block(0, 3, 3, 1);
+        trajectories[index].pose.transformation_matrix.block(0, 3, 3, 1);
     movement = block * (trajectories[index].velocity.linear +
                         trajectories[index].velocity.angular);
     arrowVector = (baseArrow + translation);
@@ -38,8 +38,8 @@ void SimRobot(Ecef_Coord &robotPos, Vector3d arrowVector,
   }
   DrawCircleV({(float)arrowVector.x(), (float)arrowVector.y()}, 0.3, ORANGE);
 
-  double yaw = atan2(-trajectories[index].pose.Transformation_Matrix(1, 0),
-                     trajectories[index].pose.Transformation_Matrix(0, 0));
+  double yaw = atan2(trajectories[index].pose.transformation_matrix(1, 0),
+                     trajectories[index].pose.transformation_matrix(0, 0));
   Rectangle robot = {static_cast<float>(robotPos.x()),
                      static_cast<float>(robotPos.y()), 2.0, 1.0};
   Vector2 origin = {2.0 / 2.0, 1.0 / 2.0};
@@ -181,6 +181,6 @@ int main() {
   saveToFile("waypoints", waypoints);
   saveToFile("trajectories", trajectories);
   // saveToFile("velocities", velocities);
-  saveToFile("time", trajectories.size());
+  // saveToFile("time", trajectories.size());
   return 0;
 }

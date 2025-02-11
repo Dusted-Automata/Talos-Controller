@@ -8,6 +8,7 @@ class PIDController : public Controller {
 public:
   ControlCommand computeControl(const ControlState &currentState,
                                 const ControlState &desiredState);
+  PIDController(PIDGains gains) : gains(gains) {}
 
   double update(double measured_value, double dt) {
     // auto current_time = std::chrono::steady_clock::now();

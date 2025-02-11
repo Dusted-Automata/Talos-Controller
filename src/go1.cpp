@@ -141,8 +141,18 @@ int main(void) {
 
   };
 
+  Velocity_Profile vel_profile = {};
+  // PIDGains linear_gains = {1.0, 0.0, 0.0};
+  // PIDController linear_pid(linear_gains);
+  // PIDGains angular_gains = {1.0, 0.0, 0.0};
+  // PIDController angular_pid(angular_gains);
+  // Trajectory_Controller controller(config.motion_constraints, vel_profile,
+  //                                  linear_pid, angular_pid, config.hz);
+  Trajectory_Controller controller(config.motion_constraints, vel_profile,
+                                   config.hz);
+
   std::vector<Trajectory_Point> trajectories =
-      generate_trajectory(waypoints, config);
+      controller.generate_trajectory(waypoints, config);
 
   saveToFile("trajectories", trajectories);
 

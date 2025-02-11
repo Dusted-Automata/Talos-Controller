@@ -19,14 +19,23 @@ int main() {
                                                 .corner_velocity = 0.0}
 
   };
+  Velocity_Profile vel_profile = {};
+  // PIDGains linear_gains = {1.0, 0.0, 0.0};
+  // PIDController linear_pid(linear_gains);
+  // PIDGains angular_gains = {1.0, 0.0, 0.0};
+  // PIDController angular_pid(angular_gains);
+  // Trajectory_Controller controller(config.motion_constraints, vel_profile,
+  //                                  linear_pid, angular_pid, config.hz);
+  Trajectory_Controller controller(config.motion_constraints, vel_profile,
+                                   config.hz);
 
   std::vector<Trajectory_Point> trajectories =
-      generate_trajectory(waypoints, config);
+      controller.generate_trajectory(waypoints, config);
 
   // std::vector<double> velocities =
   //     generate_velocity_profile(trajectories, config);
   //
-  // saveToFile("waypoints", waypoints);
+  saveToFile("trajectories", trajectories);
   // saveToFileTrajectories("trajectories", trajectories);
   // saveToFile("velocities", trajectories);
 

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 
+using Eigen::Affine3d;
 using Eigen::Matrix4d;
 using Eigen::Vector3d;
 typedef Vector3d Ecef_Coord;
@@ -13,8 +14,8 @@ typedef Vector3d Linear_Velocity;
 typedef Vector3d Angular_Velocity;
 
 struct Pose {
-  Vector3d point;
-  Matrix4d Transformation_Matrix; // Change this to Quaternion maybe
+  Ecef_Coord point;
+  Affine3d transformation_matrix; // Change this to Quaternion maybe
 };
 
 // struct Angular_Velocity {
@@ -38,6 +39,15 @@ struct Motion_Constraints {
   double corner_velocity;
 };
 
+struct Velocity_Profile {
+  double time_to_max_speed;
+  double time_to_min_speed;
+  double corner_velocity;
+  double standing_turn_velocity;
+  double acceleration_rate;
+  double deceleration_rate;
+};
+
 struct Robot_Config {
   int hz;
   Motion_Constraints motion_constraints;
@@ -45,7 +55,7 @@ struct Robot_Config {
   // Matrix4d robot_frame{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0,
   // 1}}; Matrix4d world_frame{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0,
   // 0, 1}};
-  Eigen::Affine3d transform_world_to_robot = Eigen::Affine3d::Identity();
+  Affine3d transform_world_to_robot = Affine3d::Identity();
 };
 
 struct Trajectory_Point {
@@ -68,217 +78,256 @@ struct Trajectory_Point {
 //   return point;
 // };
 
-Vector3d calculate_velocity(double progress, const Robot_Config &config) {
-  Vector3d vec;
-  vec.setZero();
-  if (progress < 0.2) {
-    vec.x() = config.motion_constraints.max_velocity * (progress / 0.2);
-    return vec;
-  } else if (progress > 0.8) {
-    vec.x() = config.motion_constraints.max_velocity * ((1.0 - progress) / 0.2);
-    return vec;
-  } else {
-    vec.x() = config.motion_constraints.max_velocity;
-    return vec;
-  }
-};
-
-// High level Path planning (Maybe, check back later)
-std::vector<Trajectory_Point>
-generate_geometric_trajectory(const std::vector<Ecef_Coord> &waypoints,
-                              const Robot_Config &robot_config) {
-
-  std::vector<Trajectory_Point> path = {};
-
-  if (waypoints.size() < 2) {
-    return path;
-  }
-
-  double resolution = 1.0 / robot_config.hz;
+std::vector<Pose> generate_path(const std::vector<Ecef_Coord> &waypoints,
+                                double points_per_meter) {
+  Pose default_pose = {.point = {0.0, 0.0, 0.0},
+                       .transformation_matrix = Affine3d::Identity()};
+  std::vector<Pose> path;
+  path.push_back(default_pose);
 
   for (int i = 0; i < waypoints.size() - 1; i++) {
     Ecef_Coord current = waypoints[i];
     Ecef_Coord next = waypoints[i + 1];
-    double dx = next.x() - current.x();
-    double dy = next.y() - current.y();
-    double distance = std::sqrt(dx * dx + dy * dy);
-    int points = static_cast<int>(distance / resolution);
-
-    for (int j = 0; j <= points; j++) {
-      double t = static_cast<double>(j) / points;
-      // Pose3d point = cubic_interpolation(dx, dy, start, end, t);
-      double x = current.x() * (1 - t) + next.x() * t;
-      double y = current.y() * (1 - t) + next.y() * t;
-      double z = current.z() * (1 - t) + next.z() * t;
-
-      // Vector3d point = {.x = x, .y = y, .z = z};
-      // Vector3d point;
-      // point << x, y, z;
-      Vector3d point(x, y, z);
-
-      Pose pose = {.point = point};
-      Trajectory_Point tp = {.pose = pose};
-      path.push_back(tp);
-    }
-  }
-
-  return path;
-}
-
-std::vector<Trajectory_Point>
-generate_trajectory(const std::vector<Ecef_Coord> &coordinates,
-                    Robot_Config &config) {
-  std::vector<Trajectory_Point> path = {};
-
-  if (coordinates.size() < 2) {
-    return path;
-  }
-
-  double resolution = 1.0 / config.hz;
-  PIDController linear_pid({1.0, 0.0, 0.0});
-  PIDController angular_pid({1.0, 0.0, 0.0});
-
-  for (int i = 0; i < coordinates.size() - 1; i++) {
-    Ecef_Coord current = coordinates[i];
-    Ecef_Coord next = coordinates[i + 1];
     Vector3d difference = next - current;
     double horizontal_distance = std::sqrt(difference.x() * difference.x() +
                                            difference.y() * difference.y());
-    int points = static_cast<int>(horizontal_distance / resolution);
+    int points = static_cast<int>(horizontal_distance * points_per_meter);
 
     double azimuth_rad_world = atan2(difference.y(), difference.x());
-    double azimuth_rad_robot = atan2(config.transform_world_to_robot(1, 0),
-                                     config.transform_world_to_robot(0, 0));
-    double azimuth_rad = azimuth_rad_world - azimuth_rad_robot;
     double azimuth_degrees = fmod(azimuth_rad_world / M_PI * 180, 360);
-    // Ensure azimuth is between 0 and 360 degrees
-    // Calculate elevation angle (vertical angle from x-y plane)
     double elevation = std::atan2(difference.z(), horizontal_distance);
     double elevation_degrees = fmod(elevation / M_PI * 180, 360);
 
-    int turn_points;
-    if (config.motion_constraints.standing_turn_velocity != 0) {
-      turn_points = static_cast<int>(
-          azimuth_rad_world /
-          (config.motion_constraints.standing_turn_velocity * resolution));
-    } else {
-      turn_points = 20;
-    }
-    // int turn_points =
-    // static_cast<int>(config.motion_constraints.standing_turn_velocity /
-    // resolution);
-    // double test =
-    //     azimuth_rad -
-    //     (config.motion_constraints.standing_turn_velocity * resolution);
-    std::cout << "turn_points: " << turn_points
-              << " azimuth_deg: " << azimuth_degrees
-              << " azimuth_rad: " << azimuth_rad_world << std::endl;
+    // for (int j = 0; j <= points; j++) {
+    //   double t = static_cast<double>(j) / points;
+    //   Ecef_Coord next_point = (current * (1 - t)) + (next * t);
+    //   Ecef_Coord diff_vec =
+    //       next_point - path[i + j].transformation_matrix.translation();
+    //   Pose pose = {.point = next_point,
+    //                .transformation_matrix = path[i +
+    //                j].transformation_matrix};
+    //   pose.transformation_matrix.translation() += diff_vec;
+    //   path.push_back(pose);
+    // }
 
-    // std::cout << "before translation: " << std::endl
-    //           << config.transform_world_to_robot << std::endl;
-
-    for (int j = 0; (j < abs(turn_points)); j++) {
-      double t = (double)j / points;
-      Angular_Velocity angular;
-      angular.z() = config.motion_constraints.standing_turn_velocity;
-      // if (t < 0.2) {
-      //   angular.yaw = config.motion_constraints.max_velocity * (t / 0.2);
-      // } else if (t > 0.8) {
-      //   angular.yaw =
-      //       config.motion_constraints.max_velocity * ((1.0 - t) / 0.2);
-      // } else {
-      //   angular.yaw = 1.0;
-      // }
-      // Eigen::Affine3d transform = Eigen::Affine3d::Identity();
-      // transform.rotate(
-      //     Eigen::AngleAxisd(azimuth_rad, Eigen::Vector3d::UnitZ()));
-      config.transform_world_to_robot.rotate(Eigen::AngleAxisd(
-          (azimuth_rad * 1 / abs(turn_points)), Vector3d::UnitZ()));
-
-      Velocity2d velocity = {.linear = {}, .angular = angular};
-      Matrix4d transformation = config.transform_world_to_robot.matrix();
-      Pose pose = {.point = coordinates[i],
-                   .Transformation_Matrix = transformation};
-      Trajectory_Point tp = {.pose = pose, .velocity = velocity};
-      path.push_back(tp);
-    }
-    // std::cout << "After turning: " << path.size() << std::endl;
-
-    auto test = config.transform_world_to_robot.translation();
-    auto test2 = config.transform_world_to_robot;
-    for (int j = 0; j <= points; j++) {
-      double t = static_cast<double>(j) / points;
-      // Pose3d point = cubic_interpolation(dx, dy, start, end, t);
-
-      Ecef_Coord next_point = (current * (1 - t)) + (next * t);
-      Ecef_Coord diff_vec =
-          next_point - config.transform_world_to_robot.translation();
-      // config.transform_world_to_robot.translate(diff_vec);
-      // test = diff_vec + test;
-      // test2.translate(diff_vec);
-      config.transform_world_to_robot.translation() += diff_vec;
-
-      Velocity2d velocity = {.linear = calculate_velocity(t, config),
-                             .angular = {}};
-
-      Matrix4d transformation = config.transform_world_to_robot.matrix();
-      // std::cout << transformation << std::endl;
-      // std::cout << test << std::endl;
-      // std::cout << test2.translation() << std::endl;
-      // std::cout << " ------------" << std::endl;
-
-      Pose pose = {.point = next_point,
-                   .Transformation_Matrix = transformation};
-      Trajectory_Point tp = {.pose = pose, .velocity = velocity};
-      path.push_back(tp);
-    }
-    // std::cout << "After linear: " << path.size() << std::endl;
+    // TODO if I add back the loop with the points, then i need to change
+    // path[i] to something that considers the newly added poses
+    Pose pose = {.point = next,
+                 .transformation_matrix = path[i].transformation_matrix};
+    pose.transformation_matrix.translation() += difference;
+    pose.transformation_matrix.rotate(
+        Eigen::AngleAxisd((azimuth_rad_world), Vector3d::UnitZ()));
+    path.push_back(pose);
   }
-  // std::cout << "After all: " << path.size() << std::endl;
-
   return path;
 }
 
-// std::vector<double>
-// generate_velocity_profile(std::vector<Trajectory_Point> &path,
-//                           Robot_Config &robot_config) {
-//   std::vector<double> velocities(path.size());
-//
-//   double distance_vel = 0.0;
-//   double distance_traj = 0.0;
-//   double dx, dy;
-//   // trapezoidal velocity profile
-//   for (int i = 0; path.size(); i++) {
-//     for (size_t j = 0; j < path.size(); j++) {
-//       double progress = static_cast<double>(j) / path.size();
-//       if (j < path.size() - 1) {
-//         dx = path[j + 1].pose.point.x() - path[j].pose.point.x();
-//         dy = path[j + 1].pose.point.y() - path[j].pose.point.y();
-//         distance_traj += std::sqrt(dx * dx + dy * dy);
-//       }
-//
-//       if (j > 0) {
-//         distance_vel += velocities[j - 1] * (1.0 / robot_config.hz);
-//       }
-//
-//       if (progress < 0.2) {
-//         velocities[j] =
-//             robot_config.motion_constraints.max_velocity * (progress / 0.2);
-//       } else if (progress > 0.8) {
-//         velocities[j] = robot_config.motion_constraints.max_velocity *
-//                         ((1.0 - progress) / 0.2);
-//       } else {
-//         if (distance_vel < distance_traj) {
-//           velocities[j] = robot_config.motion_constraints.max_velocity;
-//         }
-//         double displacement = std::sqrt(dx * dx + dy * dy);
-//         velocities[j] = displacement / (1.0 / robot_config.hz);
-//       }
-//     }
-//   }
-//
-//   return velocities;
-// }
+class Trajectory_Controller {
+
+  Motion_Constraints motion_constraints;
+  Velocity_Profile velocity_profile;
+  // PIDController linear_pid;
+  // PIDController angular_pid;
+  double sampling_rate = 1.0;
+
+public:
+  // Trajectory_Controller(Motion_Constraints motion_constraints,
+  //                       Velocity_Profile velocity_profile,
+  //                       PIDController linear_pid, PIDController angular_pid,
+  //                       double sampling_rate)
+  //     : motion_constraints(motion_constraints),
+  //       velocity_profile(velocity_profile), linear_pid(linear_pid),
+  //       angular_pid(angular_pid), sampling_rate(sampling_rate) {};
+  Trajectory_Controller(Motion_Constraints motion_constraints,
+                        Velocity_Profile velocity_profile, double sampling_rate)
+      : motion_constraints(motion_constraints),
+        velocity_profile(velocity_profile), sampling_rate(sampling_rate) {};
+  std::vector<Trajectory_Point>
+  generate_trajectory(const std::vector<Ecef_Coord> &path,
+                      Robot_Config &config) {
+    std::vector<Trajectory_Point> trajectory = {};
+    Affine3d &robot_frame = config.transform_world_to_robot;
+    if (path.size() < 2) {
+      return trajectory;
+    }
+
+    for (int i = 0; i < path.size() - 1; i++) {
+      Ecef_Coord current = path[i];
+      Ecef_Coord next = path[i + 1];
+      Ecef_Coord difference = next - current;
+      double horizontal_distance = std::sqrt(difference.x() * difference.x() +
+                                             difference.y() * difference.y());
+      Vector3d unit_vector = difference.normalized();
+
+      // TODO: fix me
+      // This is not quite correct since it will always go to max velocity then.
+      // trajectory_ramp_up();
+      double distance_acceleration =
+          compute_displacement(0, motion_constraints.max_velocity,
+                               velocity_profile.acceleration_rate);
+      Ecef_Coord next_goal = current;
+      for (int j = 0; j <= sampling_rate; j++) {
+        double t = static_cast<double>(j) / sampling_rate;
+        Ecef_Coord next_point =
+            current + ((t * distance_acceleration) * unit_vector);
+        Vector3d linear((motion_constraints.max_velocity * t), 0.0, 0.0);
+        // TODO:
+        // need to add dt !!
+        new_trajectory_point(trajectory, robot_frame, next_point, linear, {},
+                             0.0);
+      }
+
+      current = trajectory.back().pose.point;
+      // CRUISE
+      // trajectory_cruise()
+      double distance_deceleration =
+          compute_displacement(motion_constraints.max_velocity, 0,
+                               velocity_profile.acceleration_rate);
+      Ecef_Coord next_point = next - (distance_deceleration * unit_vector);
+      Vector3d linear((motion_constraints.max_velocity), 0.0, 0.0);
+      double dt = 0.0;
+      new_trajectory_point(trajectory, robot_frame, next_point, linear, {}, dt);
+
+      current = trajectory.back().pose.point;
+      // RAMP DOWN
+      // trajectory_ramp_down();
+      for (int j = 0; j <= sampling_rate; j++) {
+        double t = static_cast<double>(j) / sampling_rate;
+        Ecef_Coord next_point =
+            current + ((t * distance_deceleration) * unit_vector);
+        Vector3d linear((motion_constraints.max_velocity * (1 - t)), 0.0, 0.0);
+        // TODO:
+        // need to add dt !!
+        new_trajectory_point(trajectory, robot_frame, next_point, linear, {},
+                             0.0);
+      }
+
+      // trajectory_turn();
+      double azimuth_rad_world = atan2(difference.y(), difference.x());
+      double azimuth_rad_robot = atan2(config.transform_world_to_robot(1, 0),
+                                       config.transform_world_to_robot(0, 0));
+      double azimuth_rad = azimuth_rad_world - azimuth_rad_robot;
+
+      current = trajectory.back().pose.point;
+      Angular_Velocity angular;
+      angular.z() = motion_constraints.standing_turn_velocity;
+      robot_frame.rotate(Eigen::AngleAxisd((azimuth_rad), Vector3d::UnitZ()));
+      Velocity2d velocity = {.linear = {}, .angular = angular};
+      Affine3d transformation = robot_frame;
+      Pose pose = {.point = current, .transformation_matrix = transformation};
+      double turn_duration =
+          azimuth_rad / motion_constraints.standing_turn_velocity;
+      Trajectory_Point tp = {
+          .pose = pose, .dt = (0.0 + turn_duration), .velocity = velocity};
+      trajectory.push_back(tp);
+    }
+
+    return trajectory;
+  }
+
+  double compute_displacement(double init_velocity, double final_velocity,
+                              double acceleration) {
+    double v0 = (init_velocity * init_velocity);
+    double vf = (final_velocity * final_velocity);
+    double avg_accel = (2 * acceleration);
+    double displacement = (vf - v0) / avg_accel;
+    return displacement;
+  }
+
+  void trajectory_ramp_up() {}
+  void trajectory_cruise() {}
+  void trajectory_ramp_down() {}
+  void trajectory_turn() {}
+
+  void new_trajectory_point(std::vector<Trajectory_Point> &trajectories,
+                            Affine3d &robot_frame, Ecef_Coord next_point,
+                            Vector3d linear, Vector3d angular, double dt) {
+
+    Ecef_Coord diff_vec = next_point - robot_frame.translation();
+    robot_frame.translation() += diff_vec;
+    Velocity2d velocity = {.linear = linear, .angular = angular};
+    Affine3d transformation = robot_frame;
+    Pose pose = {.point = next_point, .transformation_matrix = transformation};
+    Trajectory_Point tp = {.pose = pose, .dt = dt, .velocity = velocity};
+
+    trajectories.push_back(tp);
+  }
+
+  // double turning(Robot_Config &config, Pose current, Pose next) {
+  //   Affine3d &robot_frame = config.transform_world_to_robot;
+  //
+  //   Ecef_Coord difference = next.point - current.point;
+  //   double horizontal_distance = std::sqrt(difference.x() * difference.x() +
+  //                                          difference.y() * difference.y());
+  //   double azimuth_rad_world = atan2(difference.y(), difference.x());
+  //   double azimuth_degrees = fmod(azimuth_rad_world / M_PI * 180, 360);
+  //   double elevation = std::atan2(difference.z(), horizontal_distance);
+  //   double elevation_degrees = fmod(elevation / M_PI * 180, 360);
+  //
+  //   robot_frame.rotate(Eigen::AngleAxisd((azimuth_rad), Vector3d::UnitZ()));
+  //
+  //   Velocity2d velocity = {.linear = {}, .angular = angular};
+  //   Affine3d transformation = robot_frame;
+  //   Pose pose = {.point = path[i].point,
+  //                .transformation_matrix = transformation};
+  //   Trajectory_Point tp = {.pose = pose, .velocity = velocity};
+  //
+  //   return 0.0;
+  // }
+
+  // TODO calculate time for a curve
+  double compute_straight_line_travel_time(double distance, Velocity2d v0,
+                                           Velocity2d vf) {
+    double distance_acceleration =
+        ((motion_constraints.max_velocity * motion_constraints.max_velocity) -
+         (v0.linear.x() * v0.linear.x())) /
+        (2 * velocity_profile.acceleration_rate);
+
+    double distance_deceleration =
+        ((motion_constraints.max_velocity * motion_constraints.max_velocity) -
+         (vf.linear.x() * vf.linear.x())) /
+        (2 * velocity_profile.deceleration_rate);
+
+    double t_accel = (motion_constraints.max_velocity - v0.linear.x()) /
+                     velocity_profile.acceleration_rate;
+    double t_decel = (motion_constraints.max_velocity - vf.linear.x()) /
+                     velocity_profile.deceleration_rate;
+    double t_cruise = 0;
+
+    if (distance_acceleration + distance_deceleration > distance) {
+      double peak_v = std::sqrt(
+          (2 * velocity_profile.acceleration_rate * distance +
+           (v0.linear.x() * v0.linear.x() + vf.linear.x() * vf.linear.x())) /
+          2);
+      t_accel = (peak_v - v0.linear.x()) / velocity_profile.acceleration_rate;
+      t_decel = (peak_v - vf.linear.x()) / velocity_profile.deceleration_rate;
+    } else {
+      double d_cruise =
+          distance - (distance_acceleration + distance_deceleration);
+      t_cruise = d_cruise / motion_constraints.max_velocity;
+    }
+
+    double total_time = t_accel + t_cruise + t_decel;
+
+    return total_time;
+  }
+
+  Pose get_current_pose() { return {}; }
+  void follow_trajectory() {
+    // In here I go through all poses with velocities and correct the velocities
+    // by PID usage
+  }
+  void sendVelocityCommand(double linear_vel, double angular_vel) {
+    // In actual implementation, this would interface with:
+    // 1. Robot's motor controllers
+    // 2. ROS cmd_vel topic
+    // 3. Low-level motor driver
+    std::cout << "Linear Velocity: " << linear_vel
+              << " Angular Velocity: " << angular_vel << std::endl;
+  }
+
+  void local_replanning() {}
+};
 
 static bool saveToFile(const std::string &filename,
                        const std::vector<Ecef_Coord> &data) {
@@ -289,7 +338,7 @@ static bool saveToFile(const std::string &filename,
   }
 
   for (const auto &line : data) {
-    outFile << line.x() << "," << line.y() << std::endl;
+    outFile << line.x() << "," << line.y() << "," << line.z() << std::endl;
   }
 
   outFile.close();
@@ -324,53 +373,3 @@ static bool saveToFile(const std::string &filename,
   outFile.close();
   return true;
 }
-
-static bool saveToFileTrajectories(const std::string &filename,
-                                   const std::vector<Trajectory_Point> &data) {
-  std::ofstream outFile(filename);
-  if (!outFile.is_open()) {
-    std::cerr << "Unable to open file for writing: " << filename << std::endl;
-    return false;
-  }
-
-  for (const auto &line : data) {
-    outFile << std::fixed;
-    outFile << 1 << " " << 0 << " " << 0 << " " << line.pose.point.x() << " ";
-    outFile << 0 << " " << 1 << " " << 0 << " " << line.pose.point.y() << " ";
-    outFile << 0 << " " << 0 << " " << 1 << " " << line.pose.point.z();
-    outFile << std::endl;
-  }
-
-  outFile.close();
-  return true;
-}
-
-static bool saveToFile(const std::string &filename,
-                       const std::vector<double> &data) {
-  std::ofstream outFile(filename);
-  if (!outFile.is_open()) {
-    std::cerr << "Unable to open file for writing: " << filename << std::endl;
-    return false;
-  }
-
-  for (const auto &line : data) {
-    outFile << line << std::endl;
-  }
-
-  outFile.close();
-  return true;
-}
-
-static bool saveToFile(const std::string &filename, const int amount) {
-  std::ofstream outFile(filename);
-  if (!outFile.is_open()) {
-    std::cerr << "Unable to open file for writing: " << filename << std::endl;
-    return false;
-  }
-
-  for (int i = 0; i < amount; i++) {
-    double dt = 0.02 * i;
-    outFile << dt << std::endl;
-  }
-  return true;
-};
