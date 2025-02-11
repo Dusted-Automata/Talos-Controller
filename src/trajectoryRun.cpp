@@ -11,7 +11,7 @@ int main() {
       {0.0, 0.0, 0.0}, {4.0, -2.0, 0.0}, {4.0, 2.0, 0.0}, {0.0, 0.0, 0.0}};
 
   Robot_Config config = {.hz = 50,
-                         .motion_constraints = {.max_velocity = 2.0,
+                         .motion_constraints = {.max_velocity = 1.0,
                                                 .standing_turn_velocity = 2.0,
                                                 .max_acceleration = 0.5,
                                                 .max_deceleration = 0.5,
@@ -19,7 +19,7 @@ int main() {
                                                 .corner_velocity = 0.0}
 
   };
-  Velocity_Profile vel_profile = {.acceleration_rate = 10.0,
+  Velocity_Profile vel_profile = {.acceleration_rate = 35.0,
                                   .deceleration_rate = 10.0};
   // PIDGains linear_gains = {1.0, 0.0, 0.0};
   // PIDController linear_pid(linear_gains);

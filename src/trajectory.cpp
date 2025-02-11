@@ -165,16 +165,20 @@ public:
       double distance_acceleration =
           compute_displacement(0, motion_constraints.max_velocity,
                                velocity_profile.acceleration_rate);
+      // TODO:
+      // Not quite correct. I don't know if I will even reach max_velocity
+      double time_accelerating =
+          motion_constraints.max_velocity / velocity_profile.acceleration_rate;
       Ecef_Coord next_goal = current;
       for (int j = 0; j <= sampling_rate; j++) {
         double t = static_cast<double>(j) / sampling_rate;
         Ecef_Coord next_point =
             current + ((t * distance_acceleration) * unit_vector);
         Vector3d linear((motion_constraints.max_velocity * t), 0.0, 0.0);
-        // TODO:
-        // need to add dt !!
+        double dt = time_accelerating * t;
+
         new_trajectory_point(trajectory, robot_frame, next_point, linear,
-                             {0.0, 0.0, 0.0}, 0.0);
+                             {0.0, 0.0, 0.0}, dt);
       }
 
       current = trajectory.back().pose.point;
@@ -183,24 +187,33 @@ public:
       double distance_deceleration =
           compute_displacement(motion_constraints.max_velocity, 0,
                                velocity_profile.acceleration_rate);
+      double distance_cruising =
+          difference.norm() - (distance_acceleration + distance_deceleration);
+      double time_cruising =
+          distance_cruising / motion_constraints.max_velocity;
+
       Ecef_Coord next_point = next + (distance_deceleration * unit_vector);
       Vector3d linear((motion_constraints.max_velocity), 0.0, 0.0);
-      double dt = 0.0;
+      double dt = trajectory.back().dt + time_cruising;
       new_trajectory_point(trajectory, robot_frame, next_point, linear,
                            {0.0, 0.0, 0.0}, dt);
 
       current = trajectory.back().pose.point;
       // RAMP DOWN
       // trajectory_ramp_down();
+      // time_decelerating t = -max_velocity / -acceleartion_rate
+      // - acceleration is deceleration, but i am unsure if i should codify that
+      // like that.
+      double time_decelerating =
+          motion_constraints.max_velocity / velocity_profile.deceleration_rate;
       for (int j = 0; j <= sampling_rate; j++) {
         double t = static_cast<double>(j) / sampling_rate;
         Ecef_Coord next_point =
             current - ((t * distance_deceleration) * unit_vector);
         Vector3d linear((motion_constraints.max_velocity * (1 - t)), 0.0, 0.0);
-        // TODO:
-        // need to add dt !!
+        double dt = trajectory.back().dt + (time_accelerating * t);
         new_trajectory_point(trajectory, robot_frame, next_point, linear,
-                             {0.0, 0.0, 0.0}, 0.0);
+                             {0.0, 0.0, 0.0}, dt);
       }
 
       // trajectory_turn();
@@ -217,11 +230,11 @@ public:
       Velocity2d velocity = {.linear = {}, .angular = angular};
       Affine3d transformation = robot_frame;
       Pose pose = {.point = current, .transformation_matrix = transformation};
-      std::cout << pose.point.transpose() << std::endl;
       double turn_duration =
           azimuth_rad / motion_constraints.standing_turn_velocity;
-      Trajectory_Point tp = {
-          .pose = pose, .dt = (0.0 + turn_duration), .velocity = velocity};
+      dt = trajectory.back().dt + std::abs(turn_duration);
+      std::cout << dt << std::endl;
+      Trajectory_Point tp = {.pose = pose, .dt = dt, .velocity = velocity};
       trajectory.push_back(tp);
     }
 
