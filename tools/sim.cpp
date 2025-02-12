@@ -152,14 +152,14 @@ int main() {
     DrawAbsoluteGrid(camera, gridStep);
 
     for (int i = 0; i < waypoints.size(); i++) {
-      DrawCircle(waypoints[i].x(), waypoints[i].y(), 2, BLUE);
+      DrawCircle(waypoints[i].x(), -waypoints[i].y(), 2, BLUE);
     }
 
     for (int i = 0; i < trajectories.size() - 1; i++) {
       DrawLineV({(float)trajectories[i].pose.point.x(),
-                 (float)trajectories[i].pose.point.y()},
+                 -(float)trajectories[i].pose.point.y()},
                 {(float)trajectories[i + 1].pose.point.x(),
-                 (float)trajectories[i + 1].pose.point.y()},
+                 -(float)trajectories[i + 1].pose.point.y()},
                 GREEN);
     }
 

@@ -218,10 +218,12 @@ public:
         // trajectory_cruise()
         double distance_cruising =
             difference.norm() - (distance_acceleration + distance_deceleration);
+
+        std::cout << distance_acceleration << std::endl;
         double time_cruising =
             distance_cruising / motion_constraints.max_velocity;
 
-        Ecef_Coord next_point = next + (distance_deceleration * unit_vector);
+        Ecef_Coord next_point = next - (distance_deceleration * unit_vector);
         Vector3d linear((motion_constraints.max_velocity), 0.0, 0.0);
         dt += time_cruising;
         new_trajectory_point(trajectory, robot_frame, next_point, linear,
@@ -238,7 +240,7 @@ public:
         for (int j = 0; j <= sampling_rate; j++) {
           double t = static_cast<double>(j) / sampling_rate;
           Ecef_Coord next_point =
-              current - ((t * distance_deceleration) * unit_vector);
+              current + ((t * distance_deceleration) * unit_vector);
           Vector3d linear((motion_constraints.max_velocity * (1 - t)), 0.0,
                           0.0);
           dt += (time_accelerating * t);
@@ -257,7 +259,7 @@ public:
     double vf = (final_velocity * final_velocity);
     double avg_accel = (2 * acceleration);
     double displacement = (vf - v0) / avg_accel;
-    return displacement;
+    return std::abs(displacement);
   }
 
   void trajectory_ramp_up() {}
