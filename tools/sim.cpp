@@ -13,18 +13,20 @@
 Vector3d baseArrow = Vector3d(1.0, 0.0, 0.0);
 void SimRobot(Ecef_Coord &robotPos, Vector3d arrowVector,
               std::vector<Ecef_Coord> &waypoints,
-              std::vector<Trajectory_Point> &trajectories, double dt) {
-  int index = std::floor(dt / 0.02);
+              std::vector<Trajectory_Point> &trajectories, int &index) {
+  if (trajectories[index].dt < GetTime())
+    index++;
+  // int index = std::floor(dt / 0.02);
   Vector3d movement;
 
   if (index < trajectories.size()) {
-    Eigen::Matrix3d block =
-        trajectories[index].pose.transformation_matrix.block(0, 0, 3, 3);
+    Eigen::Matrix3d rotation =
+        trajectories[index].pose.transformation_matrix.rotation();
 
     Vector3d translation =
-        trajectories[index].pose.transformation_matrix.block(0, 3, 3, 1);
-    movement = block * (trajectories[index].velocity.linear +
-                        trajectories[index].velocity.angular);
+        trajectories[index].pose.transformation_matrix.translation();
+    movement = rotation * (trajectories[index].velocity.linear +
+                           trajectories[index].velocity.angular);
     arrowVector = (baseArrow + translation);
     Linear_Velocity vel = movement * (double)GetFrameTime();
     robotPos.x() += vel.x();
@@ -80,16 +82,17 @@ int main() {
 
   float dt = 0;
 
-  Robot_Config robot_config = {
-      .hz = 50,
-      .motion_constraints = {.max_velocity = 2.0,
-                             .standing_turn_velocity = 2.0,
-                             .max_acceleration = 0.5,
-                             .max_deceleration = 0.5,
-                             .max_jerk = 0.0,
-                             .corner_velocity = 0.0}
+  Robot_Config config = {.hz = 50,
+                         .motion_constraints = {.max_velocity = 2.0,
+                                                .standing_turn_velocity = 2.0,
+                                                .max_acceleration = 0.5,
+                                                .max_deceleration = 0.5,
+                                                .max_jerk = 0.0,
+                                                .corner_velocity = 0.0}
 
   };
+  Velocity_Profile vel_profile = {.acceleration_rate = 35.0,
+                                  .deceleration_rate = 10.0};
 
   // std::vector<Ecef_Coord> waypoints = {
   //     {4100175.625135626, 476368.7899695045, 4846344.356704135},
@@ -103,8 +106,11 @@ int main() {
                                        {0.0, 10.0, 0.0},
                                        {0.0, 0.0, 0.0}};
 
+  Trajectory_Controller controller(config.motion_constraints, vel_profile,
+                                   config.hz);
+
   std::vector<Trajectory_Point> trajectories =
-      generate_trajectory(waypoints, robot_config);
+      controller.generate_trajectory(waypoints, config);
 
   // std::vector<double> velocities =
   //     generate_velocity_profile(trajectories, robot_config);
@@ -117,6 +123,7 @@ int main() {
   // camera.target = (Vector2){waypoints[0].x, waypoints[0].y};
   camera.offset = (Vector2){SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
   camera.zoom = 1.0f;
+  int index = 0;
 
   while (!WindowShouldClose()) {
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
@@ -156,7 +163,7 @@ int main() {
                 GREEN);
     }
 
-    SimRobot(robotPos, arrowVector, waypoints, trajectories, GetTime());
+    SimRobot(robotPos, arrowVector, waypoints, trajectories, index);
 
     EndMode2D();
 

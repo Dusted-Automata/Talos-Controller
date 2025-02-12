@@ -151,6 +151,8 @@ public:
       return trajectory;
     }
 
+    double dt = 0.0;
+
     for (int i = 0; i < path.size() - 1; i++) {
       Ecef_Coord current = path[i];
       Ecef_Coord next = path[i + 1];
@@ -159,83 +161,91 @@ public:
                                              difference.y() * difference.y());
       Vector3d unit_vector = difference.normalized();
 
-      // TODO: fix me
-      // This is not quite correct since it will always go to max velocity then.
-      // trajectory_ramp_up();
       double distance_acceleration =
           compute_displacement(0, motion_constraints.max_velocity,
                                velocity_profile.acceleration_rate);
-      // TODO:
-      // Not quite correct. I don't know if I will even reach max_velocity
-      double time_accelerating =
-          motion_constraints.max_velocity / velocity_profile.acceleration_rate;
-      Ecef_Coord next_goal = current;
-      for (int j = 0; j <= sampling_rate; j++) {
-        double t = static_cast<double>(j) / sampling_rate;
-        Ecef_Coord next_point =
-            current + ((t * distance_acceleration) * unit_vector);
-        Vector3d linear((motion_constraints.max_velocity * t), 0.0, 0.0);
-        double dt = time_accelerating * t;
 
-        new_trajectory_point(trajectory, robot_frame, next_point, linear,
-                             {0.0, 0.0, 0.0}, dt);
-      }
-
-      current = trajectory.back().pose.point;
-      // CRUISE
-      // trajectory_cruise()
       double distance_deceleration =
           compute_displacement(motion_constraints.max_velocity, 0,
                                velocity_profile.acceleration_rate);
-      double distance_cruising =
-          difference.norm() - (distance_acceleration + distance_deceleration);
-      double time_cruising =
-          distance_cruising / motion_constraints.max_velocity;
+      double time_accelerating;
+      double time_decelerating;
 
-      Ecef_Coord next_point = next + (distance_deceleration * unit_vector);
-      Vector3d linear((motion_constraints.max_velocity), 0.0, 0.0);
-      double dt = trajectory.back().dt + time_cruising;
-      new_trajectory_point(trajectory, robot_frame, next_point, linear,
-                           {0.0, 0.0, 0.0}, dt);
+      {
+        // trajectory_turn();
+        double azimuth_rad_world = atan2(difference.y(), difference.x());
+        double azimuth_rad_robot = atan2(config.transform_world_to_robot(1, 0),
+                                         config.transform_world_to_robot(0, 0));
+        double azimuth_rad = azimuth_rad_world - azimuth_rad_robot;
+        std::cout << "azimuth_rad_world: " << azimuth_rad_world
+                  << " azimuth_rad_robot: " << azimuth_rad_robot
+                  << " azimuth_rad: " << azimuth_rad << std::endl;
 
-      current = trajectory.back().pose.point;
-      // RAMP DOWN
-      // trajectory_ramp_down();
-      // time_decelerating t = -max_velocity / -acceleartion_rate
-      // - acceleration is deceleration, but i am unsure if i should codify that
-      // like that.
-      double time_decelerating =
-          motion_constraints.max_velocity / velocity_profile.deceleration_rate;
-      for (int j = 0; j <= sampling_rate; j++) {
-        double t = static_cast<double>(j) / sampling_rate;
-        Ecef_Coord next_point =
-            current - ((t * distance_deceleration) * unit_vector);
-        Vector3d linear((motion_constraints.max_velocity * (1 - t)), 0.0, 0.0);
-        double dt = trajectory.back().dt + (time_accelerating * t);
+        Angular_Velocity angular;
+        angular.setZero();
+        angular.z() = motion_constraints.standing_turn_velocity;
+        robot_frame.rotate(Eigen::AngleAxisd((azimuth_rad), Vector3d::UnitZ()));
+        Velocity2d velocity = {.linear = {}, .angular = angular};
+        Affine3d transformation = robot_frame;
+        Pose pose = {.point = current, .transformation_matrix = transformation};
+        double turn_duration =
+            azimuth_rad / motion_constraints.standing_turn_velocity;
+        dt += std::abs(turn_duration);
+        std::cout << turn_duration << std::endl;
+        Trajectory_Point tp = {.pose = pose, .dt = dt, .velocity = velocity};
+        trajectory.push_back(tp);
+      }
+
+      { // RAMP UP
+        // TODO:
+        // Not quite correct. I don't know if I will even reach max_velocity
+        time_accelerating = motion_constraints.max_velocity /
+                            velocity_profile.acceleration_rate;
+        Ecef_Coord next_goal = current;
+        for (int j = 0; j <= sampling_rate; j++) {
+          double t = static_cast<double>(j) / sampling_rate;
+          Ecef_Coord next_point =
+              current + ((t * distance_acceleration) * unit_vector);
+          Vector3d linear((motion_constraints.max_velocity * t), 0.0, 0.0);
+          dt += (time_accelerating * t);
+          new_trajectory_point(trajectory, robot_frame, next_point, linear,
+                               {0.0, 0.0, 0.0}, dt);
+        }
+      }
+
+      { // CRUISE
+        current = trajectory.back().pose.point;
+        // trajectory_cruise()
+        double distance_cruising =
+            difference.norm() - (distance_acceleration + distance_deceleration);
+        double time_cruising =
+            distance_cruising / motion_constraints.max_velocity;
+
+        Ecef_Coord next_point = next + (distance_deceleration * unit_vector);
+        Vector3d linear((motion_constraints.max_velocity), 0.0, 0.0);
+        dt += time_cruising;
         new_trajectory_point(trajectory, robot_frame, next_point, linear,
                              {0.0, 0.0, 0.0}, dt);
       }
-
-      // trajectory_turn();
-      double azimuth_rad_world = atan2(difference.y(), difference.x());
-      double azimuth_rad_robot = atan2(config.transform_world_to_robot(1, 0),
-                                       config.transform_world_to_robot(0, 0));
-      double azimuth_rad = azimuth_rad_world - azimuth_rad_robot;
-
-      current = trajectory.back().pose.point;
-      Angular_Velocity angular;
-      angular.setZero();
-      angular.z() = motion_constraints.standing_turn_velocity;
-      robot_frame.rotate(Eigen::AngleAxisd((azimuth_rad), Vector3d::UnitZ()));
-      Velocity2d velocity = {.linear = {}, .angular = angular};
-      Affine3d transformation = robot_frame;
-      Pose pose = {.point = current, .transformation_matrix = transformation};
-      double turn_duration =
-          azimuth_rad / motion_constraints.standing_turn_velocity;
-      dt = trajectory.back().dt + std::abs(turn_duration);
-      std::cout << dt << std::endl;
-      Trajectory_Point tp = {.pose = pose, .dt = dt, .velocity = velocity};
-      trajectory.push_back(tp);
+      { // RAMP DOWN
+        current = trajectory.back().pose.point;
+        // trajectory_ramp_down();
+        // time_decelerating t = -max_velocity / -acceleartion_rate
+        // - acceleration is deceleration, but i am unsure if i should codify
+        // that like that.
+        time_decelerating = motion_constraints.max_velocity /
+                            velocity_profile.deceleration_rate;
+        for (int j = 0; j <= sampling_rate; j++) {
+          double t = static_cast<double>(j) / sampling_rate;
+          Ecef_Coord next_point =
+              current - ((t * distance_deceleration) * unit_vector);
+          Vector3d linear((motion_constraints.max_velocity * (1 - t)), 0.0,
+                          0.0);
+          dt += (time_accelerating * t);
+          new_trajectory_point(trajectory, robot_frame, next_point, linear,
+                               {0.0, 0.0, 0.0}, dt);
+        }
+      }
     }
 
     return trajectory;
@@ -290,43 +300,6 @@ public:
   //
   //   return 0.0;
   // }
-
-  // TODO calculate time for a curve
-  double compute_straight_line_travel_time(double distance, Velocity2d v0,
-                                           Velocity2d vf) {
-    double distance_acceleration =
-        ((motion_constraints.max_velocity * motion_constraints.max_velocity) -
-         (v0.linear.x() * v0.linear.x())) /
-        (2 * velocity_profile.acceleration_rate);
-
-    double distance_deceleration =
-        ((motion_constraints.max_velocity * motion_constraints.max_velocity) -
-         (vf.linear.x() * vf.linear.x())) /
-        (2 * velocity_profile.deceleration_rate);
-
-    double t_accel = (motion_constraints.max_velocity - v0.linear.x()) /
-                     velocity_profile.acceleration_rate;
-    double t_decel = (motion_constraints.max_velocity - vf.linear.x()) /
-                     velocity_profile.deceleration_rate;
-    double t_cruise = 0;
-
-    if (distance_acceleration + distance_deceleration > distance) {
-      double peak_v = std::sqrt(
-          (2 * velocity_profile.acceleration_rate * distance +
-           (v0.linear.x() * v0.linear.x() + vf.linear.x() * vf.linear.x())) /
-          2);
-      t_accel = (peak_v - v0.linear.x()) / velocity_profile.acceleration_rate;
-      t_decel = (peak_v - vf.linear.x()) / velocity_profile.deceleration_rate;
-    } else {
-      double d_cruise =
-          distance - (distance_acceleration + distance_deceleration);
-      t_cruise = d_cruise / motion_constraints.max_velocity;
-    }
-
-    double total_time = t_accel + t_cruise + t_decel;
-
-    return total_time;
-  }
 
   Pose get_current_pose() { return {}; }
   void follow_trajectory() {
