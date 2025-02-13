@@ -35,6 +35,14 @@ enum class Go1_mode : uint8_t {
                 //  1 first
 };
 
+struct Path_Movement {
+  int trajectory_index;
+  int waypoint_index;
+  int relative_motiontime;
+  std::vector<Ecef_Coord> &waypoints;
+  std::vector<Trajectory_Point> trajectories;
+};
+
 class Go1_Quadruped {
 public:
   Go1_Quadruped()
@@ -57,8 +65,8 @@ public:
   float foot_raise_height;
   float body_height;
 
-  void control_loop(std::vector<Trajectory_Point> trajectories, int &index,
-                    std::ofstream &file);
+  void control_loop(Path_Movement &path, Trajectory_Controller &t_controller,
+                    Robot_Config &config, std::ofstream &file);
   void UDPRecv();
   void UDPSend();
 
@@ -93,8 +101,7 @@ UT::HighCmd defaultCmd() {
   return cmd;
 }
 
-UT::HighCmd run_through(UT::HighCmd &cmd, int dt,
-                        Trajectory_Point &trajectory) {
+UT::HighCmd run_through(UT::HighCmd &cmd, Trajectory_Point &trajectory) {
   //   printf("%d   %f\n", motiontime, state.imu.quaternion[2]);
 
   cmd.mode = 2;
@@ -107,28 +114,33 @@ UT::HighCmd run_through(UT::HighCmd &cmd, int dt,
   return cmd;
 }
 
-void Go1_Quadruped::control_loop(std::vector<Trajectory_Point> trajectories,
-                                 int &index, std::ofstream &file) {
+void Go1_Quadruped::control_loop(Path_Movement &path,
+                                 Trajectory_Controller &t_controller,
+                                 Robot_Config &config, std::ofstream &file) {
   udp.GetRecv(state);
-  if (trajectories[index].dt < ((double)relative_motiontime / 1000))
-    index++;
-  cmd = run_through(cmd, index, trajectories[index]);
-  if (index == trajectories.size()) {
+  // TODO have this folded into Trajectory_Controller
+  if (path.trajectory_index >= path.trajectories.size()) {
+    // if (path.waypoint_index >= path.waypoints.size()) {
+    //   path.waypoint_index = 0;
+    // }
+    path.trajectories = t_controller.generate_trajectory(
+        path.waypoints[path.waypoint_index],
+        path.waypoints[path.waypoint_index + 1], config);
     relative_motiontime = 0;
-    index = 0;
+    path.trajectory_index = 0;
+    path.waypoint_index = (path.waypoint_index + 1) % path.waypoints.size();
   }
-  // std::cout << "DT: " << motiontime << " INDEX: " << index << std::endl;
-  // std::cout << "DT: " << motiontime
-  //           << " VEL: " << trajectories[index].velocity.linear.x()
-  //           << " YAW: " << trajectories[index].velocity.angular.z()
-  //           << std::endl;
+  if (path.trajectories[path.trajectory_index].dt <
+      ((double)relative_motiontime / 1000))
+    path.trajectory_index++;
+
+  cmd = run_through(cmd, path.trajectories[path.trajectory_index]);
+
   file << "DT: " << motiontime << " VEL: " << cmd.velocity[0]
        << " YAW: " << cmd.yawSpeed << " | "
        << "S.VEL: " << state.velocity[0] << " S.YAW: " << state.yawSpeed
        << std::endl;
 
-  // std::cout << "S.accel: " << state.mode << std::endl;
-  // printf("%d   %f\n", motiontime, state.imu.quaternion[2]);
   udp.SetSend(cmd);
   motiontime += 2;
   relative_motiontime += 2;
@@ -140,7 +152,6 @@ int main(void) {
             << std::endl
             << "Press Enter to continue..." << std::endl;
   std::cin.ignore();
-
   Go1_Quadruped robot;
 
   // std::vector<Ecef_Coord> waypoints = {
@@ -150,8 +161,11 @@ int main(void) {
   //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
   std::vector<Ecef_Coord> waypoints_square = {
-      {0.0, 0.0, 0.0}, {2.0, 0.0, 0.0}, {2.0, 2.0, 0.0},
-      {0.0, 2.0, 0.0}, {0.0, 0.0, 0.0}, {0.0001, 0.0, 0.0}};
+      {0.0, 0.0, 0.0},
+      {2.0, 0.0, 0.0},
+      {2.0, 2.0, 0.0},
+      {0.0, 2.0, 0.0},
+  };
 
   std::vector<Ecef_Coord> waypoints_circle = {
       {1.5, 0.0, 0.0},       {1.37, 0.61, 0.0},    {1.004, 1.115, 0.0},
@@ -189,17 +203,23 @@ int main(void) {
   //                                  linear_pid, angular_pid, config.hz);
   Trajectory_Controller controller(config.motion_constraints, vel_profile,
                                    config.hz);
-  int index = 0;
+  Path_Movement path_movement = {.trajectory_index = 0,
+                                 .waypoint_index = 0,
+                                 .relative_motiontime = 0,
+                                 .waypoints = waypoints_square,
+                                 .trajectories = {}};
 
-  std::vector<Trajectory_Point> trajectories =
-      controller.generate_trajectory(waypoints_square, config);
+  std::vector<Trajectory_Point> trajectories = controller.generate_trajectory(
+      waypoints_square[0], waypoints_square[1], config);
+  std::cout << "T SIZE: " << trajectories.size() << std::endl;
 
-  saveToFile("trajectories", trajectories);
+  // saveToFile("trajectories", trajectories);
   std::ofstream info("go1_info");
 
   UT::LoopFunc loop_control("control_loop", robot.dt,
                             boost::bind(&Go1_Quadruped::control_loop, &robot,
-                                        trajectories, index, boost::ref(info)));
+                                        path_movement, controller, config,
+                                        boost::ref(info)));
   UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
                             boost::bind(&Go1_Quadruped::UDPRecv, &robot));
   UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,
