@@ -63,6 +63,7 @@ public:
   void UDPSend();
 
   int motiontime = 0;
+  int relative_motiontime = 0;
   float dt = 0.002; // 0.001~0.01
 
   // Eigen::Matrix4d go1_config_matrix[4];
@@ -102,16 +103,20 @@ UT::HighCmd run_through(UT::HighCmd &cmd, int dt,
   cmd.yawSpeed = trajectory.velocity.angular.z();
   // // cmd.velocity[0] = 0.2;
   // cmd.yawSpeed = 0.3;
-  cmd.footRaiseHeight = 0.1;
+  // cmd.footRaiseHeight = 0.1;
   return cmd;
 }
 
 void Go1_Quadruped::control_loop(std::vector<Trajectory_Point> trajectories,
                                  int &index, std::ofstream &file) {
   udp.GetRecv(state);
-  if (trajectories[index].dt < ((double)motiontime / 1000))
+  if (trajectories[index].dt < ((double)relative_motiontime / 1000))
     index++;
   cmd = run_through(cmd, index, trajectories[index]);
+  if (index == trajectories.size()) {
+    relative_motiontime = 0;
+    index = 0;
+  }
   // std::cout << "DT: " << motiontime << " INDEX: " << index << std::endl;
   // std::cout << "DT: " << motiontime
   //           << " VEL: " << trajectories[index].velocity.linear.x()
@@ -126,6 +131,7 @@ void Go1_Quadruped::control_loop(std::vector<Trajectory_Point> trajectories,
   // printf("%d   %f\n", motiontime, state.imu.quaternion[2]);
   udp.SetSend(cmd);
   motiontime += 2;
+  relative_motiontime += 2;
 }
 
 int main(void) {
@@ -143,24 +149,38 @@ int main(void) {
   //     {4100218.5394949187, 476445.5598077707, 4846300.796185957},
   //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
-  std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0},
-                                       {2.0, 0.0, 0.0},
-                                       {2.0, 2.0, 0.0},
-                                       {0.0, 2.0, 0.0},
-                                       {0.0, 0.0, 0.0}};
+  std::vector<Ecef_Coord> waypoints_square = {
+      {0.0, 0.0, 0.0}, {2.0, 0.0, 0.0}, {2.0, 2.0, 0.0},
+      {0.0, 2.0, 0.0}, {0.0, 0.0, 0.0}, {0.0001, 0.0, 0.0}};
+
+  std::vector<Ecef_Coord> waypoints_circle = {
+      {1.5, 0.0, 0.0},       {1.37, 0.61, 0.0},    {1.004, 1.115, 0.0},
+      {0.464, 1.427, 0.0},   {-0.157, 1.492, 0.0}, {-0.75, 1.299, 0.0},
+      {-1.214, 0.882, 0.0},  {-1.467, 0.312, 0.0}, {-1.467, -0.312, 0.0},
+      {-1.214, -0.882, 0.0}, {-0.75, -1.299, 0.0}, {-0.157, -1.492, 0.0},
+      {0.464, -1.427, 0.0},  {1.004, -1.115, 0.0}, {1.37, -0.61, 0.0},
+      {1.5, -0.0, 0.0}};
+
+  std::vector<Ecef_Coord> waypoints_eight = {
+      {1.5, 1.5, 0.0},    {2.074, 2.03, 0.0}, {2.561, 2.25, 0.0},
+      {2.886, 2.03, 0.0}, {3.0, 1.5, 0.0},    {2.886, 0.97, 0.0},
+      {2.561, 0.75, 0.0}, {2.074, 0.97, 0.0}, {1.5, 1.5, 0.0},
+      {0.926, 2.03, 0.0}, {0.439, 2.25, 0.0}, {0.114, 2.03, 0.0},
+      {0.0, 1.5, 0.0},    {0.114, 0.97, 0.0}, {0.439, 0.75, 0.0},
+      {0.926, 0.97, 0.0}, {1.5, 1.5, 0.0}};
 
   Robot_Config config = {.hz = 50,
                          .motion_constraints = {.max_velocity = 0.6,
                                                 .standing_turn_velocity = 2.0,
-                                                .max_acceleration = 0.5,
-                                                .max_deceleration = 0.5,
+                                                .max_acceleration = 100.0,
+                                                .max_deceleration = 100.0,
                                                 .max_jerk = 0.0,
                                                 .corner_velocity = 0.0}
 
   };
 
-  Velocity_Profile vel_profile = {.acceleration_rate = 35.0,
-                                  .deceleration_rate = 10.0};
+  Velocity_Profile vel_profile = {.acceleration_rate = 200.0,
+                                  .deceleration_rate = 200.0};
   // PIDGains linear_gains = {1.0, 0.0, 0.0};
   // PIDController linear_pid(linear_gains);
   // PIDGains angular_gains = {1.0, 0.0, 0.0};
@@ -172,7 +192,7 @@ int main(void) {
   int index = 0;
 
   std::vector<Trajectory_Point> trajectories =
-      controller.generate_trajectory(waypoints, config);
+      controller.generate_trajectory(waypoints_square, config);
 
   saveToFile("trajectories", trajectories);
   std::ofstream info("go1_info");

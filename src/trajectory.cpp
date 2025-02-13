@@ -78,6 +78,15 @@ struct Trajectory_Point {
 //   return point;
 // };
 
+double compute_displacement(double init_velocity, double final_velocity,
+                            double acceleration) {
+  double v0 = (init_velocity * init_velocity);
+  double vf = (final_velocity * final_velocity);
+  double avg_accel = (2 * acceleration);
+  double displacement = (vf - v0) / avg_accel;
+  return std::abs(displacement);
+}
+
 std::vector<Pose> generate_path(const std::vector<Ecef_Coord> &waypoints,
                                 double points_per_meter) {
   Pose default_pose = {.point = {0.0, 0.0, 0.0},
@@ -130,6 +139,25 @@ class Trajectory_Controller {
   // PIDController angular_pid;
   double sampling_rate = 1.0;
 
+  void trajectory_ramp_up() {}
+  void trajectory_cruise() {}
+  void trajectory_ramp_down() {}
+  void trajectory_turn() {}
+
+  void new_trajectory_point(std::vector<Trajectory_Point> &trajectories,
+                            Affine3d &robot_frame, Ecef_Coord next_point,
+                            Vector3d linear, Vector3d angular, double dt) {
+
+    Ecef_Coord diff_vec = next_point - robot_frame.translation();
+    robot_frame.translation() += diff_vec;
+    Velocity2d velocity = {.linear = linear, .angular = angular};
+    Affine3d transformation = robot_frame;
+    Pose pose = {.point = next_point, .transformation_matrix = transformation};
+    Trajectory_Point tp = {.pose = pose, .dt = dt, .velocity = velocity};
+
+    trajectories.push_back(tp);
+  }
+
 public:
   // Trajectory_Controller(Motion_Constraints motion_constraints,
   //                       Velocity_Profile velocity_profile,
@@ -142,6 +170,7 @@ public:
                         Velocity_Profile velocity_profile, double sampling_rate)
       : motion_constraints(motion_constraints),
         velocity_profile(velocity_profile), sampling_rate(sampling_rate) {};
+
   std::vector<Trajectory_Point>
   generate_trajectory(const std::vector<Ecef_Coord> &path,
                       Robot_Config &config) {
@@ -177,6 +206,10 @@ public:
         double azimuth_rad_robot = atan2(config.transform_world_to_robot(1, 0),
                                          config.transform_world_to_robot(0, 0));
         double azimuth_rad = azimuth_rad_world - azimuth_rad_robot;
+        if (azimuth_rad > M_PI)
+          azimuth_rad -= 2 * M_PI;
+        if (azimuth_rad < -M_PI)
+          azimuth_rad += 2 * M_PI;
         std::cout << "azimuth_rad_world: " << azimuth_rad_world
                   << " azimuth_rad_robot: " << azimuth_rad_robot
                   << " azimuth_rad: " << azimuth_rad << std::endl;
@@ -249,59 +282,8 @@ public:
         }
       }
     }
-
     return trajectory;
   }
-
-  double compute_displacement(double init_velocity, double final_velocity,
-                              double acceleration) {
-    double v0 = (init_velocity * init_velocity);
-    double vf = (final_velocity * final_velocity);
-    double avg_accel = (2 * acceleration);
-    double displacement = (vf - v0) / avg_accel;
-    return std::abs(displacement);
-  }
-
-  void trajectory_ramp_up() {}
-  void trajectory_cruise() {}
-  void trajectory_ramp_down() {}
-  void trajectory_turn() {}
-
-  void new_trajectory_point(std::vector<Trajectory_Point> &trajectories,
-                            Affine3d &robot_frame, Ecef_Coord next_point,
-                            Vector3d linear, Vector3d angular, double dt) {
-
-    Ecef_Coord diff_vec = next_point - robot_frame.translation();
-    robot_frame.translation() += diff_vec;
-    Velocity2d velocity = {.linear = linear, .angular = angular};
-    Affine3d transformation = robot_frame;
-    Pose pose = {.point = next_point, .transformation_matrix = transformation};
-    Trajectory_Point tp = {.pose = pose, .dt = dt, .velocity = velocity};
-
-    trajectories.push_back(tp);
-  }
-
-  // double turning(Robot_Config &config, Pose current, Pose next) {
-  //   Affine3d &robot_frame = config.transform_world_to_robot;
-  //
-  //   Ecef_Coord difference = next.point - current.point;
-  //   double horizontal_distance = std::sqrt(difference.x() * difference.x() +
-  //                                          difference.y() * difference.y());
-  //   double azimuth_rad_world = atan2(difference.y(), difference.x());
-  //   double azimuth_degrees = fmod(azimuth_rad_world / M_PI * 180, 360);
-  //   double elevation = std::atan2(difference.z(), horizontal_distance);
-  //   double elevation_degrees = fmod(elevation / M_PI * 180, 360);
-  //
-  //   robot_frame.rotate(Eigen::AngleAxisd((azimuth_rad), Vector3d::UnitZ()));
-  //
-  //   Velocity2d velocity = {.linear = {}, .angular = angular};
-  //   Affine3d transformation = robot_frame;
-  //   Pose pose = {.point = path[i].point,
-  //                .transformation_matrix = transformation};
-  //   Trajectory_Point tp = {.pose = pose, .velocity = velocity};
-  //
-  //   return 0.0;
-  // }
 
   Pose get_current_pose() { return {}; }
   void follow_trajectory() {
