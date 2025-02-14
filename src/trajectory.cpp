@@ -87,50 +87,6 @@ double compute_displacement(double init_velocity, double final_velocity,
   return std::abs(displacement);
 }
 
-std::vector<Pose> generate_path(const std::vector<Ecef_Coord> &waypoints,
-                                double points_per_meter) {
-  Pose default_pose = {.point = {0.0, 0.0, 0.0},
-                       .transformation_matrix = Affine3d::Identity()};
-  std::vector<Pose> path;
-  path.push_back(default_pose);
-
-  for (int i = 0; i < waypoints.size() - 1; i++) {
-    Ecef_Coord current = waypoints[i];
-    Ecef_Coord next = waypoints[i + 1];
-    Vector3d difference = next - current;
-    double horizontal_distance = std::sqrt(difference.x() * difference.x() +
-                                           difference.y() * difference.y());
-    int points = static_cast<int>(horizontal_distance * points_per_meter);
-
-    double azimuth_rad_world = atan2(difference.y(), difference.x());
-    double azimuth_degrees = fmod(azimuth_rad_world / M_PI * 180, 360);
-    double elevation = std::atan2(difference.z(), horizontal_distance);
-    double elevation_degrees = fmod(elevation / M_PI * 180, 360);
-
-    // for (int j = 0; j <= points; j++) {
-    //   double t = static_cast<double>(j) / points;
-    //   Ecef_Coord next_point = (current * (1 - t)) + (next * t);
-    //   Ecef_Coord diff_vec =
-    //       next_point - path[i + j].transformation_matrix.translation();
-    //   Pose pose = {.point = next_point,
-    //                .transformation_matrix = path[i +
-    //                j].transformation_matrix};
-    //   pose.transformation_matrix.translation() += diff_vec;
-    //   path.push_back(pose);
-    // }
-
-    // TODO if I add back the loop with the points, then i need to change
-    // path[i] to something that considers the newly added poses
-    Pose pose = {.point = next,
-                 .transformation_matrix = path[i].transformation_matrix};
-    pose.transformation_matrix.translation() += difference;
-    pose.transformation_matrix.rotate(
-        Eigen::AngleAxisd((azimuth_rad_world), Vector3d::UnitZ()));
-    path.push_back(pose);
-  }
-  return path;
-}
-
 struct Motion_Step {
   Ecef_Coord &current;
   Ecef_Coord &next;
@@ -236,8 +192,6 @@ class Trajectory_Controller {
 
     Vector3d unit_vector = step.difference.normalized();
 
-    Ecef_Coord current_point = trajectory.back().pose.point;
-    // trajectory_ramp_down();
     // time_decelerating t = -max_velocity / -acceleartion_rate
     // - acceleration is deceleration, but i am unsure if i should codify
     // that like that.
@@ -246,7 +200,7 @@ class Trajectory_Controller {
     for (int j = 0; j <= sampling_rate; j++) {
       double t = static_cast<double>(j) / sampling_rate;
       Ecef_Coord next_point =
-          current_point + ((t * distance_deceleration) * unit_vector);
+          step.current + ((t * distance_deceleration) * unit_vector);
       Vector3d linear((motion_constraints.max_velocity * (1 - t)), 0.0, 0.0);
       step.dt += (time_accelerating * t);
       Trajectory_Point tp = new_trajectory_point(
