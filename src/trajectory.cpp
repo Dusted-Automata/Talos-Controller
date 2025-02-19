@@ -2,21 +2,6 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include <thread>
-
-// Pose cubic_interpolation(double dx, double dy, Ecef_Coord start, Ecef_Coord
-// end,
-//                          double t) {
-//   double h00 = 2 * t * t * t - 3 * t * t + 1;
-//   double h10 = t * t * t - 2 * t * t + t;
-//   double h01 = -2 * t * t * t + 3 * t * t;
-//   double h11 = t * t * t - t * t;
-//
-//   Pose point = {};
-//   point.x = h00 * start.x + h10 * dx + h01 * end.x + h11 * dx;
-//   point.y = h00 * start.y + h10 * dy + h01 * end.y + h11 * dy;
-//   return point;
-// };
 
 double compute_displacement(double init_velocity, double final_velocity, double acceleration) {
   double v0 = (init_velocity * init_velocity);
@@ -173,25 +158,12 @@ std::vector<Trajectory_Point> Trajectory_Controller::generate_trajectory(Ecef_Co
 
 Pose Trajectory_Controller::get_current_pose() { return {}; }
 
-struct Path_Movement {
-  int trajectory_index;
-  int waypoint_index;
-  int relative_motiontime;
-  std::vector<Ecef_Coord> &waypoints;
-  std::vector<Trajectory_Point> trajectories;
-};
-
 Velocity2d
 Trajectory_Controller::follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &trajectories,
                                          Robot_State &state) {
   Velocity2d cmd = {.linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero()};
 
   std::optional<Trajectory_Point> point = trajectories.front();
-  if (point.has_value()) {
-    std::cout << "DT: " << point.value().dt << " - " << point.value().velocity.linear.x() << " , "
-              << point.value().velocity.angular.z() << std::endl;
-  }
-  std::cout << "trajectory_time: " << trajectory_time << std::endl;
 
   if (!point) {
     linear_pid.reset();
@@ -213,10 +185,6 @@ Trajectory_Controller::follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &tr
     angular_pid.setpoint = point.value().velocity.angular.z();
   }
 
-  //   Linear_Velocity linear_vel(0);
-  //   Angular_Velocity angular_vel(0);
-  //     linear_vel.x() = linear_pid.update(state.velocity[0], trajectory.dt);
-  //     angular_vel.z() = angular_pid.update(state.yawSpeed, trajectory.dt);
   cmd.linear.x() = linear_pid.update(state.velocity[0], trajectory_time);
   cmd.angular.z() = angular_pid.update(state.yawSpeed, trajectory_time);
   // TODO: HZ from Robot
@@ -229,13 +197,7 @@ void Trajectory_Controller::path_loop(
     // {
     Thread_Safe_Queue<Trajectory_Point> &trajectories, Ecef_Coord &current, Ecef_Coord &next,
     Robot_Config config) {
-  // const int path_period_ms = 33; // ~30Hz
-  // uint64_t next_wake_time =
-  //     std::chrono::duration_cast<std::chrono::milliseconds>(
-  //         std::chrono::steady_clock::now().time_since_epoch())
-  //         .count();
 
-  // while (1) {
   // if (LOOPING) {
   if (trajectories.empty()) {
     std::cout << "EMPTY TRAJECTORIES" << std::endl;
@@ -244,10 +206,6 @@ void Trajectory_Controller::path_loop(
       trajectories.push(point);
     }
   }
-  // std::this_thread::sleep_for(std::chrono::milliseconds(30));
-  // }
-  // std::this_thread::sleep_until(
-  //     std::chrono::steady_clock::time_point(std::chrono::milliseconds(next_wake_time)));
 }
 
 void Trajectory_Controller::local_replanning() {}

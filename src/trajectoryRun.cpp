@@ -54,8 +54,6 @@ int main() {
       controller.generate_trajectory(current, next, config);
 
   testRobot robot(controller);
-  Thread_Safe_Queue<Trajectory_Point> t_queue = {};
-  // robot.trajectory_queue =
 
   auto bound_path_loop =
       std::bind(&Trajectory_Controller::path_loop, &controller, std::ref(robot.trajectory_queue),
@@ -67,65 +65,6 @@ int main() {
 
   path_loop.join();
   control_loop_thread.join();
-
-  // Thread_Safe_Queue<SimplePoint> q;
-  // SimplePoint sp{1234.5};
-  // if (!q.push(sp)) {
-  //   std::cerr << "Push failed?\n";
-  // }
-  // auto frontOpt = q.front();
-  // if (frontOpt) {
-  //   std::cout << "Got dt = " << frontOpt->dt << std::endl;
-  // } else {
-  //   std::cout << "No front?\n";
-  // }
-
-  // std::optional<Trajectory_Point> cmd = robot.trajectory_queue.front();
-  // std::cout << cmd.value().velocity.linear.x() << " , " << cmd.value().velocity.angular.z()
-  //           << std::endl;
-  // robot.trajectory_queue.pop();
-  // cmd = robot.trajectory_queue.front();
-  // std::cout << cmd.value().velocity.linear.x() << " , " << cmd.value().velocity.angular.z()
-  //           << std::endl;
-  // while (1) {
-  // }
-
-  // std::this_thread::sleep_for(std::chrono::seconds(10));
-
-  // std::vector<double> velocities =
-  //     generate_velocity_profile(trajectories, config);
-  //
-  // saveToFile("trajectories", trajectories);
-  // saveToFileTrajectories("trajectories", trajectories);
-  // saveToFile("velocities", trajectories);
-
-  // Print trajectory points
-  // for (size_t i = 0; i < trajectories.size(); i++) {
-  //   std::cout << "Point " << i << ": (" << trajectories[i].pose.x << ",
-  //             << trajectories[i].pose.y << ") "
-  //             << "Velocity: " << trajectories[i].velocity.linear <<
-  //             std::endl;
-  // }
-
-  // Eigen::Matrix3d R;
-  // double angle = M_PI / 2;
-  // R = Eigen::AngleAxisd(angle, Eigen::Vector3d::UnitZ()).toRotationMatrix();
-  // Eigen::Affine3d transform = Eigen::Affine3d::Identity();
-  // std::cout << "Rotation matrix : \n " << transform.affine() << std::endl;
-
-  // for (const auto &line : trajectories) {
-  //   std::cout << std::fixed;
-  //   std::cout << " ------------------------------------------------- " << std::endl;
-  //   std::cout << "dt: " << line.dt << " " << std::endl;
-  //   std::cout << "pose: " << line.pose.point.x() << " " << line.pose.point.y() << " "
-  //             << line.pose.point.z() << " " << std::endl;
-  //   std::cout << "Velocity-linear: forward: " << line.velocity.linear.x()
-  //             << " lateral: " << line.velocity.linear.y()
-  //             << " vertical: " << line.velocity.linear.z() << std::endl;
-  //   std::cout << "Velocity-angular: pitch: " << line.velocity.angular.x()
-  //             << " roll: " << line.velocity.angular.y() << " yaw: " << line.velocity.angular.z()
-  //             << std::endl;
-  // }
 
   return 0;
 }
