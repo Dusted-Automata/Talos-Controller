@@ -30,40 +30,43 @@ int main() {
   std::vector<Ecef_Coord> waypoints = {
       {0.0, 0.0, 0.0}, {4.0, -2.0, 0.0}, {4.0, 2.0, 0.0}, {0.0, 0.0, 0.0}};
 
-  Robot_Config config = {.hz = 50,
-                         .motion_constraints = {.max_velocity = 1.0,
-                                                .standing_turn_velocity = 2.0,
-                                                .max_acceleration = 0.5,
-                                                .max_deceleration = 0.5,
-                                                .max_jerk = 0.0,
-                                                .corner_velocity = 0.0}
+  Velocity_Profile vel_profile = {.acceleration_rate = 35.0, .deceleration_rate = 10.0};
+  Robot_Config config = {
+      .hz = 50,
+      .motion_constraints = {.max_velocity = 1.0,
+                             .standing_turn_velocity = 2.0,
+                             .max_acceleration = 0.5,
+                             .max_deceleration = 0.5,
+                             .max_jerk = 0.0,
+                             .corner_velocity = 0.0},
+      .velocity_profile = vel_profile,
 
   };
-  Velocity_Profile vel_profile = {.acceleration_rate = 35.0, .deceleration_rate = 10.0};
   PIDGains linear_gains = {1.0, 0.0, 0.0};
   PIDController linear_pid(linear_gains);
   PIDGains angular_gains = {1.0, 0.0, 0.0};
   PIDController angular_pid(angular_gains);
-  Trajectory_Controller controller(config.motion_constraints, vel_profile, linear_pid, angular_pid,
-                                   config.hz);
+  Trajectory_Controller controller(config, linear_pid, angular_pid, config.hz);
 
   Ecef_Coord current = waypoints[0];
   Ecef_Coord next = waypoints[1];
 
-  std::vector<Trajectory_Point> trajectories =
-      controller.generate_trajectory(current, next, config);
-
   testRobot robot(controller);
 
-  auto bound_path_loop =
-      std::bind(&Trajectory_Controller::path_loop, &controller, std::ref(robot.trajectory_queue),
-                std::ref(current), std::ref(next), std::ref(config));
-  auto bound_control_loop = std::bind(&testRobot::control_loop, &robot);
+  std::function<void()> bound_path_loop =
+      std::bind(&Trajectory_Controller::path_loop, &controller, std::ref(robot.path_queue),
+                std::ref(waypoints));
+  std::function<void()> bound_trajectory_loop =
+      std::bind(&Trajectory_Controller::trajectory_loop, &controller,
+                std::ref(robot.trajectory_queue), std::ref(robot.path_queue));
+  std::function<void()> bound_control_loop = std::bind(&testRobot::control_loop, &robot);
   std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
+  std::thread trajectory_loop = std::thread(worker_function, bound_trajectory_loop, 30);
   std::thread control_loop_thread = std::thread(worker_function, bound_control_loop, 2);
   // std::thread control_loop_thread = std::thread(&testRobot::control_loop, &robot);
 
   path_loop.join();
+  trajectory_loop.join();
   control_loop_thread.join();
 
   return 0;

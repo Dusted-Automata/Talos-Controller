@@ -12,7 +12,7 @@ void Robot::control_loop() {
   motiontime += 1000 / hz;
 
   // will be 0.0 until i fix the state.
-  std::cout << cmd.linear.x() << " , " << cmd.angular.z() << std::endl;
+  // std::cout << cmd.linear.x() << " , " << cmd.angular.z() << std::endl;
 }
 
 // void Robot::updateState() {}

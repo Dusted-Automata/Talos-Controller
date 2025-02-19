@@ -26,12 +26,12 @@ Trajectory_Point Trajectory_Controller::trajectory_turn(Motion_Step step) {
 
   Angular_Velocity angular;
   angular.setZero();
-  angular.z() = motion_constraints.standing_turn_velocity;
+  angular.z() = config.motion_constraints.standing_turn_velocity;
   step.robot_frame.rotate(Eigen::AngleAxisd((azimuth_rad), Vector3d::UnitZ()));
   Velocity2d velocity = {.linear = {}, .angular = angular};
   Affine3d transformation = step.robot_frame;
   Pose pose = {.point = step.current, .transformation_matrix = transformation};
-  double turn_duration = azimuth_rad / motion_constraints.standing_turn_velocity;
+  double turn_duration = azimuth_rad / config.motion_constraints.standing_turn_velocity;
   step.dt += std::abs(turn_duration);
   Trajectory_Point tp = {.pose = pose, .dt = step.dt, .velocity = velocity};
   return tp;
@@ -41,16 +41,17 @@ std::vector<Trajectory_Point> Trajectory_Controller::trajectory_ramp_up(Motion_S
   // TODO:
   // Not quite correct. I don't know if I will even reach max_velocity
   std::vector<Trajectory_Point> trajectory;
-  double distance_acceleration =
-      compute_displacement(0, motion_constraints.max_velocity, velocity_profile.acceleration_rate);
-  double time_accelerating = motion_constraints.max_velocity / velocity_profile.acceleration_rate;
+  double distance_acceleration = compute_displacement(0, config.motion_constraints.max_velocity,
+                                                      config.velocity_profile.acceleration_rate);
+  double time_accelerating =
+      config.motion_constraints.max_velocity / config.velocity_profile.acceleration_rate;
 
   Vector3d unit_vector = step.difference.normalized();
 
   for (int j = 0; j <= sampling_rate; j++) {
     double t = static_cast<double>(j) / sampling_rate;
     Ecef_Coord next_point = step.current + ((t * distance_acceleration) * unit_vector);
-    Vector3d linear((motion_constraints.max_velocity * t), 0.0, 0.0);
+    Vector3d linear((config.motion_constraints.max_velocity * t), 0.0, 0.0);
     step.dt += (time_accelerating * t);
     Trajectory_Point tp =
         new_trajectory_point(step.robot_frame, next_point, linear, {0.0, 0.0, 0.0}, step.dt);
@@ -61,18 +62,18 @@ std::vector<Trajectory_Point> Trajectory_Controller::trajectory_ramp_up(Motion_S
 
 Trajectory_Point Trajectory_Controller::trajectory_cruise(Motion_Step step) {
   Vector3d unit_vector = step.difference.normalized();
-  double distance_acceleration =
-      compute_displacement(0, motion_constraints.max_velocity, velocity_profile.acceleration_rate);
-  double distance_deceleration =
-      compute_displacement(motion_constraints.max_velocity, 0, velocity_profile.acceleration_rate);
+  double distance_acceleration = compute_displacement(0, config.motion_constraints.max_velocity,
+                                                      config.velocity_profile.acceleration_rate);
+  double distance_deceleration = compute_displacement(config.motion_constraints.max_velocity, 0,
+                                                      config.velocity_profile.acceleration_rate);
   double distance_cruising =
       step.difference.norm() - (distance_acceleration + distance_deceleration);
 
   // std::cout << distance_acceleration << std::endl;
-  double time_cruising = distance_cruising / motion_constraints.max_velocity;
+  double time_cruising = distance_cruising / config.motion_constraints.max_velocity;
 
   Ecef_Coord next_point = step.next - (distance_deceleration * unit_vector);
-  Vector3d linear((motion_constraints.max_velocity), 0.0, 0.0);
+  Vector3d linear((config.motion_constraints.max_velocity), 0.0, 0.0);
   step.dt += time_cruising;
   Trajectory_Point tp =
       new_trajectory_point(step.robot_frame, next_point, linear, {0.0, 0.0, 0.0}, step.dt);
@@ -81,13 +82,14 @@ Trajectory_Point Trajectory_Controller::trajectory_cruise(Motion_Step step) {
 
 std::vector<Trajectory_Point> Trajectory_Controller::trajectory_ramp_down(Motion_Step step) {
   std::vector<Trajectory_Point> trajectory;
-  double distance_acceleration =
-      compute_displacement(0, motion_constraints.max_velocity, velocity_profile.acceleration_rate);
+  double distance_acceleration = compute_displacement(0, config.motion_constraints.max_velocity,
+                                                      config.velocity_profile.acceleration_rate);
 
-  double distance_deceleration =
-      compute_displacement(motion_constraints.max_velocity, 0, velocity_profile.acceleration_rate);
+  double distance_deceleration = compute_displacement(config.motion_constraints.max_velocity, 0,
+                                                      config.velocity_profile.acceleration_rate);
   double time_accelerating;
-  time_accelerating = motion_constraints.max_velocity / velocity_profile.acceleration_rate;
+  time_accelerating =
+      config.motion_constraints.max_velocity / config.velocity_profile.acceleration_rate;
   double time_decelerating;
 
   Vector3d unit_vector = step.difference.normalized();
@@ -95,11 +97,12 @@ std::vector<Trajectory_Point> Trajectory_Controller::trajectory_ramp_down(Motion
   // time_decelerating t = -max_velocity / -acceleartion_rate
   // - acceleration is deceleration, but i am unsure if i should codify
   // that like that.
-  time_decelerating = motion_constraints.max_velocity / velocity_profile.deceleration_rate;
+  time_decelerating =
+      config.motion_constraints.max_velocity / config.velocity_profile.deceleration_rate;
   for (int j = 0; j <= sampling_rate; j++) {
     double t = static_cast<double>(j) / sampling_rate;
     Ecef_Coord next_point = step.current + ((t * distance_deceleration) * unit_vector);
-    Vector3d linear((motion_constraints.max_velocity * (1 - t)), 0.0, 0.0);
+    Vector3d linear((config.motion_constraints.max_velocity * (1 - t)), 0.0, 0.0);
     step.dt += (time_accelerating * t);
     Trajectory_Point tp =
         new_trajectory_point(step.robot_frame, next_point, linear, {0.0, 0.0, 0.0}, step.dt);
@@ -121,8 +124,7 @@ Trajectory_Point Trajectory_Controller::new_trajectory_point(Affine3d &robot_fra
 }
 
 std::vector<Trajectory_Point> Trajectory_Controller::generate_trajectory(Ecef_Coord current,
-                                                                         Ecef_Coord next,
-                                                                         Robot_Config &config) {
+                                                                         Ecef_Coord next) {
   std::vector<Trajectory_Point> trajectory = {};
   Affine3d &robot_frame = config.transform_world_to_robot;
 
@@ -185,6 +187,10 @@ Trajectory_Controller::follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &tr
     angular_pid.setpoint = point.value().velocity.angular.z();
   }
 
+  std::cout << "DT: " << point.value().dt << " | t_dt: " << trajectory_time
+            << " lin: " << point.value().velocity.linear.x()
+            << " ang: " << point.value().velocity.angular.z() << std::endl;
+
   cmd.linear.x() = linear_pid.update(state.velocity[0], trajectory_time);
   cmd.angular.z() = angular_pid.update(state.yawSpeed, trajectory_time);
   // TODO: HZ from Robot
@@ -192,18 +198,41 @@ Trajectory_Controller::follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &tr
   return cmd;
 }
 
-void Trajectory_Controller::path_loop(
-    // Thread_Safe_Queue<Trajectory_Point> &trajectories, Thread_Safe_Queue<Ecef_Coord> &waypoints)
-    // {
-    Thread_Safe_Queue<Trajectory_Point> &trajectories, Ecef_Coord &current, Ecef_Coord &next,
-    Robot_Config config) {
-
-  // if (LOOPING) {
+void Trajectory_Controller::trajectory_loop(Thread_Safe_Queue<Trajectory_Point> &trajectories,
+                                            Thread_Safe_Queue<Ecef_Coord> &waypoints) {
+  std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = waypoints.front_two();
   if (trajectories.empty()) {
-    std::cout << "EMPTY TRAJECTORIES" << std::endl;
-    std::vector<Trajectory_Point> trajectory = generate_trajectory(current, next, config);
-    for (auto &point : trajectory) {
-      trajectories.push(point);
+    if (path.has_value()) {
+      std::cout << "EMPTY TRAJECTORIES" << std::endl;
+      std::vector<Trajectory_Point> trajectory =
+          generate_trajectory(path.value().first, path.value().second);
+      for (auto &point : trajectory) {
+        trajectories.push(point);
+      }
+      waypoints.pop();
+    }
+  }
+}
+
+void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
+                                      std::vector<Ecef_Coord> &waypoints) {
+  if (waypoints.empty()) {
+    return;
+  }
+  if (!added_paths) {
+    std::cout << "EMPTY FIRST WAYPOINTS" << std::endl;
+    for (Ecef_Coord &waypoint : waypoints) {
+      std::cout << "EMPTY TRAJECTORIES" << std::endl;
+      path.push(waypoint);
+    }
+    added_paths = true;
+  }
+
+  // FIXME: One waypoint does not get popped off, so it wont loop
+  if (path.empty() && path_looping) {
+    std::cout << "EMPTY WAYPOINTS" << std::endl;
+    for (Ecef_Coord &waypoint : waypoints) {
+      path.push(waypoint);
     }
   }
 }

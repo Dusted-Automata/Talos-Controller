@@ -38,6 +38,7 @@ public:
       : trajectory_controller(trajectory_controller) {}
   virtual ~Robot() = default;
   Thread_Safe_Queue<Trajectory_Point> trajectory_queue;
+  Thread_Safe_Queue<Ecef_Coord> path_queue;
 
   virtual void send_velocity_command(Velocity2d cmd) = 0;
   virtual void update_state() = 0;

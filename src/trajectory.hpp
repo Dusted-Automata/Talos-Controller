@@ -52,6 +52,7 @@ struct Velocity_Profile {
 struct Robot_Config {
   int hz;
   Motion_Constraints motion_constraints;
+  Velocity_Profile velocity_profile;
   // TODO: Make a real frame and transformation data structure
   // Matrix4d robot_frame{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0,
   // 1}}; Matrix4d world_frame{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0,
@@ -75,7 +76,7 @@ struct Trajectory_Point {
 
 template <typename T> class Thread_Safe_Queue {
 private:
-  std::queue<T> queue;
+  std::deque<T> queue;
   std::mutex mutex;
   const size_t max_size;
 
@@ -89,7 +90,7 @@ public:
       return false;
     }
 
-    queue.push(point);
+    queue.push_back(point);
     lock.unlock();
     return true;
   }
@@ -101,7 +102,7 @@ public:
       return false;
     }
 
-    queue.push(std::move(point));
+    queue.push_back(std::move(point));
     lock.unlock();
     return true;
   }
@@ -116,12 +117,20 @@ public:
     return point;
   }
 
+  std::optional<std::pair<T, T>> front_two() {
+    std::unique_lock<std::mutex> lock(mutex);
+    if (queue.size() < 2) {
+      return std::nullopt;
+    }
+    return std::make_pair(queue[0], queue[1]);
+  }
+
   bool pop() {
     std::unique_lock<std::mutex> lock(mutex);
     if (queue.empty()) {
       return false;
     }
-    queue.pop();
+    queue.pop_front();
     lock.unlock();
     return true;
   }
@@ -135,12 +144,13 @@ public:
 class Trajectory_Controller {
 
 private:
-  Motion_Constraints motion_constraints;
-  Velocity_Profile velocity_profile;
+  Robot_Config config;
   PIDController linear_pid;
   PIDController angular_pid;
   double trajectory_time = 0.0;
   double sampling_rate = 1.0;
+  bool path_looping = true;
+  bool added_paths = false;
 
   bool (*sendVelocityCommand)(Linear_Velocity &, Angular_Velocity &);
   // bool (*getState)(Robot_State &);
@@ -153,24 +163,23 @@ private:
                                         Vector3d linear, Vector3d angular, double dt);
 
 public:
-  Trajectory_Controller(Motion_Constraints motion_constraints, Velocity_Profile velocity_profile,
-                        PIDController linear_pid, PIDController angular_pid, double sampling_rate)
-      : motion_constraints(motion_constraints), velocity_profile(velocity_profile),
-        linear_pid(linear_pid), angular_pid(angular_pid), sampling_rate(sampling_rate) {};
+  Trajectory_Controller(Robot_Config config, PIDController linear_pid, PIDController angular_pid,
+                        double sampling_rate)
+      : config(config), linear_pid(linear_pid), angular_pid(angular_pid),
+        sampling_rate(sampling_rate) {};
 
   // Trajectory_Controller(Motion_Constraints motion_constraints,
   //                   Velocity_Profile velocity_profile, double sampling_rate)
   // : motion_constraints(motion_constraints),
   //   velocity_profile(velocity_profile), sampling_rate(sampling_rate) {};
 
-  std::vector<Trajectory_Point> generate_trajectory(Ecef_Coord current, Ecef_Coord next,
-                                                    Robot_Config &config);
+  std::vector<Trajectory_Point> generate_trajectory(Ecef_Coord current, Ecef_Coord next);
   Pose get_current_pose();
   Velocity2d follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &trajectories,
                                Robot_State &state);
 
-  // void path_loop(Thread_Safe_Queue<Trajectory_Point> &trajectories);
-  void path_loop(Thread_Safe_Queue<Trajectory_Point> &trajectories, Ecef_Coord &current,
-                 Ecef_Coord &next, Robot_Config config);
+  void path_loop(Thread_Safe_Queue<Ecef_Coord> &path, std::vector<Ecef_Coord> &waypoints);
+  void trajectory_loop(Thread_Safe_Queue<Trajectory_Point> &trajectories,
+                       Thread_Safe_Queue<Ecef_Coord> &waypoints);
   void local_replanning();
 };

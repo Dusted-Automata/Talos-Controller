@@ -12,23 +12,23 @@
 
 enum class GaitType : uint8_t { Idle, Trot, Climb_stair, Trot_obstacle };
 enum class Go1_mode : uint8_t {
-  Idle,                    // idle, default stand
-  Force_stand,             // force stand (controlled by dBodyHeight + ypr)
-  Target_velocity_walking, // target velocity walking (controlled by velocity +
-                           // yawSpeed)
+  Idle,                             // idle, default stand
+  Force_stand,                      // force stand (controlled by dBodyHeight + ypr)
+  Target_velocity_walking,          // target velocity walking (controlled by velocity +
+                                    // yawSpeed)
   Target_position_walking_RESERVED, // target position walking (controlled by
                                     // position + ypr[0]), reserve
-  Path_mode_walking_RESERVED, // path mode walking (reserve for future release),
-                              // reserve
+  Path_mode_walking_RESERVED,       // path mode walking (reserve for future release),
+                                    // reserve
   Stand_down,
   Stand_up,
   Damping_mode,
   Recovery_stand,
   Backflip_RESREVE, // backflip, reserve
-  Jump_yaw, // jumpYaw, only left direction. Note, to use this mode, you need to
-            // set
-  Straight_hand //  straightHand. Note, to use this mode, you need to set mode =
-                //  1 first
+  Jump_yaw,         // jumpYaw, only left direction. Note, to use this mode, you need to
+                    // set
+  Straight_hand     //  straightHand. Note, to use this mode, you need to set mode =
+                    //  1 first
 };
 
 struct Path_Movement {
@@ -40,6 +40,8 @@ struct Path_Movement {
 };
 
 class Go1_Quadruped : Robot {
+  UT::HighCmd moveCmd(Velocity2d &trajectory);
+
 public:
   Go1_Quadruped(Trajectory_Controller t_c)
       : safe(UT::LeggedType::Go1),
@@ -62,14 +64,11 @@ public:
   float foot_raise_height;
   float body_height;
 
-  // void control_loop(Path_Movement &path, Trajectory_Controller &t_controller,
-  //                   Robot_Config &config, std::ofstream &file);
-
-  void control_loop(Path_Movement &path, Trajectory_Controller &t_controller,
-                    Robot_Config &config);
+  // void control_loop(Path_Movement &path, Trajectory_Controller &t_controller, Robot_Config
+  // &config);
   void UDPRecv();
   void UDPSend();
-  void send_velocity_command(Velocity2d cmd) override;
+  void send_velocity_command(Velocity2d velocity) override;
   void update_state() override;
   void read_sensors() override;
   Robot_State read_state() override;
