@@ -109,8 +109,11 @@ int main() {
   Trajectory_Controller controller(config.motion_constraints, vel_profile,
                                    config.hz);
 
+  Ecef_Coord current = waypoints[0];
+  Ecef_Coord next = waypoints[1];
+
   std::vector<Trajectory_Point> trajectories =
-      controller.generate_trajectory(waypoints, config);
+      controller.generate_trajectory(current, next, config);
 
   // std::vector<double> velocities =
   //     generate_velocity_profile(trajectories, robot_config);

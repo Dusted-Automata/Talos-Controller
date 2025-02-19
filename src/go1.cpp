@@ -1,87 +1,11 @@
+#include "go1.hpp"
 #include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
+#include "trajectory.hpp"
+#include "unitree_legged_sdk/comm.h"
 #include <iostream>
 #include <math.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <vector>
-// #include <Eigen/Core>
-// #include <Eigen/Geometry>
-#include "trajectory.cpp"
-#include "unitree_legged_sdk/comm.h"
-
-#define BOOST_BIND_GLOBAL_PLACEHOLDERS
-
-// using namespace UNITREE_LEGGED_SDK;
-#define UT UNITREE_LEGGED_SDK
-
-enum class GaitType : uint8_t { Idle, Trot, Climb_stair, Trot_obstacle };
-enum class Go1_mode : uint8_t {
-  Idle,                    // idle, default stand
-  Force_stand,             // force stand (controlled by dBodyHeight + ypr)
-  Target_velocity_walking, // target velocity walking (controlled by velocity +
-                           // yawSpeed)
-  Target_position_walking_RESERVED, // target position walking (controlled by
-                                    // position + ypr[0]), reserve
-  Path_mode_walking_RESERVED, // path mode walking (reserve for future release),
-                              // reserve
-  Stand_down,
-  Stand_up,
-  Damping_mode,
-  Recovery_stand,
-  Backflip_RESREVE, // backflip, reserve
-  Jump_yaw, // jumpYaw, only left direction. Note, to use this mode, you need to
-            // set
-  Straight_hand //  straightHand. Note, to use this mode, you need to set mode =
-                //  1 first
-};
-
-struct Path_Movement {
-  int trajectory_index;
-  int waypoint_index;
-  int relative_motiontime;
-  std::vector<Ecef_Coord> &waypoints;
-  std::vector<Trajectory_Point> trajectories;
-};
-
-class Go1_Quadruped {
-public:
-  Go1_Quadruped()
-      : safe(UT::LeggedType::Go1),
-        // udp(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082) {
-        udp(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082) {
-    udp.InitCmdData(cmd);
-  }
-
-  UT::Safety safe;
-  UT::UDP udp;
-  UT::HighState state = {0};
-  UT::LowState low_state = {0};
-
-  UT::HighCmd cmd = {0};
-
-  Go1_mode mode = Go1_mode::Force_stand;
-  GaitType gait_type = GaitType::Trot;
-  uint8_t speed_level = 0;
-  float foot_raise_height;
-  float body_height;
-
-  void control_loop(Path_Movement &path, Trajectory_Controller &t_controller,
-                    Robot_Config &config, std::ofstream &file);
-  void UDPRecv();
-  void UDPSend();
-
-  int motiontime = 0;
-  int relative_motiontime = 0;
-  float dt = 0.002; // 0.001~0.01
-
-  // Eigen::Matrix4d go1_config_matrix[4];
-  const double trunk_length = 0.3762 / 2;
-  const double trunk_width = 0.0935 / 2;
-  const double l1 = 0.;
-  const double l2 = 0.080; // hip
-  const double l3 = 0.213; // thigh
-  const double l4 = 0.213; // calf
-};
 
 void Go1_Quadruped::UDPRecv() { udp.Recv(); }
 
@@ -101,49 +25,39 @@ UT::HighCmd defaultCmd() {
   return cmd;
 }
 
-UT::HighCmd run_through(UT::HighCmd &cmd, Trajectory_Point &trajectory) {
-  //   printf("%d   %f\n", motiontime, state.imu.quaternion[2]);
+UT::HighCmd moveCmd(Trajectory_Point &trajectory) {
+  UT::HighCmd cmd = defaultCmd();
 
   cmd.mode = 2;
   cmd.gaitType = 1;
   cmd.velocity[0] = trajectory.velocity.linear.x();
   cmd.yawSpeed = trajectory.velocity.angular.z();
-  // // cmd.velocity[0] = 0.2;
-  // cmd.yawSpeed = 0.3;
-  // cmd.footRaiseHeight = 0.1;
   return cmd;
 }
 
+void Go1_Quadruped::send_velocity_command(Velocity2d cmd) {};
+void Go1_Quadruped::update_state() {};
+void Go1_Quadruped::read_sensors() {};
+Robot_State Go1_Quadruped::read_state() {
+  Robot_State s;
+  s.position = state.position;
+  s.velocity = state.velocity;
+  s.yawSpeed = state.yawSpeed;
+  return s;
+};
+
 void Go1_Quadruped::control_loop(Path_Movement &path,
                                  Trajectory_Controller &t_controller,
-                                 Robot_Config &config, std::ofstream &file) {
+                                 Robot_Config &config) {
   udp.GetRecv(state);
-  // TODO have this folded into Trajectory_Controller
-  if (path.trajectory_index >= path.trajectories.size()) {
-    // if (path.waypoint_index >= path.waypoints.size()) {
-    //   path.waypoint_index = 0;
-    // }
-    path.trajectories = t_controller.generate_trajectory(
-        path.waypoints[path.waypoint_index],
-        path.waypoints[path.waypoint_index + 1], config);
-    relative_motiontime = 0;
-    path.trajectory_index = 0;
-    path.waypoint_index = (path.waypoint_index + 1) % path.waypoints.size();
-  }
-  if (path.trajectories[path.trajectory_index].dt <
-      ((double)relative_motiontime / 1000))
-    path.trajectory_index++;
 
-  cmd = run_through(cmd, path.trajectories[path.trajectory_index]);
-
-  file << "DT: " << motiontime << " VEL: " << cmd.velocity[0]
-       << " YAW: " << cmd.yawSpeed << " | "
-       << "S.VEL: " << state.velocity[0] << " S.YAW: " << state.yawSpeed
-       << std::endl;
+  // file << "DT: " << motiontime << " VEL: " << cmd.velocity[0]
+  //      << " YAW: " << cmd.yawSpeed << " | "
+  //      << "S.VEL: " << state.velocity[0] << " S.YAW: " << state.yawSpeed
+  //      << std::endl;
 
   udp.SetSend(cmd);
   motiontime += 2;
-  relative_motiontime += 2;
 }
 
 int main(void) {
@@ -152,7 +66,6 @@ int main(void) {
             << std::endl
             << "Press Enter to continue..." << std::endl;
   std::cin.ignore();
-  Go1_Quadruped robot;
 
   // std::vector<Ecef_Coord> waypoints = {
   //     {4100175.625135626, 476368.7899695045, 4846344.356704135},
@@ -195,14 +108,14 @@ int main(void) {
 
   Velocity_Profile vel_profile = {.acceleration_rate = 200.0,
                                   .deceleration_rate = 200.0};
-  // PIDGains linear_gains = {1.0, 0.0, 0.0};
-  // PIDController linear_pid(linear_gains);
-  // PIDGains angular_gains = {1.0, 0.0, 0.0};
-  // PIDController angular_pid(angular_gains);
-  // Trajectory_Controller controller(config.motion_constraints, vel_profile,
-  //                                  linear_pid, angular_pid, config.hz);
+  PIDGains linear_gains = {1.0, 0.0, 0.0};
+  PIDController linear_pid(linear_gains);
+  PIDGains angular_gains = {1.0, 0.0, 0.0};
+  PIDController angular_pid(angular_gains);
   Trajectory_Controller controller(config.motion_constraints, vel_profile,
-                                   config.hz);
+                                   linear_pid, angular_pid, config.hz);
+  // Trajectory_Controller controller(config.motion_constraints, vel_profile,
+  //                                  config.hz);
   Path_Movement path_movement = {.trajectory_index = 0,
                                  .waypoint_index = 0,
                                  .relative_motiontime = 0,
@@ -213,13 +126,19 @@ int main(void) {
       waypoints_square[0], waypoints_square[1], config);
   std::cout << "T SIZE: " << trajectories.size() << std::endl;
 
+  Go1_Quadruped robot(controller);
+
   // saveToFile("trajectories", trajectories);
-  std::ofstream info("go1_info");
+  // std::ofstream info("go1_info");
+
+  // UT::LoopFunc loop_control("control_loop", robot.dt,
+  //                           boost::bind(&Go1_Quadruped::control_loop, &robot,
+  //                                       path_movement, controller, config,
+  //                                       boost::ref(info)));
 
   UT::LoopFunc loop_control("control_loop", robot.dt,
                             boost::bind(&Go1_Quadruped::control_loop, &robot,
-                                        path_movement, controller, config,
-                                        boost::ref(info)));
+                                        path_movement, controller, config));
   UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
                             boost::bind(&Go1_Quadruped::UDPRecv, &robot));
   UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,
