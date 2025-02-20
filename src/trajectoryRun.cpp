@@ -7,7 +7,7 @@ class testRobot : public Robot {
 
 public:
   testRobot(Trajectory_Controller trajectory_controller) : Robot(trajectory_controller) {}
-  void send_velocity_command(Velocity2d cmd) override {};
+  void send_velocity_command(Velocity2d &cmd) override {};
   void update_state() override {};
   void read_sensors() override {};
   Robot_State read_state() override { return {}; };
@@ -61,7 +61,7 @@ int main() {
                 std::ref(robot.trajectory_queue), std::ref(robot.path_queue));
   std::function<void()> bound_control_loop = std::bind(&testRobot::control_loop, &robot);
   std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
-  std::thread trajectory_loop = std::thread(worker_function, bound_trajectory_loop, 30);
+  std::thread trajectory_loop = std::thread(worker_function, bound_trajectory_loop, 100);
   std::thread control_loop_thread = std::thread(worker_function, bound_control_loop, 2);
   // std::thread control_loop_thread = std::thread(&testRobot::control_loop, &robot);
 

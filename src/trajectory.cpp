@@ -183,16 +183,21 @@ Trajectory_Controller::follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &tr
     point = trajectories.front();
     if (!point)
       return cmd;
+    std::cout << "SETTING NEW SETPOINTS" << std::endl;
     linear_pid.setpoint = point.value().velocity.linear.x();
     angular_pid.setpoint = point.value().velocity.angular.z();
   }
 
-  std::cout << "DT: " << point.value().dt << " | t_dt: " << trajectory_time
-            << " lin: " << point.value().velocity.linear.x()
-            << " ang: " << point.value().velocity.angular.z() << std::endl;
+  // std::cout << "DT: " << point.value().dt << " | t_dt: " << trajectory_time
+  //           << " lin: " << point.value().velocity.linear.x()
+  //           << " ang: " << point.value().velocity.angular.z();
 
   cmd.linear.x() = linear_pid.update(state.velocity[0], trajectory_time);
   cmd.angular.z() = angular_pid.update(state.yawSpeed, trajectory_time);
+
+  // cmd.linear.x() = point.value().velocity.linear.x();
+  // cmd.angular.z() = point.value().velocity.angular.z();
+  std::cout << " CMD: " << cmd.linear.transpose() << " , " << cmd.angular.transpose() << std::endl;
   // TODO: HZ from Robot
   trajectory_time += 0.002;
   return cmd;
@@ -203,7 +208,7 @@ void Trajectory_Controller::trajectory_loop(Thread_Safe_Queue<Trajectory_Point> 
   std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = waypoints.front_two();
   if (trajectories.empty()) {
     if (path.has_value()) {
-      std::cout << "EMPTY TRAJECTORIES" << std::endl;
+      // std::cout << "EMPTY TRAJECTORIES" << std::endl;
       std::vector<Trajectory_Point> trajectory =
           generate_trajectory(path.value().first, path.value().second);
       for (auto &point : trajectory) {
@@ -219,6 +224,7 @@ void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
   if (waypoints.empty()) {
     return;
   }
+  // std::cout << path.size() << "  WAYPOINTS" << std::endl;
   if (!added_paths) {
     std::cout << "EMPTY FIRST WAYPOINTS" << std::endl;
     for (Ecef_Coord &waypoint : waypoints) {
@@ -229,8 +235,8 @@ void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
   }
 
   // FIXME: One waypoint does not get popped off, so it wont loop
-  if (path.empty() && path_looping) {
-    std::cout << "EMPTY WAYPOINTS" << std::endl;
+  if ((path.size() == 1) && path_looping) {
+    std::cout << path.size() << " EMPTY WAYPOINTS" << std::endl;
     for (Ecef_Coord &waypoint : waypoints) {
       path.push(waypoint);
     }

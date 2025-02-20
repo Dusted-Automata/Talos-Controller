@@ -31,15 +31,7 @@ enum class Go1_mode : uint8_t {
                     //  1 first
 };
 
-struct Path_Movement {
-  int trajectory_index;
-  int waypoint_index;
-  int relative_motiontime;
-  std::vector<Ecef_Coord> &waypoints;
-  std::vector<Trajectory_Point> trajectories;
-};
-
-class Go1_Quadruped : Robot {
+class Go1_Quadruped : public Robot {
   UT::HighCmd moveCmd(Velocity2d &trajectory);
 
 public:
@@ -64,11 +56,9 @@ public:
   float foot_raise_height;
   float body_height;
 
-  // void control_loop(Path_Movement &path, Trajectory_Controller &t_controller, Robot_Config
-  // &config);
   void UDPRecv();
   void UDPSend();
-  void send_velocity_command(Velocity2d velocity) override;
+  void send_velocity_command(Velocity2d &velocity) override;
   void update_state() override;
   void read_sensors() override;
   Robot_State read_state() override;

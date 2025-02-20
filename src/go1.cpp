@@ -26,17 +26,18 @@ UT::HighCmd defaultCmd() {
 }
 
 UT::HighCmd Go1_Quadruped ::moveCmd(Velocity2d &velocity) {
-  UT::HighCmd cmd = defaultCmd();
-
+  // UT::HighCmd cmd = defaultCmd();
+  //
   cmd.mode = 2;
   cmd.gaitType = 1;
   cmd.velocity[0] = velocity.linear.x();
+  // cmd.velocity[0] = 0.6;
   cmd.yawSpeed = velocity.angular.z();
   return cmd;
 }
 
-void Go1_Quadruped::send_velocity_command(Velocity2d velocity) {
-  UT::HighCmd cmd = moveCmd(velocity);
+void Go1_Quadruped::send_velocity_command(Velocity2d &velocity) {
+  moveCmd(velocity);
   udp.SetSend(cmd);
 };
 
@@ -51,14 +52,16 @@ Robot_State Go1_Quadruped::read_state() {
   return s;
 };
 
-// void Go1_Quadruped::control_loop(Path_Movement &path, Trajectory_Controller &t_controller,
-//                                  Robot_Config &config) {
+// void Go1_Quadruped::control_loop() {
 //
+//   udp.GetRecv(state);
+//   Velocity2d velocity = {.linear = {}, .angular = {}};
+//   UT::HighCmd cmd = moveCmd(velocity);
+//   udp.SetSend(cmd);
 //   // file << "DT: " << motiontime << " VEL: " << cmd.velocity[0]
 //   //      << " YAW: " << cmd.yawSpeed << " | "
 //   //      << "S.VEL: " << state.velocity[0] << " S.YAW: " << state.yawSpeed
 //   //      << std::endl;
-//
 // }
 
 int main(void) {
@@ -105,15 +108,20 @@ int main(void) {
 
   };
 
-  PIDGains linear_gains = {1.0, 0.0, 0.0};
+  PIDGains linear_gains = {0.4, 0.0, 0.0};
   PIDController linear_pid(linear_gains);
-  PIDGains angular_gains = {1.0, 0.0, 0.0};
+  linear_pid.output_max = 10, 0;
+  linear_pid.output_min = 0, 0;
+  PIDGains angular_gains = {0.2, 0.0, 0.0};
   PIDController angular_pid(angular_gains);
+  angular_pid.output_max = 10, 0;
+  angular_pid.output_min = 0, 0;
   Trajectory_Controller controller(config, linear_pid, angular_pid, config.hz);
   // Trajectory_Controller controller(config.motion_constraints, vel_profile,
   //                                  config.hz);
 
   Go1_Quadruped robot(controller);
+  robot.trajectory_controller.path_looping = true;
 
   // saveToFile("trajectories", trajectories);
   // std::ofstream info("go1_info");
@@ -123,19 +131,24 @@ int main(void) {
   //                                       path_movement, controller, config,
   //                                       boost::ref(info)));
 
-  // auto bound_path_loop =
-  //     std::bind(&Trajectory_Controller::path_loop, &controller, std::ref(robot.trajectory_queue),
-  //               std::ref(current), std::ref(next), std::ref(config));
-  // std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
+  UT::LoopFunc loop_control("control_loop", robot.dt,
+                            boost::bind(&Go1_Quadruped::control_loop, &robot));
 
-  UT::LoopFunc loop_control("control_loop", robot.dt, boost::bind(&Robot::control_loop, &robot));
-  // std::thread path_loop("path_loop", 30, boost::bind(&Trajectory_Controller::path_loop,
-  // &controller));
+  UT::LoopFunc path_loop("path_loop", 0.030,
+                         boost::bind(&Trajectory_Controller::path_loop, &controller,
+                                     boost::ref(robot.path_queue), waypoints_square));
+  UT::LoopFunc traj_loop("traj_loop", 0.030,
+                         boost::bind(&Trajectory_Controller::trajectory_loop, &controller,
+                                     boost::ref(robot.trajectory_queue),
+                                     boost::ref(robot.path_queue)));
+
   UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3, boost::bind(&Go1_Quadruped::UDPRecv, &robot));
   UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3, boost::bind(&Go1_Quadruped::UDPSend, &robot));
 
   loop_udpSend.start();
   loop_udpRecv.start();
+  path_loop.start();
+  traj_loop.start();
   loop_control.start();
 
   while (1) {

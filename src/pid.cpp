@@ -1,18 +1,8 @@
 #include "pid.hpp"
 #include <algorithm>
+#include <iostream>
 
 double PIDController::update(double measured_value, double dt) {
-  // auto current_time = std::chrono::steady_clock::now();
-
-  // Calculate time delta
-  // double dt;
-  // if (first_update_) {
-  //   dt = 0.0;
-  //   first_update_ = false;
-  // } else {
-  //   dt = std::chrono::duration<double>(current_time - last_time_).count();
-  // }
-  // last_time_ = current_time;
 
   double error = setpoint - measured_value;
   double p_term = gains.k_p * error;
@@ -23,7 +13,6 @@ double PIDController::update(double measured_value, double dt) {
   integral = std::max(integral_min, std::min(integral_max, integral));
   double i_term = gains.k_i * integral;
 
-  // Derivative term (on measurement to avoid derivative kick)
   double derivative;
   if (dt > 0.0) {
     derivative = (error - prev_error) / dt;
@@ -32,13 +21,11 @@ double PIDController::update(double measured_value, double dt) {
   }
   double d_term = gains.k_d * derivative;
 
-  // Calculate total output
   double output = p_term + i_term + d_term;
 
-  // Apply output constraints
   output = std::max(output_min, std::min(output_max, output));
 
-  // Store error for next iteration
+  std::cout << i_term << std::endl;
   prev_error = error;
 
   return output;

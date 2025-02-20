@@ -25,7 +25,6 @@
 class Robot {
   int motiontime = 0;
   float hz = 500;
-  Trajectory_Controller trajectory_controller;
   // Thread_Safe_Queue<Trajectory_Point> trajectory_queue;
   Thread_Safe_Queue<Ecef_Coord> waypoint_queue;
   Robot_Config config = {};
@@ -39,8 +38,9 @@ public:
   virtual ~Robot() = default;
   Thread_Safe_Queue<Trajectory_Point> trajectory_queue;
   Thread_Safe_Queue<Ecef_Coord> path_queue;
+  Trajectory_Controller trajectory_controller;
 
-  virtual void send_velocity_command(Velocity2d cmd) = 0;
+  virtual void send_velocity_command(Velocity2d &cmd) = 0;
   virtual void update_state() = 0;
   void control_loop();
   virtual Robot_State read_state() = 0;

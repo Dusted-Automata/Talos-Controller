@@ -139,6 +139,11 @@ public:
     std::unique_lock<std::mutex> lock(mutex);
     return queue.empty();
   }
+
+  size_t size() {
+    std::unique_lock<std::mutex> lock(mutex);
+    return queue.size();
+  }
 };
 
 class Trajectory_Controller {
@@ -149,7 +154,6 @@ private:
   PIDController angular_pid;
   double trajectory_time = 0.0;
   double sampling_rate = 1.0;
-  bool path_looping = true;
   bool added_paths = false;
 
   bool (*sendVelocityCommand)(Linear_Velocity &, Angular_Velocity &);
@@ -167,11 +171,7 @@ public:
                         double sampling_rate)
       : config(config), linear_pid(linear_pid), angular_pid(angular_pid),
         sampling_rate(sampling_rate) {};
-
-  // Trajectory_Controller(Motion_Constraints motion_constraints,
-  //                   Velocity_Profile velocity_profile, double sampling_rate)
-  // : motion_constraints(motion_constraints),
-  //   velocity_profile(velocity_profile), sampling_rate(sampling_rate) {};
+  bool path_looping = true;
 
   std::vector<Trajectory_Point> generate_trajectory(Ecef_Coord current, Ecef_Coord next);
   Pose get_current_pose();
