@@ -44,8 +44,12 @@ int main() {
   };
   PIDGains linear_gains = {1.0, 0.0, 0.0};
   PIDController linear_pid(linear_gains);
+  linear_pid.output_max = 10, 0;
+  linear_pid.output_min = 0, 0;
   PIDGains angular_gains = {1.0, 0.0, 0.0};
   PIDController angular_pid(angular_gains);
+  angular_pid.output_max = 10, 0;
+  angular_pid.output_min = 0, 0;
   Trajectory_Controller controller(config, linear_pid, angular_pid, config.hz);
 
   Ecef_Coord current = waypoints[0];
