@@ -20,7 +20,8 @@ include_directories(src)
 link_directories(lib/cpp/${ARCH})
 
 set(EXTRA_LIBS -pthread libunitree_legged_sdk.a)
-set(CMAKE_CXX_FLAGS "-O3 -fPIC")
+set(CMAKE_CXX_FLAGS "-O3 -fPIC -ggdb")
+# set(CMAKE_CXX_FLAGS "-O3 -fPIC -Wall -Wextra -ggdb")
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(catkin QUIET)
@@ -35,15 +36,15 @@ find_package(Eigen3 REQUIRED)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # one pc one process
-add_executable(controller src/go1.cpp src/trajectory.cpp src/robot.cpp src/pid.cpp)
-# add_executable(sim ./tools/sim.cpp)
-add_executable(trajectory_run src/trajectoryRun.cpp src/trajectory.cpp src/robot.cpp src/pid.cpp)
-target_link_libraries(controller ${EXTRA_LIBS})
-target_include_directories(controller PRIVATE ${EIGEN3_INCLUDE_DIR})
-# target_link_libraries(sim -lraylib -lGL -lm -lpthread -ldl -lrt )
-# target_include_directories(sim PRIVATE ${EIGEN3_INCLUDE_DIR})
-target_link_libraries(trajectory_run ${EXTRA_LIBS})
-target_include_directories(trajectory_run PRIVATE ${EIGEN3_INCLUDE_DIR})
+# add_executable(controller src/go1.cpp src/trajectory.cpp src/robot.cpp src/pid.cpp src/mppi.cpp)
+add_executable(sim tools/sim.cpp src/robot.cpp src/mppi.cpp src/trajectory.cpp src/pid.cpp)
+# add_executable(trajectory_run src/trajectoryRun.cpp src/trajectory.cpp src/robot.cpp src/pid.cpp)
+# target_link_libraries(controller ${EXTRA_LIBS})
+# target_include_directories(controller PRIVATE ${EIGEN3_INCLUDE_DIR})
+target_link_libraries(sim -lraylib -lGL -lm -lpthread -ldl -lrt )
+target_include_directories(sim PRIVATE ${EIGEN3_INCLUDE_DIR})
+# target_link_libraries(trajectory_run ${EXTRA_LIBS})
+# target_include_directories(trajectory_run PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 
 # install
