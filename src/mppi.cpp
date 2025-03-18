@@ -62,21 +62,19 @@ double MPPI_Controller::evaluateTrajectory(Pose_State &initial_state, Trajectory
     {
         state = model.simulate(state, trajectory.controls.velocities[i], dt);
 
-        // Calculate desired heading direction (vector from current position to target)
-        // Eigen::Vector3d to_target = target_position - state.position;
-        Eigen::Vector3d to_target = state.orientation * (target_position - state.position);
-        to_target.normalize();
-
-        Eigen::Vector3d robot_forward = Eigen::Vector3d::UnitX().normalized();
-
-        double dot_val = robot_forward.dot(to_target);
-        dot_val = std::max(-1.0, std::min(1.0, dot_val));
-        double angle = std::acos(dot_val);
+        Ecef_Coord difference = target_position - state.position;
+        double azimuth_rad_world = atan2(difference.y(), difference.x());
+        double azimuth_rad_robot = atan2(state.orientation(1, 0), state.orientation(0, 0));
+        double azimuth_rad = azimuth_rad_world - azimuth_rad_robot;
+        if (azimuth_rad > M_PI)
+            azimuth_rad -= 2 * M_PI;
+        if (azimuth_rad < -M_PI)
+            azimuth_rad += 2 * M_PI;
 
         // Compute orientation cost (dot product gives angle difference)
         // 1 - dot product gives 0 when perfectly aligned, 2 when facing opposite
         // double orientation_cost = (1.0 - robot_forward.dot(to_target)) * 0.3;
-        double orientation_cost = angle * 0.3;
+        double orientation_cost = azimuth_rad * 0.3;
         double position_cost = (state.position - target_position).norm();
         double velocity_cost = state.velocity.linear.norm() * 0.1;
         double angular_vel_cost = state.velocity.angular.norm() * 0.2;
@@ -84,7 +82,8 @@ double MPPI_Controller::evaluateTrajectory(Pose_State &initial_state, Trajectory
                               trajectory.controls.velocities[i].angular.norm() * 0.3;
 
         // Increase cost weight for later time steps to prioritize reaching the goal
-        double time_weight = 1.0 + 0.1 * i;
+        // double time_weight = 1.0 + 0.1 * i;
+        double time_weight = 1.0;
 
         total_cost += time_weight * (position_cost + orientation_cost + velocity_cost +
                                      angular_vel_cost + control_cost);
