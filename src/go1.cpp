@@ -45,17 +45,17 @@ void Go1_Quadruped::send_velocity_command(Velocity2d &velocity)
     udp.SetSend(cmd);
 };
 
-void Go1_Quadruped::update_state() {};
-void Go1_Quadruped::read_sensors() {};
+void Go1_Quadruped::update_state(){};
+void Go1_Quadruped::read_sensors(){};
 Pose_State Go1_Quadruped::read_state()
 {
     udp.GetRecv(state);
     Pose_State ps;
     // Robot_State s;
-    ps.orientation.w() = state.imu.quaternion[0];
-    ps.orientation.x() = state.imu.quaternion[1];
-    ps.orientation.y() = state.imu.quaternion[2];
-    ps.orientation.z() = state.imu.quaternion[3];
+    /*ps.orientation.w() = state.imu.quaternion[0];*/
+    /*ps.orientation.x() = state.imu.quaternion[1];*/
+    /*ps.orientation.y() = state.imu.quaternion[2];*/
+    /*ps.orientation.z() = state.imu.quaternion[3];*/
     // ps.position.x() = state.position[0];
     // ps.position.y() = state.position[1];
     // ps.position.z() = state.position[2];
@@ -142,8 +142,9 @@ int main(void)
     // Trajectory_Controller controller(config.motion_constraints, vel_profile,
     //                                  config.hz);
 
-    Go1_Quadruped robot(t_c, m_c);
-    robot.trajectory_controller.path_looping = true;
+    /*Go1_Quadruped robot(t_c, m_c);*/
+    Go1_Quadruped robot(t_c);
+    robot.controller.path_looping = true;
 
     // saveToFile("trajectories", trajectories);
     // std::ofstream info("go1_info");
@@ -159,11 +160,11 @@ int main(void)
     UT::LoopFunc path_loop("path_loop", 0.030,
                            boost::bind(&Trajectory_Controller::path_loop, &t_c,
                                        boost::ref(robot.path_queue), waypoints_square));
-    UT::LoopFunc traj_loop("traj_loop", 0.030,
-                           boost::bind(&Trajectory_Controller::trajectory_loop, &t_c,
-                                       boost::ref(robot.trajectory_queue),
-                                       boost::ref(robot.path_queue)));
-
+    /*UT::LoopFunc traj_loop("traj_loop", 0.030,*/
+    /*                       boost::bind(&Trajectory_Controller::trajectory_loop, &t_c,*/
+    /*                                   boost::ref(robot.trajectory_queue),*/
+    /*                                   boost::ref(robot.path_queue)));*/
+    /**/
     UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
                               boost::bind(&Go1_Quadruped::UDPRecv, &robot));
     UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,
@@ -172,7 +173,7 @@ int main(void)
     loop_udpSend.start();
     loop_udpRecv.start();
     path_loop.start();
-    traj_loop.start();
+    /*traj_loop.start();*/
     loop_control.start();
 
     while (1)

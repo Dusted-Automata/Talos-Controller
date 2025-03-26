@@ -146,6 +146,14 @@ void MPPI_Controller::updateNominalTrajectory(const std::vector<Trajectory> &tra
     }
 }
 
+Velocity2d MPPI_Controller::get_cmd(Pose_State &state)
+{
+    update(state);
+    Velocity2d cmd = nominal_controls.velocities[0];
+    shiftControlHorizon();
+    return cmd;
+}
+
 class QuadrupedRobot
 {
   public:

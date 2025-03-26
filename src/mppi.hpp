@@ -61,7 +61,7 @@ struct Trajectory
     double weight;
 };
 
-class MPPI_Controller
+class MPPI_Controller : public Controller
 {
   private:
     int horizon_steps;
@@ -104,7 +104,7 @@ class MPPI_Controller
 
     void update(Pose_State &current_state);
     void setTarget(const Ecef_Coord &target) { target_position = target; }
-    Velocity2d getCmd() { return nominal_controls.velocities[0]; }
+    Velocity2d get_cmd(Pose_State &state) override;
     void shiftControlHorizon();
     double dt;
     std::vector<Trajectory> perturbed_trajectories;

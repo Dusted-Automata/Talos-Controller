@@ -1,4 +1,5 @@
 #pragma once
+#include "controller.hpp"
 #include "pid.hpp"
 #include "types.hpp"
 #include <deque>
@@ -91,7 +92,7 @@ template <typename T> class Thread_Safe_Queue
     }
 };
 
-class Trajectory_Controller
+class Trajectory_Controller : public Controller
 {
 
   private:
@@ -116,16 +117,16 @@ class Trajectory_Controller
     Trajectory_Controller(Robot_Config config, PIDController linear_pid, PIDController angular_pid,
                           double sampling_rate)
         : config(config), linear_pid(linear_pid), angular_pid(angular_pid),
-          sampling_rate(sampling_rate) {};
-    bool path_looping = true;
+          sampling_rate(sampling_rate){};
 
     std::vector<Trajectory_Point> generate_trajectory(Ecef_Coord current, Ecef_Coord next);
     Pose get_current_pose();
-    Velocity2d follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &trajectories,
-                                 Robot_State &state);
+    Velocity2d follow_trajectory(Pose_State &state);
 
     void path_loop(Thread_Safe_Queue<Ecef_Coord> &path, std::vector<Ecef_Coord> &waypoints);
-    void trajectory_loop(Thread_Safe_Queue<Trajectory_Point> &trajectories,
-                         Thread_Safe_Queue<Ecef_Coord> &waypoints);
+    void trajectory_loop(Thread_Safe_Queue<Ecef_Coord> &waypoints);
     void local_replanning();
+    Velocity2d get_cmd(Pose_State &state) override;
+
+    Thread_Safe_Queue<Trajectory_Point> trajectories;
 };

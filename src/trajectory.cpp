@@ -1,4 +1,5 @@
 #include "trajectory.hpp"
+#include "types.hpp"
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -164,14 +165,16 @@ std::vector<Trajectory_Point> Trajectory_Controller::generate_trajectory(Ecef_Co
         std::vector<Trajectory_Point> ramp_down = trajectory_ramp_down(step);
         trajectory.insert(trajectory.end(), ramp_down.begin(), ramp_down.end());
     }
+    for (auto traj : trajectory)
+    {
+        std::cout << traj.dt << std::endl;
+    }
     return trajectory;
 }
 
 Pose Trajectory_Controller::get_current_pose() { return {}; }
 
-Velocity2d
-Trajectory_Controller::follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &trajectories,
-                                         Robot_State &state)
+Velocity2d Trajectory_Controller::follow_trajectory(Pose_State &state)
 {
     Velocity2d cmd = {.linear = Linear_Velocity().setZero(),
                       .angular = Angular_Velocity().setZero()};
@@ -205,27 +208,26 @@ Trajectory_Controller::follow_trajectory(Thread_Safe_Queue<Trajectory_Point> &tr
     //           << " lin: " << point.value().velocity.linear.x()
     //           << " ang: " << point.value().velocity.angular.z();
 
-    cmd.linear.x() = linear_pid.update(state.velocity[0], trajectory_time);
-    cmd.angular.z() = angular_pid.update(state.yawSpeed, trajectory_time);
+    /*cmd.linear.x() = linear_pid.update(state.velocity.linear.x(), trajectory_time);*/
+    /*cmd.angular.z() = angular_pid.update(state.velocity.angular.z(), trajectory_time);*/
 
-    // cmd.linear.x() = point.value().velocity.linear.x();
-    // cmd.angular.z() = point.value().velocity.angular.z();
-    std::cout << " CMD: " << cmd.linear.transpose() << " , " << cmd.angular.transpose()
-              << std::endl;
+    cmd.linear.x() = point.value().velocity.linear.x();
+    cmd.angular.z() = point.value().velocity.angular.z();
+    /*std::cout << " CMD: " << cmd.linear.transpose() << " , " << cmd.angular.transpose()*/
+    /*          << std::endl;*/
     // TODO: HZ from Robot
     trajectory_time += 0.002;
     return cmd;
 }
 
-void Trajectory_Controller::trajectory_loop(Thread_Safe_Queue<Trajectory_Point> &trajectories,
-                                            Thread_Safe_Queue<Ecef_Coord> &waypoints)
+void Trajectory_Controller::trajectory_loop(Thread_Safe_Queue<Ecef_Coord> &waypoints)
 {
     std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = waypoints.front_two();
     if (trajectories.empty())
     {
         if (path.has_value())
         {
-            // std::cout << "EMPTY TRAJECTORIES" << std::endl;
+            std::cout << "EMPTY TRAJECTORIES" << std::endl;
             std::vector<Trajectory_Point> trajectory =
                 generate_trajectory(path.value().first, path.value().second);
             for (auto &point : trajectory)
@@ -250,7 +252,8 @@ void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
         std::cout << "EMPTY FIRST WAYPOINTS" << std::endl;
         for (Ecef_Coord &waypoint : waypoints)
         {
-            std::cout << "EMPTY TRAJECTORIES" << std::endl;
+            std::cout << "Adding Waypoints!" << std::endl;
+            std::cout << waypoint.transpose() << std::endl;
             path.push(waypoint);
         }
         added_paths = true;
@@ -262,12 +265,23 @@ void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
         std::cout << path.size() << " EMPTY WAYPOINTS" << std::endl;
         for (Ecef_Coord &waypoint : waypoints)
         {
+            std::cout << "Adding Waypoints!" << std::endl;
+            std::cout << waypoint.transpose() << std::endl;
             path.push(waypoint);
         }
     }
 }
 
 void Trajectory_Controller::local_replanning() {}
+
+Velocity2d Trajectory_Controller::get_cmd(Pose_State &state)
+{
+
+    // Path_Movement path = readPath();
+    // Thread_Safe_Queue<Trajectory_Point> trajectories = readPath();
+    Velocity2d cmd = follow_trajectory(state);
+    return cmd;
+}
 
 static bool saveToFile(const std::string &filename, const std::vector<Ecef_Coord> &data)
 {

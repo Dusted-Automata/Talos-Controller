@@ -9,10 +9,20 @@
 #include "raymath.h"
 #include <iostream>
 #include <stdio.h>
+#include <thread>
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
 #define ROBOT_SIZE 20.0
+
+void worker_function(std::function<void()> callback, int period_ms)
+{
+    while (1)
+    {
+        callback();
+        std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
+    }
+}
 
 void DrawAbsoluteGrid(Camera2D camera, float gridStep)
 {
@@ -53,7 +63,7 @@ class Quadruped : public Robot
 {
 
   public:
-    Quadruped(Trajectory_Controller t_c, MPPI_Controller m_c) : Robot(t_c, m_c)
+    Quadruped(Controller &controller) : Robot(controller)
     { // horizon_steps, num_samples, dt, temperature
 
         // Initialize robot state
@@ -85,11 +95,11 @@ class Quadruped : public Robot
     }
 
     // Set a new target position for the robot
-    void setTargetPosition(const Ecef_Coord &target)
-    {
-        std::cout << "Setting new target: " << target.transpose() << std::endl;
-        mppi_controller.setTarget(target);
-    }
+    /*void setTargetPosition(const Ecef_Coord &target)*/
+    /*{*/
+    /*    std::cout << "Setting new target: " << target.transpose() << std::endl;*/
+    /*    mppi_controller.setTarget(target);*/
+    /*}*/
 
     // Apply a disturbance to the robot (e.g., someone pushing it)
     void applyDisturbance(const Eigen::Vector3d &force, const Eigen::Vector3d &torque)
@@ -108,8 +118,8 @@ class Quadruped : public Robot
         move_robot(pose_state, velocity);
     };
 
-    void read_sensors() override {};
-    void update_state() override {};
+    void read_sensors() override{};
+    void update_state() override{};
 
     Pose_State read_state() override { return pose_state; };
 };
@@ -171,6 +181,55 @@ void showcaseTrajectory(Pose_State state, Control_Sequence controls, double dt, 
     }
 }
 
+// void simbot_mpc(Quadruped &robot)
+// {
+//
+//     robot.controller.dt = GetFrameTime();
+//     robot.control_loop();
+//
+//     {
+//         Eigen::Matrix3d R = robot.pose_state.orientation.rotation();
+//         double yaw = atan2(R(1, 0), R(0, 0));
+//         Rectangle bot = {static_cast<float>(robot.pose_state.position.x()),
+//                          static_cast<float>(-robot.pose_state.position.y()), 2.0, 1.0};
+//         Vector2 origin = {2.0 / 2.0, 1.0 / 2.0};
+//         DrawRectanglePro(bot, origin, (-(yaw * 180) / M_PI), RED);
+//
+//         for (auto trajectory : robot.controller.perturbed_trajectories)
+//         {
+//
+//             showcaseTrajectory(robot.pose_state, trajectory.controls, GetFrameTime(), 0.1, BLUE);
+//         }
+//         showcaseTrajectory(robot.pose_state, robot.controller.nominal_controls, GetFrameTime(),
+//         0.1,
+//                            ORANGE);
+//     }
+// }
+
+void simbot_linear(Quadruped &robot)
+{
+
+    robot.control_loop();
+
+    {
+        Eigen::Matrix3d R = robot.pose_state.orientation.rotation();
+        double yaw = atan2(R(1, 0), R(0, 0));
+        Rectangle bot = {static_cast<float>(robot.pose_state.position.x()),
+                         static_cast<float>(-robot.pose_state.position.y()), 2.0, 1.0};
+        Vector2 origin = {2.0 / 2.0, 1.0 / 2.0};
+        DrawRectanglePro(bot, origin, (-(yaw * 180) / M_PI), RED);
+
+        // for (auto trajectory : robot.mppi_controller.perturbed_trajectories)
+        // {
+
+        //     showcaseTrajectory(robot.pose_state, trajectory.controls, GetFrameTime(), 0.1, BLUE);
+        // }
+        // showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
+        // GetFrameTime(),
+        //                    0.1, ORANGE);
+    }
+}
+
 int main()
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Absolute Coordinate System");
@@ -214,14 +273,22 @@ int main()
     Trajectory_Controller t_c(config, linear_pid, angular_pid, config.hz);
     MPPI_Controller m_c(50, 2500, 0.166, 5.0);
 
-    Quadruped robot(t_c, m_c);
+    /*Quadruped robot(t_c, m_c);*/
+    Quadruped robot(t_c);
 
-    Ecef_Coord current = waypoints[0];
-    Ecef_Coord next = waypoints[1];
-    robot.setTargetPosition(next);
+    std::function<void()> bound_path_loop = std::bind(
+        &Trajectory_Controller::path_loop, &t_c, std::ref(robot.path_queue), std::ref(waypoints));
+    std::function<void()> bound_trajectory_loop =
+        std::bind(&Trajectory_Controller::trajectory_loop, &t_c, std::ref(robot.path_queue));
+
+    std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
+    std::thread trajectory_loop = std::thread(worker_function, bound_trajectory_loop, 100);
+    path_loop.detach();
+    trajectory_loop.detach();
+
+    /*robot.setTargetPosition(next);*/
 
     Camera2D camera = {.target = {(float)waypoints[0].x(), (float)waypoints[0].y()}};
-    // camera.target = (Vector2){waypoints[0].x, waypoints[0].y};
     camera.offset = (Vector2){SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
     camera.zoom = 10.0f;
     int index = 0;
@@ -260,26 +327,8 @@ int main()
             DrawCircle(waypoints[i].x(), -waypoints[i].y(), 2, BLUE);
         }
 
-        robot.mppi_controller.dt = GetFrameTime();
-        robot.control_loop();
-
-        {
-            Eigen::Matrix3d R = robot.pose_state.orientation.rotation();
-            double yaw = atan2(R(1, 0), R(0, 0));
-            Rectangle bot = {static_cast<float>(robot.pose_state.position.x()),
-                             static_cast<float>(-robot.pose_state.position.y()), 2.0, 1.0};
-            Vector2 origin = {2.0 / 2.0, 1.0 / 2.0};
-            DrawRectanglePro(bot, origin, (-(yaw * 180) / M_PI), RED);
-
-            for (auto trajectory : robot.mppi_controller.perturbed_trajectories)
-            {
-
-                showcaseTrajectory(robot.pose_state, trajectory.controls, GetFrameTime(), 0.1,
-                                   BLUE);
-            }
-            showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
-                               GetFrameTime(), 0.1, ORANGE);
-        }
+        /*simbot_mpc(robot);*/
+        simbot_linear(robot);
 
         EndMode2D();
 
