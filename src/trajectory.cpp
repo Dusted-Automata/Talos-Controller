@@ -133,8 +133,8 @@ Trajectory_Point Trajectory_Controller::new_trajectory_point(Affine3d &robot_fra
     return tp;
 }
 
-std::vector<Trajectory_Point> Trajectory_Controller::generate_trajectory(Ecef_Coord current,
-                                                                         Ecef_Coord next)
+std::vector<Trajectory_Point>
+Trajectory_Controller::generate_trajectory(Pose_State &state, Ecef_Coord current, Ecef_Coord next)
 {
     std::vector<Trajectory_Point> trajectory = {};
     Affine3d &robot_frame = config.transform_world_to_robot;
@@ -147,25 +147,25 @@ std::vector<Trajectory_Point> Trajectory_Controller::generate_trajectory(Ecef_Co
                         .robot_frame = robot_frame,
                         .dt = dt};
 
-    { // Turning
-        Trajectory_Point tp = trajectory_turn(step);
-        trajectory.push_back(tp);
-    }
-
-    { // RAMP UP
-        std::vector<Trajectory_Point> ramp_up = trajectory_ramp_up(step);
-        trajectory.insert(trajectory.end(), ramp_up.begin(), ramp_up.end());
-    }
-
-    { // CRUISE
-        Trajectory_Point tp = trajectory_cruise(step);
-        trajectory.push_back(tp);
-    }
-    step.current = trajectory.back().pose.point;
-    { // RAMP DOWN
-        std::vector<Trajectory_Point> ramp_down = trajectory_ramp_down(step);
-        trajectory.insert(trajectory.end(), ramp_down.begin(), ramp_down.end());
-    }
+    // { // Turning
+    //     Trajectory_Point tp = trajectory_turn(step);
+    //     trajectory.push_back(tp);
+    // }
+    //
+    // { // RAMP UP
+    //     std::vector<Trajectory_Point> ramp_up = trajectory_ramp_up(step);
+    //     trajectory.insert(trajectory.end(), ramp_up.begin(), ramp_up.end());
+    // }
+    //
+    // { // CRUISE
+    //     Trajectory_Point tp = trajectory_cruise(step);
+    //     trajectory.push_back(tp);
+    // }
+    // step.current = trajectory.back().pose.point;
+    // { // RAMP DOWN
+    //     std::vector<Trajectory_Point> ramp_down = trajectory_ramp_down(step);
+    //     trajectory.insert(trajectory.end(), ramp_down.begin(), ramp_down.end());
+    // }
     /*for (auto traj : trajectory)*/
     /*{*/
     /*    std::cout << traj.dt << std::endl;*/
@@ -194,7 +194,7 @@ Velocity2d Trajectory_Controller::follow_trajectory(Pose_State &state,
 
             std::cout << "EMPTY TRAJECTORIES" << std::endl;
             std::vector<Trajectory_Point> trajectory =
-                generate_trajectory(path.value().first, path.value().second);
+                generate_trajectory(state, path.value().first, path.value().second);
             for (auto &point : trajectory)
             {
                 trajectories.push(point);
@@ -228,15 +228,11 @@ Velocity2d Trajectory_Controller::follow_trajectory(Pose_State &state,
               << " lin: " << point.value().velocity.linear.x()
               << " ang: " << point.value().velocity.angular.z() << std::endl;
 
-    /*cmd.linear.x() = linear_pid.update(state.velocity.linear.x(), trajectory_time);*/
-    /*cmd.angular.z() = angular_pid.update(state.velocity.angular.z(), trajectory_time);*/
+    cmd.linear.x() = linear_pid.update(state.velocity.linear.x(), trajectory_time);
+    cmd.angular.z() = angular_pid.update(state.velocity.angular.z(), trajectory_time);
 
-    cmd.linear.x() = point.value().velocity.linear.x();
-    cmd.angular.z() = point.value().velocity.angular.z();
-    /*std::cout << " CMD: " << cmd.linear.transpose() << " , " << cmd.angular.transpose()*/
-    /*          << std::endl;*/
-    // TODO: HZ from Robot
-    /*trajectory_time += 0.0167;*/
+    // cmd.linear.x() = point.value().velocity.linear.x();
+    // cmd.angular.z() = point.value().velocity.angular.z();
     trajectory_time += state.dt;
     return cmd;
 }
@@ -298,10 +294,92 @@ void Trajectory_Controller::local_replanning() {}
 Velocity2d Trajectory_Controller::get_cmd(Pose_State &state,
                                           Thread_Safe_Queue<Ecef_Coord> &path_queue)
 {
+    double max_vel_x = 2.0;
+    double min_vel_x = -2.0;
+    double goal_yaw = 0;
+    double rotate_dist_threshold = 0.1;
+    int odom_waiting_count = 1;
+
+    double yaw_tolerance = 20.0; // degrees
+    double goal_tolerance = 0.3; // meters
+
+    double proportional_gain_x = 0.8;
+    double proportional_gain_yaw = 1.0;
+
+    Velocity2d cmd = {.linear = Linear_Velocity().setZero(),
+                      .angular = Angular_Velocity().setZero()};
+
+    std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = path_queue.front_two();
+    if (!path.has_value())
+    {
+        return cmd;
+        // linear_pid.reset();
+        // angular_pid.reset();
+        // path_queue.pop();
+    }
+    Ecef_Coord goal = path.value().second;
+
+    Ecef_Coord difference = path.value().second - path.value().first;
+
+    double dx = goal.x() - state.position.x();
+    double dy = goal.y() - state.position.y();
+    double dist = sqrt(dx * dx + dy * dy);
+
+    double yaw = atan2(state.orientation.rotation()(1, 0), state.orientation.rotation()(0, 0));
+
+    double dx_odom = cos(yaw) * dx + sin(yaw) * dy;
+    double dy_odom = -sin(yaw) * dx + cos(yaw) * dy;
+
+    double vel_x = proportional_gain_x * dx_odom;
+    vel_x = std::max(std::min(vel_x, max_vel_x), min_vel_x);
+    double dyaw = atan2(dy_odom, dx_odom);
+    if (dist < rotate_dist_threshold)
+    {
+        // vel_yaw = 0.0;
+        dyaw = goal_yaw - yaw;
+        if (dyaw > M_PI)
+        {
+            dyaw -= 2 * M_PI;
+        }
+        else if (dyaw < -M_PI)
+        {
+            dyaw += 2 * M_PI;
+        }
+    }
+
+    double vel_yaw = proportional_gain_yaw * dyaw;
+
+    if (dist < goal_tolerance && std::abs(dyaw) < yaw_tolerance * M_PI / 180.0)
+    {
+        path_queue.pop();
+        return cmd;
+        // goal_reached_msg.data = true;
+    }
+    else
+    {
+        // goal_reached_msg.data = false;
+    }
+    cmd.linear.x() = vel_x;
+    cmd.linear.y() = 0.0;
+    cmd.linear.z() = 0.0;
+    cmd.angular.z() = vel_yaw;
+    cmd.angular.y() = 0.0;
+    cmd.angular.x() = 0.0;
+
+    trajectory_time += state.dt;
 
     // Path_Movement path = readPath();
     // Thread_Safe_Queue<Trajectory_Point> trajectories = readPath();
-    Velocity2d cmd = follow_trajectory(state, path_queue);
+    // Velocity2d cmd = follow_trajectory(state, path_queue);
+
+    std::ofstream traj_file("trajectories", std::ios::app);
+    traj_file << 1 << " " << 0 << " " << 0 << " " << state.position.x() << " ";
+    traj_file << 0 << " " << 1 << " " << 0 << " " << state.position.y() << " ";
+    traj_file << 0 << " " << 0 << " " << 1 << " " << state.position.z();
+    traj_file << std::endl;
+    std::ofstream time_file("time", std::ios::app);
+    time_file << trajectory_time << std::endl;
+
     return cmd;
 }
 

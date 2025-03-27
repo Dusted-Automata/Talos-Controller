@@ -260,11 +260,28 @@ int main()
     //     {4100218.5394949187, 476445.5598077707, 4846300.796185957},
     //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
-    std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0}, {40.0, 10.0, 0.0}, {20.0, -10.0, 0.0}};
+    std::vector<Ecef_Coord> waypoints = {
+        {0.0, 0.0, 0.0}, {10.0, 10.0, 0.0}, {20.0, -15.0, 0.0}, {0.0, -10, 0.0}};
 
-    PIDGains linear_gains = {0.4, 0.0, 0.0};
+    // std::vector<Ecef_Coord> waypoints = {{1.5, 1.5, 0.0},    {2.074, 2.03, 0.0}, {2.561, 2.25,
+    // 0.0},
+    //                                      {2.886, 2.03, 0.0}, {3.0, 1.5, 0.0},    {2.886, 0.97,
+    //                                      0.0}, {2.561, 0.75, 0.0}, {2.074, 0.97, 0.0}, {1.5, 1.5,
+    //                                      0.0}, {0.926, 2.03, 0.0}, {0.439, 2.25, 0.0},
+    //                                      {0.114, 2.03, 0.0}, {0.0, 1.5, 0.0},    {0.114, 0.97,
+    //                                      0.0}, {0.439, 0.75, 0.0}, {0.926, 0.97, 0.0}, {1.5, 1.5,
+    //                                      0.0}};
+
+    // std::vector<Ecef_Coord> waypoints = {
+    //     {1.5, 0.0, 0.0},       {1.37, 0.61, 0.0},     {1.004, 1.115, 0.0},  {0.464, 1.427, 0.0},
+    //     {-0.157, 1.492, 0.0},  {-0.75, 1.299, 0.0},   {-1.214, 0.882, 0.0}, {-1.467, 0.312, 0.0},
+    //     {-1.467, -0.312, 0.0}, {-1.214, -0.882, 0.0}, {-0.75, -1.299, 0.0}, {-0.157, -1.492,
+    //     0.0}, {0.464, -1.427, 0.0},  {1.004, -1.115, 0.0},  {1.37, -0.61, 0.0},   {1.5, -0.0,
+    //     0.0}};
+
+    PIDGains linear_gains = {1.2, 0.0, 0.0};
     PIDController linear_pid(linear_gains);
-    linear_pid.output_max = 10.0;
+    linear_pid.output_max = 100.0;
     linear_pid.output_min = 0.0;
     PIDGains angular_gains = {0.2, 0.0, 0.0};
     PIDController angular_pid(angular_gains);
@@ -306,7 +323,7 @@ int main()
 
             float scaleFactor = 1.0f + (0.25f * fabsf(wheel));
             camera.zoom *= (wheel > 0) ? scaleFactor : 1.0f / scaleFactor;
-            camera.zoom = Clamp(camera.zoom, 0.125f, 64.0f);
+            camera.zoom = Clamp(camera.zoom, 0.125f, 254.0f);
         }
 
         BeginDrawing();
@@ -319,7 +336,7 @@ int main()
 
         for (int i = 0; i < waypoints.size(); i++)
         {
-            DrawCircle(waypoints[i].x(), -waypoints[i].y(), 2, BLUE);
+            DrawCircle(waypoints[i].x(), -waypoints[i].y(), 0.8, BLUE);
         }
 
         /*simbot_mpc(robot);*/

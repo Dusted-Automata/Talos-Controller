@@ -2,6 +2,7 @@
 #include "controller.hpp"
 #include "pid.hpp"
 #include "types.hpp"
+#include <fstream>
 #include <vector>
 
 class Trajectory_Controller : public Controller
@@ -14,6 +15,8 @@ class Trajectory_Controller : public Controller
     double trajectory_time = 0.0;
     double sampling_rate = 1.0;
     bool added_paths = false;
+    std::ofstream traj_file;
+    std::ofstream time_file;
 
     bool (*sendVelocityCommand)(Linear_Velocity &, Angular_Velocity &);
     // bool (*getState)(Robot_State &);
@@ -29,9 +32,15 @@ class Trajectory_Controller : public Controller
     Trajectory_Controller(Robot_Config config, PIDController linear_pid, PIDController angular_pid,
                           double sampling_rate)
         : config(config), linear_pid(linear_pid), angular_pid(angular_pid),
-          sampling_rate(sampling_rate) {};
+          sampling_rate(sampling_rate)
+    {
 
-    std::vector<Trajectory_Point> generate_trajectory(Ecef_Coord current, Ecef_Coord next);
+        std::ofstream traj_file("trajectories", std::ios::trunc);
+        std::ofstream time_file("time", std::ios::trunc);
+    };
+
+    std::vector<Trajectory_Point> generate_trajectory(Pose_State &state, Ecef_Coord current,
+                                                      Ecef_Coord next);
     Pose get_current_pose();
     Velocity2d follow_trajectory(Pose_State &state, Thread_Safe_Queue<Ecef_Coord> &path_queue);
 
