@@ -119,8 +119,8 @@ class Quadruped : public Robot
         move_robot(pose_state, velocity);
     };
 
-    void read_sensors() override{};
-    void update_state() override{};
+    void read_sensors() override {};
+    void update_state() override {};
 
     Pose_State read_state() override { return pose_state; };
 };
@@ -279,15 +279,9 @@ int main()
 
     std::function<void()> bound_path_loop = std::bind(
         &Trajectory_Controller::path_loop, &t_c, std::ref(robot.path_queue), std::ref(waypoints));
-    std::function<void()> bound_trajectory_loop =
-        std::bind(&Trajectory_Controller::trajectory_loop, &t_c, std::ref(robot.path_queue));
 
     std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
-    std::thread trajectory_loop = std::thread(worker_function, bound_trajectory_loop, 100);
     path_loop.detach();
-    trajectory_loop.detach();
-
-    /*robot.setTargetPosition(next);*/
 
     Camera2D camera = {.target = {(float)waypoints[0].x(), (float)waypoints[0].y()}};
     camera.offset = (Vector2){SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};

@@ -175,19 +175,38 @@ std::vector<Trajectory_Point> Trajectory_Controller::generate_trajectory(Ecef_Co
 
 Pose Trajectory_Controller::get_current_pose() { return {}; }
 
-Velocity2d Trajectory_Controller::follow_trajectory(Pose_State &state)
+Velocity2d Trajectory_Controller::follow_trajectory(Pose_State &state,
+                                                    Thread_Safe_Queue<Ecef_Coord> &path_queue)
 {
+
     Velocity2d cmd = {.linear = Linear_Velocity().setZero(),
                       .angular = Angular_Velocity().setZero()};
+
+    std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = path_queue.front_two();
+    if (trajectories.empty())
+    {
+        if (path.has_value())
+        {
+
+            linear_pid.reset();
+            angular_pid.reset();
+            trajectory_time = 0.0;
+
+            std::cout << "EMPTY TRAJECTORIES" << std::endl;
+            std::vector<Trajectory_Point> trajectory =
+                generate_trajectory(path.value().first, path.value().second);
+            for (auto &point : trajectory)
+            {
+                trajectories.push(point);
+            }
+            path_queue.pop();
+        }
+    }
 
     std::optional<Trajectory_Point> point = trajectories.front();
 
     if (!point)
     {
-        linear_pid.reset();
-        angular_pid.reset();
-        trajectory_time = 0.0;
-        // empty command
         return cmd;
     }
 
@@ -222,24 +241,24 @@ Velocity2d Trajectory_Controller::follow_trajectory(Pose_State &state)
     return cmd;
 }
 
-void Trajectory_Controller::trajectory_loop(Thread_Safe_Queue<Ecef_Coord> &waypoints)
-{
-    std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = waypoints.front_two();
-    if (trajectories.empty())
-    {
-        if (path.has_value())
-        {
-            std::cout << "EMPTY TRAJECTORIES" << std::endl;
-            std::vector<Trajectory_Point> trajectory =
-                generate_trajectory(path.value().first, path.value().second);
-            for (auto &point : trajectory)
-            {
-                trajectories.push(point);
-            }
-            waypoints.pop();
-        }
-    }
-}
+// void Trajectory_Controller::trajectory_loop(Thread_Safe_Queue<Ecef_Coord> &waypoints)
+// {
+//     std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = waypoints.front_two();
+//     if (trajectories.empty())
+//     {
+//         if (path.has_value())
+//         {
+//             std::cout << "EMPTY TRAJECTORIES" << std::endl;
+//             std::vector<Trajectory_Point> trajectory =
+//                 generate_trajectory(path.value().first, path.value().second);
+//             for (auto &point : trajectory)
+//             {
+//                 trajectories.push(point);
+//             }
+//             waypoints.pop();
+//         }
+//     }
+// }
 
 void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
                                       std::vector<Ecef_Coord> &waypoints)
@@ -276,12 +295,13 @@ void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
 
 void Trajectory_Controller::local_replanning() {}
 
-Velocity2d Trajectory_Controller::get_cmd(Pose_State &state)
+Velocity2d Trajectory_Controller::get_cmd(Pose_State &state,
+                                          Thread_Safe_Queue<Ecef_Coord> &path_queue)
 {
 
     // Path_Movement path = readPath();
     // Thread_Safe_Queue<Trajectory_Point> trajectories = readPath();
-    Velocity2d cmd = follow_trajectory(state);
+    Velocity2d cmd = follow_trajectory(state, path_queue);
     return cmd;
 }
 

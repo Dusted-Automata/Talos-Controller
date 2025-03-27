@@ -1,6 +1,5 @@
 #pragma once
 #include "controller.hpp"
-#include "trajectory.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
 

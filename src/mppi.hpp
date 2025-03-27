@@ -104,7 +104,7 @@ class MPPI_Controller : public Controller
 
     void update(Pose_State &current_state);
     void setTarget(const Ecef_Coord &target) { target_position = target; }
-    Velocity2d get_cmd(Pose_State &state) override;
+    Velocity2d get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_Coord> &path_queue) override;
     void shiftControlHorizon();
     double dt;
     std::vector<Trajectory> perturbed_trajectories;

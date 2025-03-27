@@ -1,4 +1,5 @@
 #include "mppi.hpp"
+#include "controller.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
 #include <cmath>
@@ -146,7 +147,7 @@ void MPPI_Controller::updateNominalTrajectory(const std::vector<Trajectory> &tra
     }
 }
 
-Velocity2d MPPI_Controller::get_cmd(Pose_State &state)
+Velocity2d MPPI_Controller::get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_Coord> &path_queue)
 {
     update(state);
     Velocity2d cmd = nominal_controls.velocities[0];

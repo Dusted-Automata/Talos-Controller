@@ -14,7 +14,7 @@ void Robot::control_loop()
 
     // Path_Movement path = readPath();
     // Sensors sensors = readSensors();
-    Velocity2d cmd = controller.get_cmd(pose_state);
+    Velocity2d cmd = controller.get_cmd(pose_state, path_queue);
     /*std::cout << cmd.linear.transpose() << std::endl;*/
     send_velocity_command(cmd);
     motiontime += 1000 / hz;
