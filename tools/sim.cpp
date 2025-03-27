@@ -254,14 +254,13 @@ int main()
                                                   .corner_velocity = 0.0},
                            .velocity_profile = vel_profile};
 
-    // std::vector<Ecef_Coord> waypoints = {
-    //     {4100175.625135626, 476368.7899695045, 4846344.356704135},
-    //     {4100209.6729529747, 476361.2681338759, 4846316.478097512},
-    //     {4100218.5394949187, 476445.5598077707, 4846300.796185957},
-    //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
+    std::vector<Ecef_Coord> waypoints = {{4100175.625135626, 476368.7899695045, 4846344.356704135},
+                                         {4100209.6729529747, 476361.2681338759, 4846316.478097512},
+                                         {4100218.5394949187, 476445.5598077707, 4846300.796185957},
+                                         {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
-    std::vector<Ecef_Coord> waypoints = {
-        {0.0, 0.0, 0.0}, {10.0, 10.0, 0.0}, {20.0, -15.0, 0.0}, {0.0, -10, 0.0}};
+    // std::vector<Ecef_Coord> waypoints = {
+    //     {0.0, 0.0, 0.0}, {10.0, 10.0, 0.0}, {20.0, -15.0, 0.0}, {0.0, -10, 0.0}};
 
     // std::vector<Ecef_Coord> waypoints = {{1.5, 1.5, 0.0},    {2.074, 2.03, 0.0}, {2.561, 2.25,
     // 0.0},
@@ -293,6 +292,7 @@ int main()
 
     /*Quadruped robot(t_c, m_c);*/
     Quadruped robot(t_c);
+    robot.pose_state.position = waypoints[0];
 
     std::function<void()> bound_path_loop = std::bind(
         &Trajectory_Controller::path_loop, &t_c, std::ref(robot.path_queue), std::ref(waypoints));

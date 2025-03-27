@@ -323,7 +323,8 @@ Velocity2d Trajectory_Controller::get_cmd(Pose_State &state,
 
     double dx = goal.x() - state.position.x();
     double dy = goal.y() - state.position.y();
-    double dist = sqrt(dx * dx + dy * dy);
+    double dz = goal.z() - state.position.z();
+    double dist = sqrt(dx * dx + dy * dy + dz * dz);
 
     double yaw = atan2(state.orientation.rotation()(1, 0), state.orientation.rotation()(0, 0));
 
@@ -373,11 +374,14 @@ Velocity2d Trajectory_Controller::get_cmd(Pose_State &state,
     // Velocity2d cmd = follow_trajectory(state, path_queue);
 
     std::ofstream traj_file("trajectories", std::ios::app);
+
+    traj_file << std::fixed;
     traj_file << 1 << " " << 0 << " " << 0 << " " << state.position.x() << " ";
     traj_file << 0 << " " << 1 << " " << 0 << " " << state.position.y() << " ";
     traj_file << 0 << " " << 0 << " " << 1 << " " << state.position.z();
     traj_file << std::endl;
     std::ofstream time_file("time", std::ios::app);
+    time_file << std::fixed;
     time_file << trajectory_time << std::endl;
 
     return cmd;
