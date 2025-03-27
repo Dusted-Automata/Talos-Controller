@@ -35,6 +35,7 @@ Trajectory_Point Trajectory_Controller::trajectory_turn(Motion_Step step)
     Affine3d transformation = step.robot_frame;
     Pose pose = {.point = step.current, .transformation_matrix = transformation};
     double turn_duration = azimuth_rad / config.motion_constraints.standing_turn_velocity;
+    std::cout << azimuth_rad_world << std::endl;
     step.dt += std::abs(turn_duration);
     Trajectory_Point tp = {.pose = pose, .dt = step.dt, .velocity = velocity};
     return tp;
@@ -165,10 +166,10 @@ std::vector<Trajectory_Point> Trajectory_Controller::generate_trajectory(Ecef_Co
         std::vector<Trajectory_Point> ramp_down = trajectory_ramp_down(step);
         trajectory.insert(trajectory.end(), ramp_down.begin(), ramp_down.end());
     }
-    for (auto traj : trajectory)
-    {
-        std::cout << traj.dt << std::endl;
-    }
+    /*for (auto traj : trajectory)*/
+    /*{*/
+    /*    std::cout << traj.dt << std::endl;*/
+    /*}*/
     return trajectory;
 }
 
@@ -204,9 +205,9 @@ Velocity2d Trajectory_Controller::follow_trajectory(Pose_State &state)
         angular_pid.setpoint = point.value().velocity.angular.z();
     }
 
-    // std::cout << "DT: " << point.value().dt << " | t_dt: " << trajectory_time
-    //           << " lin: " << point.value().velocity.linear.x()
-    //           << " ang: " << point.value().velocity.angular.z();
+    std::cout << "DT: " << point.value().dt << " | t_dt: " << trajectory_time
+              << " lin: " << point.value().velocity.linear.x()
+              << " ang: " << point.value().velocity.angular.z() << std::endl;
 
     /*cmd.linear.x() = linear_pid.update(state.velocity.linear.x(), trajectory_time);*/
     /*cmd.angular.z() = angular_pid.update(state.velocity.angular.z(), trajectory_time);*/
@@ -216,7 +217,8 @@ Velocity2d Trajectory_Controller::follow_trajectory(Pose_State &state)
     /*std::cout << " CMD: " << cmd.linear.transpose() << " , " << cmd.angular.transpose()*/
     /*          << std::endl;*/
     // TODO: HZ from Robot
-    trajectory_time += 0.002;
+    /*trajectory_time += 0.0167;*/
+    trajectory_time += state.dt;
     return cmd;
 }
 

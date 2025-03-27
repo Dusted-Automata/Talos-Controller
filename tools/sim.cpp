@@ -115,6 +115,7 @@ class Quadruped : public Robot
     void send_velocity_command(Velocity2d &velocity) override
     {
         pose_state.velocity = velocity;
+        pose_state.dt = GetFrameTime();
         move_robot(pose_state, velocity);
     };
 
@@ -259,7 +260,7 @@ int main()
     //     {4100218.5394949187, 476445.5598077707, 4846300.796185957},
     //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
-    std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0}, {40.0, 10.0, 0.0}};
+    std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0}, {40.0, 10.0, 0.0}, {20.0, -10.0, 0.0}};
 
     PIDGains linear_gains = {0.4, 0.0, 0.0};
     PIDController linear_pid(linear_gains);

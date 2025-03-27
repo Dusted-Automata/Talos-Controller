@@ -41,6 +41,7 @@ struct Pose_State
     Affine3d orientation;
     // Eigen::Quaterniond orientation; // quaternion
     Velocity2d velocity; // vx, vy, vz \  wx, wy, wz
+    double dt;
 };
 
 struct Pose
