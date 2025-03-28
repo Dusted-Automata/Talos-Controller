@@ -35,7 +35,7 @@ Trajectory_Point Trajectory_Controller::trajectory_turn(Motion_Step step)
     Affine3d transformation = step.robot_frame;
     Pose pose = {.point = step.current, .transformation_matrix = transformation};
     double turn_duration = azimuth_rad / config.motion_constraints.standing_turn_velocity;
-    std::cout << azimuth_rad_world << std::endl;
+    // std::cout << azimuth_rad_world << std::endl;
     step.dt += std::abs(turn_duration);
     Trajectory_Point tp = {.pose = pose, .dt = step.dt, .velocity = velocity};
     return tp;
@@ -320,11 +320,13 @@ Velocity2d Trajectory_Controller::get_cmd(Pose_State &state,
     Ecef_Coord goal = path.value().second;
 
     Ecef_Coord difference = path.value().second - path.value().first;
+    double difference_distance =
+        std::sqrt(difference.x() * difference.x() + difference.y() * difference.y());
 
     double dx = goal.x() - state.position.x();
     double dy = goal.y() - state.position.y();
     double dz = goal.z() - state.position.z();
-    double dist = sqrt(dx * dx + dy * dy + dz * dz);
+    double dist = sqrt(dx * dx + dy * dy);
 
     double yaw = atan2(state.orientation.rotation()(1, 0), state.orientation.rotation()(0, 0));
 
@@ -373,14 +375,20 @@ Velocity2d Trajectory_Controller::get_cmd(Pose_State &state,
     // Thread_Safe_Queue<Trajectory_Point> trajectories = readPath();
     // Velocity2d cmd = follow_trajectory(state, path_queue);
 
-    std::ofstream traj_file("trajectories", std::ios::app);
+    std::ofstream traj_file("poses", std::ios::app);
+
+    double t = dist / difference_distance;
+    double interpolated = (path.value().first.z() * t + path.value().second.z() * (1 - t));
+    // std::cout << "DIST: " << dist << "Difference: " << difference_distance << std::endl;
+    // std::cout << t << std::endl;
 
     traj_file << std::fixed;
     traj_file << 1 << " " << 0 << " " << 0 << " " << state.position.x() << " ";
     traj_file << 0 << " " << 1 << " " << 0 << " " << state.position.y() << " ";
-    traj_file << 0 << " " << 0 << " " << 1 << " " << state.position.z();
+    // traj_file << 0 << " " << 0 << " " << 1 << " " << state.position.z();
+    traj_file << 0 << " " << 0 << " " << 1 << " " << interpolated;
     traj_file << std::endl;
-    std::ofstream time_file("time", std::ios::app);
+    std::ofstream time_file("times", std::ios::app);
     time_file << std::fixed;
     time_file << trajectory_time << std::endl;
 
