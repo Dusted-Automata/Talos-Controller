@@ -72,9 +72,6 @@ double MPPI_Controller::evaluateTrajectory(Pose_State &initial_state, Trajectory
         if (azimuth_rad < -M_PI)
             azimuth_rad += 2 * M_PI;
 
-        // Compute orientation cost (dot product gives angle difference)
-        // 1 - dot product gives 0 when perfectly aligned, 2 when facing opposite
-        // double orientation_cost = (1.0 - robot_forward.dot(to_target)) * 0.3;
         double orientation_cost = azimuth_rad * 0.3;
         double position_cost = (state.position - target_position).norm();
         double velocity_cost = state.velocity.linear.norm() * 0.1;
@@ -109,7 +106,6 @@ void MPPI_Controller::computeWeights(std::vector<Trajectory> &trajectories)
         sum_weights += trajectories[i].weight;
     }
 
-    // Normalize weights
     if (sum_weights > 0.0)
     {
         for (int i = 0; i < num_samples; ++i)
@@ -119,7 +115,6 @@ void MPPI_Controller::computeWeights(std::vector<Trajectory> &trajectories)
     }
     else
     {
-        // otherwise assign equal weights
         for (int i = 0; i < num_samples; ++i)
         {
             trajectories[i].weight = 1.0 / num_samples;
@@ -161,28 +156,24 @@ class QuadrupedRobot
     QuadrupedRobot() : mppi_(50, 1000, 0.02, 0.5)
     { // horizon_steps, num_samples, dt, temperature
 
-        // Initialize robot state
         state_.position = Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
         state_.orientation = Eigen::Affine3d::Identity();
         state_.velocity.linear = Vector3d::Zero();
         state_.velocity.angular = Vector3d::Zero();
     }
 
-    // Set a new target position for the robot
     void setTargetPosition(const Ecef_Coord &target)
     {
         std::cout << "Setting new target: " << target.transpose() << std::endl;
         mppi_.setTarget(target);
     }
 
-    // Apply a disturbance to the robot (e.g., someone pushing it)
     void applyDisturbance(const Eigen::Vector3d &force, const Eigen::Vector3d &torque)
     {
         std::cout << "Applying disturbance: force=" << force.transpose()
                   << ", torque=" << torque.transpose() << std::endl;
 
-        // Simplified disturbance model - directly modify velocity
-        state_.velocity.linear += force * 0.1; // Scale for reasonable effect
+        state_.velocity.linear += force * 0.1;
         state_.velocity.angular += torque * 0.1;
     }
 

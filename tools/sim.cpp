@@ -15,6 +15,27 @@
 #define SCREEN_HEIGHT 1000
 #define ROBOT_SIZE 20.0
 
+Ecef_Coord latLngToECEF(double lat, double lng, double alt = 0)
+{
+    // WGS84 ellipsoid constants
+    double a = 6378137.0;         // semi-major axis in meters
+    double e = 0.081819190842622; // first eccentricity
+
+    // Convert latitude and longitude to radians
+    double latRad = lat * (M_PI / 180.0);
+    double lngRad = lng * (M_PI / 180.0);
+
+    // Calculate N, the radius of curvature in the prime vertical
+    double N = a / std::sqrt(1 - std::pow(e * std::sin(latRad), 2));
+
+    // Calculate ECEF coordinates
+    double x = (N + alt) * std::cos(latRad) * std::cos(lngRad);
+    double y = (N + alt) * std::cos(latRad) * std::sin(lngRad);
+    double z = (N * (1 - std::pow(e, 2)) + alt) * std::sin(latRad);
+
+    return {x, y, z};
+}
+
 void worker_function(std::function<void()> callback, int period_ms)
 {
     while (1)
@@ -50,8 +71,6 @@ void move_robot(Pose_State &state, Velocity2d &velocity)
 {
     float dt = GetFrameTime();
     state.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z() * dt), Vector3d::UnitZ()));
-
-    // std::cout << q_yaw.coeffs().transpose() << std::endl;
     Linear_Velocity lv = state.orientation.rotation() * velocity.linear;
     // Vector3d vel = state.orientation * velocity.linear;
     state.position += lv * dt;
@@ -234,7 +253,7 @@ void simbot_linear(Quadruped &robot)
 int main()
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Absolute Coordinate System");
-    SetTargetFPS(60);
+    SetTargetFPS(500);
 
     float dt = 0;
 
@@ -262,8 +281,23 @@ int main()
     //                                      {4100241.72195791, 476441.0557096391,
     //                                      4846281.753675706}};
 
-    std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0},    {8.5, 10.5, 0.0},   {10.0, 10.0, 0.0},
-                                         {21.0, -14.0, 0.0}, {20.0, -15.0, 0.0}, {0.0, -10, 0.0}};
+    std::vector<Ecef_Coord> waypoints = {
+        {4100175.501310785, 476368.5810492334, 4846344.481161202},
+        {4100206.413589074, 476361.2785325105, 4846319.216194633},
+        {4100208.2686218983, 476361.8831207554, 4846317.598228671},
+        {4100209.900653061, 476364.4071562134, 4846315.980261215},
+        {4100219.0424836874, 476442.50566599367, 4846300.67172578},
+        {4100218.752532444, 476445.00095228496, 4846300.67172578},
+        {4100219.002473338, 476447.94804803375, 4846300.173884979},
+        {4100221.441998387, 476448.6205962849, 4846298.058059992},
+        {4100223.1262948154, 476446.8709422366, 4846296.813455865},
+        {4100241.5312245293, 476441.4226223994, 4846281.878137232},
+        {4100241.6527441368, 476439.1022889267, 4846282.002598747}};
+
+    // std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0},    {8.5, 10.5, 0.0},   {10.0, 10.0,
+    // 0.0},
+    //                                      {21.0, -14.0, 0.0}, {20.0, -15.0, 0.0}, {0.0, -10,
+    //                                      0.0}};
 
     // std::vector<Ecef_Coord> waypoints = {{1.5, 1.5, 0.0},    {2.074, 2.03, 0.0}, {2.561, 2.25,
     // 0.0},

@@ -35,8 +35,8 @@ class Trajectory_Controller : public Controller
           sampling_rate(sampling_rate)
     {
 
-        std::ofstream traj_file("trajectories", std::ios::trunc);
-        std::ofstream time_file("time", std::ios::trunc);
+        std::ofstream traj_file("poses", std::ios::trunc);
+        std::ofstream time_file("times", std::ios::trunc);
     };
 
     std::vector<Trajectory_Point> generate_trajectory(Pose_State &state, Ecef_Coord current,

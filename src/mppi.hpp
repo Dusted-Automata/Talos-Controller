@@ -11,13 +11,10 @@ class QuadrupedModel
   public:
     Pose_State simulate(Pose_State &current_state, Velocity2d &control, double dt)
     {
-        // Simplified dynamics model (you'd replace this with your robot's actual dynamics)
         Pose_State next_state = current_state;
 
-        // Update position based on velocity
         next_state.position += current_state.velocity.linear * dt;
 
-        // Update velocity with some damping and the control input
         const double damping = 0.9;
         next_state.velocity.linear =
             damping * current_state.velocity.linear + (1.0 - damping) * control.linear;

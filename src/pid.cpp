@@ -2,38 +2,42 @@
 #include <algorithm>
 #include <iostream>
 
-double PIDController::update(double measured_value, double dt) {
+double PIDController::update(double measured_value, double dt)
+{
 
-  double error = setpoint - measured_value;
-  double p_term = gains.k_p * error;
+    double error = setpoint - measured_value;
+    double p_term = gains.k_p * error;
 
-  // Integral term
-  integral += error * dt;
-  // Apply integral limits (anti-windup)
-  integral = std::max(integral_min, std::min(integral_max, integral));
-  double i_term = gains.k_i * integral;
+    integral += error * dt;
+    // Apply integral limits (anti-windup)
+    integral = std::max(integral_min, std::min(integral_max, integral));
+    double i_term = gains.k_i * integral;
 
-  double derivative;
-  if (dt > 0.0) {
-    derivative = (error - prev_error) / dt;
-  } else {
-    derivative = 0.0;
-  }
-  double d_term = gains.k_d * derivative;
+    double derivative;
+    if (dt > 0.0)
+    {
+        derivative = (error - prev_error) / dt;
+    }
+    else
+    {
+        derivative = 0.0;
+    }
+    double d_term = gains.k_d * derivative;
 
-  double output = p_term + i_term + d_term;
+    double output = p_term + i_term + d_term;
 
-  output = std::max(output_min, std::min(output_max, output));
+    output = std::max(output_min, std::min(output_max, output));
 
-  std::cout << i_term << std::endl;
-  prev_error = error;
+    std::cout << i_term << std::endl;
+    prev_error = error;
 
-  return output;
+    return output;
 }
 
-void PIDController::reset() {
-  prev_error = 0.0;
-  integral = 0.0;
+void PIDController::reset()
+{
+    prev_error = 0.0;
+    integral = 0.0;
 }
 
 // public:
