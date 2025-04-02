@@ -44,7 +44,7 @@ class Go1_Quadruped : public Robot
     UT::HighCmd moveCmd(Velocity2d &trajectory);
 
   public:
-    Go1_Quadruped(Controller t_c)
+    Go1_Quadruped(Controller &t_c)
         : Robot(t_c),
           // udp(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082) {
           safe(UT::LeggedType::Go1), udp(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082)
