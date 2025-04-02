@@ -37,7 +37,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # one pc one process
 # add_executable(controller src/go1.cpp src/trajectory.cpp src/robot.cpp src/pid.cpp src/mppi.cpp)
-add_executable(sim tools/sim.cpp src/robot.cpp src/mppi.cpp src/trajectory.cpp src/pid.cpp)
+add_executable(sim tools/sim.cpp src/robot.cpp src/mppi.cpp src/trajectory.cpp src/pid.cpp src/logger.cpp)
 # add_executable(trajectory_run src/trajectoryRun.cpp src/trajectory.cpp src/robot.cpp src/pid.cpp)
 # target_link_libraries(controller ${EXTRA_LIBS})
 # target_include_directories(controller PRIVATE ${EIGEN3_INCLUDE_DIR})

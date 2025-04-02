@@ -1,14 +1,15 @@
 #pragma once
 #include "controller.hpp"
+#include "logger.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
 
 class Robot
 {
-    int motiontime = 0;
+    int motion_time = 0;
     float hz = 500;
     Robot_Config config = {};
-    // void (*control_loop)();
+    Logger logger = {};
     // MAIN CONTROL THREAD
     // PATH GENERATION THREAD
     // SENSOR PROCESSING THREAD
@@ -21,16 +22,17 @@ class Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
     }
+    virtual ~Robot() = default;
 
     Pose_State pose_state;
-    virtual ~Robot() = default;
     Thread_Safe_Queue<Ecef_Coord> path_queue;
     Controller &controller;
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual void update_state() = 0;
-    void control_loop();
     virtual Pose_State read_state() = 0;
-    void read_path();
     virtual void read_sensors() = 0;
+
+    void control_loop();
+    void read_path();
 };
