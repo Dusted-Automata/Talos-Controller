@@ -3,8 +3,6 @@
 #include "../src/robot.hpp"
 #include "../src/trajectory.hpp"
 #include "../src/types.hpp"
-#include "Eigen/src/Core/Matrix.h"
-#include "Eigen/src/Geometry/AngleAxis.h"
 #include "raylib.h"
 #include "raymath.h"
 #include <iostream>
@@ -14,27 +12,6 @@
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
 #define ROBOT_SIZE 20.0
-
-Ecef_Coord latLngToECEF(double lat, double lng, double alt = 0)
-{
-    // WGS84 ellipsoid constants
-    double a = 6378137.0;         // semi-major axis in meters
-    double e = 0.081819190842622; // first eccentricity
-
-    // Convert latitude and longitude to radians
-    double latRad = lat * (M_PI / 180.0);
-    double lngRad = lng * (M_PI / 180.0);
-
-    // Calculate N, the radius of curvature in the prime vertical
-    double N = a / std::sqrt(1 - std::pow(e * std::sin(latRad), 2));
-
-    // Calculate ECEF coordinates
-    double x = (N + alt) * std::cos(latRad) * std::cos(lngRad);
-    double y = (N + alt) * std::cos(latRad) * std::sin(lngRad);
-    double z = (N * (1 - std::pow(e, 2)) + alt) * std::sin(latRad);
-
-    return {x, y, z};
-}
 
 void worker_function(std::function<void()> callback, int period_ms)
 {
@@ -72,6 +49,7 @@ void move_robot(Pose_State &state, Velocity2d &velocity)
     float dt = GetFrameTime();
     state.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z() * dt), Vector3d::UnitZ()));
     Linear_Velocity lv = state.orientation.rotation() * velocity.linear;
+    state.orientation.translation() += lv * dt;
     // Vector3d vel = state.orientation * velocity.linear;
     state.position += lv * dt;
 
