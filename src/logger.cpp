@@ -9,9 +9,16 @@ bool Logger::savePosesToFile(const Pose_State &state)
         return false;
     }
     pose_file << std::fixed;
-    pose_file << 1 << " " << 0 << " " << 0 << " " << state.position.x() << " ";
-    pose_file << 0 << " " << 1 << " " << 0 << " " << state.position.y() << " ";
-    pose_file << 0 << " " << 0 << " " << 1 << " " << state.position.z();
+    pose_file << state.orientation(0, 0) << " " << state.orientation(0, 1) << " "
+              << state.orientation(0, 2) << " " << state.position.x() << " ";
+    pose_file << state.orientation(1, 0) << " " << state.orientation(1, 1) << " "
+              << state.orientation(1, 2) << " " << state.position.y() << " ";
+    pose_file << state.orientation(2, 0) << " " << state.orientation(2, 1) << " "
+              << state.orientation(2, 2) << " " << state.position.z() << " ";
+
+    // tracks movement in space from start position.
+    // pose_file << state.orientation(0, 3) << " " << state.orientation(1, 3) << " "
+    //           << state.orientation(2, 3) << " " << state.orientation(3, 3) << " ";
     pose_file << std::endl;
     // traj_file << 0 << " " << 0 << " " << 1 << " " << interpolated;
     return true;
