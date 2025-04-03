@@ -6,7 +6,7 @@
 
 class Robot
 {
-    int motion_time = 0;
+    double motion_time = 0;
     float hz = 500;
     Robot_Config config = {};
     Logger logger = {};

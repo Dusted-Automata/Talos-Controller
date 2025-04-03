@@ -12,7 +12,8 @@ void Robot::control_loop()
 
     Velocity2d cmd = controller.get_cmd(pose_state, path_queue);
     send_velocity_command(cmd);
-    motion_time += 1000 / hz;
+    /*motion_time += 1000 / hz;*/
+    motion_time += 1 / hz;
 }
 
 void Robot::read_path() {}

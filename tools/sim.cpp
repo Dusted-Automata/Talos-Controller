@@ -46,11 +46,25 @@ void DrawAbsoluteGrid(Camera2D camera, float gridStep)
 
 void move_robot(Pose_State &state, Velocity2d &velocity)
 {
+
+    double angle_y = M_PI / 4.5;
+    double angle_x = M_PI / 12;
+    /*Eigen::Matrix3d R_z;*/
+    /*R_z << std::cos(angle), -std::sin(angle), 0, std::sin(angle), std::cos(angle), 0, 0, 0, 1;*/
+    Eigen::Matrix3d R_y;
+    R_y << std::cos(angle_y), 0, std::sin(angle_y), 0, 1, 0, -std::sin(angle_y), 0,
+        std::cos(angle_y);
+    Eigen::Matrix3d R_x;
+    R_x << 1, 0, 0, 0, std::cos(angle_x), -std::sin(angle_x), 0, std::sin(angle_x),
+        std::cos(angle_x);
+
     float dt = GetFrameTime();
     state.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z() * dt), Vector3d::UnitZ()));
     Linear_Velocity lv = state.orientation.rotation() * velocity.linear;
     state.orientation.translation() += lv * dt;
+
     // Vector3d vel = state.orientation * velocity.linear;
+    lv = R_y * lv;
     state.position += lv * dt;
 
     // std::cout << state.position.transpose() << std::endl;
@@ -116,8 +130,8 @@ class Quadruped : public Robot
         move_robot(pose_state, velocity);
     };
 
-    void read_sensors() override {};
-    void update_state() override {};
+    void read_sensors() override{};
+    void update_state() override{};
 
     Pose_State read_state() override { return pose_state; };
 };

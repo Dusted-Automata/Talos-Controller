@@ -19,7 +19,7 @@ class Logger
 
         pose_file.open("poses", std::ios::out | std::ios::trunc);
         time_file.open("times", std::ios::out | std::ios::trunc);
-        logging_file.open("LOG_" + timeString, std::ios::out | std::ios::trunc);
+        /*logging_file.open("LOG_" + timeString, std::ios::out | std::ios::trunc);*/
     }
     std::ofstream pose_file;
     std::ofstream time_file;
