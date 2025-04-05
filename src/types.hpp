@@ -6,6 +6,7 @@ using Eigen::Affine3d;
 using Eigen::Matrix4d;
 using Eigen::Vector3d;
 typedef Vector3d Ecef_Coord;
+typedef Vector3d LLH;
 typedef Vector3d Linear_Velocity;
 typedef Vector3d Angular_Velocity;
 
