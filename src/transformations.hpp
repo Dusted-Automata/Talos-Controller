@@ -43,7 +43,7 @@ static inline bool double_equal(double a, double b) { return fabs(a - b) < FLOAT
  *             as [X, Y, Z], all in meters.
  */
 // void wgsllh2ecef(const double llh[3], double ecef[3])
-inline Ecef_Coord wgsllh2ecef(const double lat, const double lon, const double height = 0)
+inline Ecef_Coord wgsllh2ecef(const double &lat, const double &lon, const double &height = 0)
 {
     Ecef_Coord ecef = {};
     double d = WGS84_E * sin(height);
@@ -81,7 +81,7 @@ inline Ecef_Coord wgsllh2ecef(const double lat, const double lon, const double h
  * \param llh  Converted geodetic coordinates are written into this array as
  *             [lat, lon, height] in [radians, radians, meters].
  */
-inline LLH wgsecef2llh(const Ecef_Coord ecef)
+inline LLH wgsecef2llh(const Ecef_Coord &ecef)
 {
     LLH llh = {};
     /* Distance from polar axis. */
@@ -194,7 +194,7 @@ inline LLH wgsecef2llh(const Ecef_Coord ecef)
  *             are assumed to be in radians, height in meters.
  * \param M        3x3 matrix to be populated with rotation matrix.
  */
-inline Eigen::Matrix3d wgs_ecef2ned_matrix(const LLH llh)
+inline Eigen::Matrix3d wgs_ecef2ned_matrix(const LLH &llh)
 {
     double sin_lat = sin(llh[0]), cos_lat = cos(llh[0]), sin_lon = sin(llh[1]),
            cos_lon = cos(llh[1]);
@@ -219,7 +219,7 @@ inline Eigen::Matrix3d wgs_ecef2ned_matrix(const LLH llh)
  *                 [X, Y, Z], all in meters.
  * \param M        3x3 matrix to be populated with rotation matrix.
  */
-inline Eigen::Matrix3d ecef2ned_matrix(const Ecef_Coord ref_ecef)
+inline Eigen::Matrix3d ecef2ned_matrix(const Ecef_Coord &ref_ecef)
 {
     LLH llh = wgsecef2llh(ref_ecef);
     Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
@@ -244,7 +244,7 @@ inline Eigen::Matrix3d ecef2ned_matrix(const Ecef_Coord ref_ecef)
  * \param ned       The North, East, Down vector is written into this array as
  *                  [N, E, D], all in meters.
  */
-inline Eigen::Vector3d wgsecef2ned(const Ecef_Coord ecef, const Ecef_Coord ref_ecef)
+inline Eigen::Vector3d wgsecef2ned(const Ecef_Coord &ecef, const Ecef_Coord &ref_ecef)
 {
     // double M[3][3];
     // ecef2ned_matrix(ref_ecef, M);
@@ -269,7 +269,7 @@ inline Eigen::Vector3d wgsecef2ned(const Ecef_Coord ecef, const Ecef_Coord ref_e
  * \param ned       The North, East, Down vector is written into this array as
  *                  [N, E, D], all in meters.
  */
-inline Eigen::Vector3d wgsecef2ned_dist(const Ecef_Coord ecef, const Ecef_Coord ref_ecef)
+inline Eigen::Vector3d wgsecef2ned_dist(const Ecef_Coord &ecef, const Ecef_Coord &ref_ecef)
 {
     Eigen::Vector3d new_ecef = ecef - ref_ecef;
     Eigen::Vector3d ned = wgsecef2ned(new_ecef, ref_ecef);
@@ -293,7 +293,7 @@ inline Eigen::Vector3d wgsecef2ned_dist(const Ecef_Coord ecef, const Ecef_Coord 
  * \param ecef      Cartesian coordinates of the point written into this array,
  *                  [X, Y, Z], all in meters.
  */
-inline Ecef_Coord wgsned2ecef(const Eigen::Vector3d ned, const Ecef_Coord ref_ecef)
+inline Ecef_Coord wgsned2ecef(const Eigen::Vector3d &ned, const Ecef_Coord &ref_ecef)
 {
     Eigen::Matrix3d M = ecef2ned_matrix(ref_ecef);
     Ecef_Coord ecef = M.transpose() * ned;
@@ -314,7 +314,7 @@ inline Ecef_Coord wgsned2ecef(const Eigen::Vector3d ned, const Ecef_Coord ref_ec
  * \param ecef      Cartesian coordinates of the point written into this array,
  *                  [X, Y, Z], all in meters.
  */
-inline Ecef_Coord wgsned2ecef_d(const Eigen::Vector3d ned, const Ecef_Coord ref_ecef)
+inline Ecef_Coord wgsned2ecef_d(const Eigen::Vector3d &ned, const Ecef_Coord &ref_ecef)
 {
     Ecef_Coord ecef = wgsned2ecef(ned, ref_ecef);
     ecef = ecef + ref_ecef;
