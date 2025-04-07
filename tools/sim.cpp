@@ -6,6 +6,7 @@
 #include "pid.hpp"
 #include "raylib.h"
 #include "raymath.h"
+#include "transformations.hpp"
 #include <iostream>
 #include <stdio.h>
 #include <thread>
@@ -87,24 +88,24 @@ class Quadruped : public Robot
 
     ~Quadruped() = default;
 
-    Pose_State simulate(Pose_State &current_state, Velocity2d &control, double dt)
-    {
-        // Simplified dynamics model (you'd replace this with your robot's actual dynamics)
-        Pose_State next_state = current_state;
-
-        next_state.orientation.rotate(
-            Eigen::AngleAxisd((control.angular.z() * dt), Vector3d::UnitZ()));
-
-        Linear_Velocity lv = next_state.orientation.rotation() * control.linear;
-
-        next_state.position += lv * dt;
-
-        next_state.velocity.linear = control.linear;
-
-        next_state.velocity.angular = control.angular;
-
-        return next_state;
-    }
+    // Pose_State simulate(Pose_State &current_state, Velocity2d &control, double dt)
+    // {
+    //     // Simplified dynamics model (you'd replace this with your robot's actual dynamics)
+    //     Pose_State next_state = current_state;
+    //
+    //     next_state.orientation.rotate(
+    //         Eigen::AngleAxisd((control.angular.z() * dt), Vector3d::UnitZ()));
+    //
+    //     Linear_Velocity lv = next_state.orientation.rotation() * control.linear;
+    //
+    //     next_state.position += lv * dt;
+    //
+    //     next_state.velocity.linear = control.linear;
+    //
+    //     next_state.velocity.angular = control.angular;
+    //
+    //     return next_state;
+    // }
 
     // Set a new target position for the robot
     /*void setTargetPosition(const Ecef_Coord &target)*/
@@ -129,6 +130,9 @@ class Quadruped : public Robot
         pose_state.velocity = velocity;
         pose_state.dt = GetFrameTime();
         // move_robot(pose_state, velocity);
+        velocity.linear *= pose_state.dt;
+        velocity.angular *= pose_state.dt;
+        frame_controller.move_in_local_frame(velocity);
     };
 
     void read_sensors() override {};
@@ -225,10 +229,14 @@ void simbot_linear(Quadruped &robot)
     robot.control_loop();
 
     {
-        Eigen::Matrix3d R = robot.pose_state.orientation.rotation();
+        // Eigen::Matrix3d R = robot.pose_state.orientation.rotation();
+        Eigen::Matrix3d R = robot.frame_controller.local_frame.orientation.rotation();
         double yaw = atan2(R(1, 0), R(0, 0));
-        Rectangle bot = {static_cast<float>(robot.pose_state.position.x()),
-                         static_cast<float>(-robot.pose_state.position.y()), 2.0, 1.0};
+        // Rectangle bot = {static_cast<float>(robot.pose_state.position.x()),
+        //                  static_cast<float>(-robot.pose_state.position.y()), 2.0, 1.0};
+
+        Rectangle bot = {static_cast<float>(robot.frame_controller.local_frame.pos.x()),
+                         static_cast<float>(-robot.frame_controller.local_frame.pos.y()), 2.0, 1.0};
         Vector2 origin = {2.0 / 2.0, 1.0 / 2.0};
         DrawRectanglePro(bot, origin, (-(yaw * 180) / M_PI), RED);
 
@@ -318,11 +326,14 @@ int main()
     angular_pid.output_min = 0.0;
 
     Linear_Controller t_c(config, linear_pid, angular_pid, config.hz);
-    MPPI_Controller m_c(50, 2500, 0.166, 5.0);
-
-    /*Quadruped robot(t_c, m_c);*/
     Quadruped robot(t_c);
-    robot.pose_state.position = waypoints[0];
+    // robot.pose_state.position = waypoints[0];
+    robot.frame_controller.local_frame.origin = waypoints[0];
+    LLH llh = wgsecef2llh(waypoints[0]);
+    double theta = atan2(llh.y(), llh.x());
+    Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
+    robot.frame_controller.local_frame.orientation = rot_yaw.toRotationMatrix();
+    robot.frame_controller.global_frame.pos = waypoints[0];
 
     std::function<void()> bound_path_loop = std::bind(
         &Linear_Controller::path_loop, &t_c, std::ref(robot.path_queue), std::ref(waypoints));
@@ -330,7 +341,8 @@ int main()
     std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
     path_loop.detach();
 
-    Camera2D camera = {.target = {(float)waypoints[0].x(), (float)waypoints[0].y()}};
+    Camera2D camera = {.target = {(float)robot.frame_controller.local_frame.pos.x(),
+                                  (float)robot.frame_controller.local_frame.pos.y()}};
     camera.offset = (Vector2){SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
     camera.zoom = 10.0f;
     int index = 0;
@@ -366,7 +378,11 @@ int main()
 
         for (int i = 0; i < waypoints.size(); i++)
         {
-            DrawCircle(waypoints[i].x(), -waypoints[i].y(), 0.8, BLUE);
+            Vector3d waypoint =
+                wgsecef2ned_d(waypoints[i], robot.frame_controller.local_frame.origin);
+            // std::cout << std::fixed;
+            // std::cout << "waypoint i: " << i << " " << waypoint.transpose() << std::endl;
+            DrawCircle(waypoint.x(), -waypoint.y(), 0.8, BLUE);
         }
 
         /*simbot_mpc(robot);*/
@@ -376,26 +392,38 @@ int main()
 
         Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
         char coordText[500];
-        sprintf(coordText, "World: (%.1f, %.1f) Zoom: %.2f Time: %f", mouseWorldPos.x,
-                -mouseWorldPos.y, camera.zoom, dt);
+        Ecef_Coord ecef_pos = wgsned2ecef_d({mouseWorldPos.x, -mouseWorldPos.y, 0},
+                                            robot.frame_controller.local_frame.origin);
+        // sprintf(coordText, "World: (%.1f, %.1f) Zoom: %.2f Time: %f", mouseWorldPos.x,
+        //         -mouseWorldPos.y, camera.zoom, dt);
+        sprintf(coordText, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %f", ecef_pos.x(),
+                ecef_pos.y(), ecef_pos.z(), camera.zoom, dt);
         DrawText(coordText, 10, 10, 20, BLACK);
-        auto R = robot.pose_state.orientation.rotation();
+        auto R = robot.frame_controller.local_frame.orientation.rotation();
         char orientationText[500];
         sprintf(orientationText,
                 "X: %.2f %.2f %.2f - Y: %.2f %.2f %.2f - Z: %.2f %.2f %.2f - YAW: %.2f", R(0, 0),
                 R(0, 1), R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2),
                 atan2(R(1, 0), R(0, 0)));
         DrawText(orientationText, 10, 40, 20, BLACK);
-        char positionText[500];
-        sprintf(positionText, "position: %.2f %.2f %.2f ", robot.pose_state.position.x(),
-                robot.pose_state.position.y(), robot.pose_state.position.z());
-        DrawText(positionText, 10, 70, 20, BLACK);
+        char localPositionText[500];
+        sprintf(localPositionText, "local position: %.2f %.2f %.2f ",
+                robot.frame_controller.local_frame.pos.x(),
+                robot.frame_controller.local_frame.pos.y(),
+                robot.frame_controller.local_frame.pos.z());
+        DrawText(localPositionText, 10, 70, 20, BLACK);
+        char globalPositionText[500];
+        sprintf(globalPositionText, "global position: %.2f %.2f %.2f ",
+                robot.frame_controller.global_frame.pos.x(),
+                robot.frame_controller.global_frame.pos.y(),
+                robot.frame_controller.global_frame.pos.z());
+        DrawText(globalPositionText, 10, 100, 20, BLACK);
         char velocityText[500];
         sprintf(velocityText, "velocity: %.2f %.2f %.2f - %.2f %.2f %.2f",
                 robot.pose_state.velocity.linear.x(), robot.pose_state.velocity.linear.y(),
                 robot.pose_state.velocity.linear.z(), robot.pose_state.velocity.angular.x(),
                 robot.pose_state.velocity.angular.y(), robot.pose_state.velocity.angular.z());
-        DrawText(velocityText, 10, 100, 20, BLACK);
+        DrawText(velocityText, 10, 130, 20, BLACK);
 
         EndDrawing();
         dt = GetTime();
