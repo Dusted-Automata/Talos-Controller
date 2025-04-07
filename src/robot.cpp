@@ -5,7 +5,7 @@ void Robot::control_loop()
 {
     update_state();
     pose_state = read_state();
-    logger.savePosesToFile(pose_state);
+    logger.savePosesToFile(frame_controller);
     logger.saveTimesToFile(motion_time);
     // Path_Movement path = readPath();
     // Sensors sensors = readSensors();

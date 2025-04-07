@@ -1,20 +1,28 @@
 
 #include "logger.hpp"
+#include "frame_controller.hpp"
 
-bool Logger::savePosesToFile(const Pose_State &state)
+bool Logger::savePosesToFile(const Frame_Controller &controller)
 {
     if (!pose_file.is_open())
     {
-        std::cerr << "Unable to open file for writing: " << "poses" << std::endl;
+        std::cerr << "Unable to open file for writing: "
+                  << "poses" << std::endl;
         return false;
     }
     pose_file << std::fixed;
-    pose_file << state.orientation(0, 0) << " " << state.orientation(0, 1) << " "
-              << state.orientation(0, 2) << " " << state.position.x() << " ";
-    pose_file << state.orientation(1, 0) << " " << state.orientation(1, 1) << " "
-              << state.orientation(1, 2) << " " << state.position.y() << " ";
-    pose_file << state.orientation(2, 0) << " " << state.orientation(2, 1) << " "
-              << state.orientation(2, 2) << " " << state.position.z() << " ";
+    pose_file << controller.local_frame.orientation(0, 0) << " "
+              << controller.local_frame.orientation(0, 1) << " "
+              << controller.local_frame.orientation(0, 2) << " " << controller.global_frame.pos.x()
+              << " ";
+    pose_file << controller.local_frame.orientation(1, 0) << " "
+              << controller.local_frame.orientation(1, 1) << " "
+              << controller.local_frame.orientation(1, 2) << " " << controller.global_frame.pos.y()
+              << " ";
+    pose_file << controller.local_frame.orientation(2, 0) << " "
+              << controller.local_frame.orientation(2, 1) << " "
+              << controller.local_frame.orientation(2, 2) << " " << controller.global_frame.pos.z()
+              << " ";
 
     // tracks movement in space from start position.
     // pose_file << state.orientation(0, 3) << " " << state.orientation(1, 3) << " "
@@ -28,7 +36,8 @@ bool Logger::saveTimesToFile(const double &timestamp)
 {
     if (!time_file.is_open())
     {
-        std::cerr << "Unable to open file for writing: " << "times" << std::endl;
+        std::cerr << "Unable to open file for writing: "
+                  << "times" << std::endl;
         return false;
     }
 
