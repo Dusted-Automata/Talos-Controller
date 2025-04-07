@@ -1,5 +1,5 @@
 #pragma once
-#include "trajectory.hpp"
+#include "trajectory_controller.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
 #include <cmath>
@@ -58,7 +58,7 @@ struct Trajectory
     double weight;
 };
 
-class MPPI_Controller : public Controller
+class MPPI_Controller : public Trajectory_Controller
 {
   private:
     int horizon_steps;

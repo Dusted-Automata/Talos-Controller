@@ -3,8 +3,8 @@
 #include <cmath>
 #include <iostream>
 
-void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
-                                      std::vector<Ecef_Coord> &waypoints)
+void Linear_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
+                                  std::vector<Ecef_Coord> &waypoints)
 {
     if (waypoints.empty())
     {
@@ -36,8 +36,7 @@ void Trajectory_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
     }
 }
 
-Velocity2d Trajectory_Controller::get_cmd(Pose_State &state,
-                                          Thread_Safe_Queue<Ecef_Coord> &path_queue)
+Velocity2d Linear_Controller::get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_Coord> &path_queue)
 {
     double max_vel_x = 2.0;
     double min_vel_x = -2.0;

@@ -89,7 +89,7 @@ template <typename T> class Thread_Safe_Queue
     }
 };
 
-class Controller
+class Trajectory_Controller
 {
   public:
     virtual Velocity2d get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_Coord> &path_queue) = 0;

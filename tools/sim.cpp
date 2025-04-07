@@ -1,7 +1,6 @@
-
 #include "../src/mppi.hpp"
 #include "../src/robot.hpp"
-#include "../src/trajectory.hpp"
+#include "../src/trajectory_controller.hpp"
 #include "../src/types.hpp"
 #include "raylib.h"
 #include "raymath.h"
@@ -74,7 +73,7 @@ class Quadruped : public Robot
 {
 
   public:
-    Quadruped(Controller &controller) : Robot(controller)
+    Quadruped(Trajectory_Controller &controller) : Robot(controller)
     { // horizon_steps, num_samples, dt, temperature
 
         // Initialize robot state
@@ -130,8 +129,8 @@ class Quadruped : public Robot
         move_robot(pose_state, velocity);
     };
 
-    void read_sensors() override{};
-    void update_state() override{};
+    void read_sensors() override {};
+    void update_state() override {};
 
     Pose_State read_state() override { return pose_state; };
 };
@@ -316,7 +315,7 @@ int main()
     angular_pid.output_max = 10.0;
     angular_pid.output_min = 0.0;
 
-    Trajectory_Controller t_c(config, linear_pid, angular_pid, config.hz);
+    Linear_Controller t_c(config, linear_pid, angular_pid, config.hz);
     MPPI_Controller m_c(50, 2500, 0.166, 5.0);
 
     /*Quadruped robot(t_c, m_c);*/
@@ -324,7 +323,7 @@ int main()
     robot.pose_state.position = waypoints[0];
 
     std::function<void()> bound_path_loop = std::bind(
-        &Trajectory_Controller::path_loop, &t_c, std::ref(robot.path_queue), std::ref(waypoints));
+        &Linear_Controller::path_loop, &t_c, std::ref(robot.path_queue), std::ref(waypoints));
 
     std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
     path_loop.detach();

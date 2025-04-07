@@ -5,7 +5,7 @@
 #include <fstream>
 #include <vector>
 
-class Trajectory_Controller : public Controller
+class Linear_Controller : public Trajectory_Controller
 {
 
   private:
@@ -19,8 +19,8 @@ class Trajectory_Controller : public Controller
     std::ofstream time_file;
 
   public:
-    Trajectory_Controller(Robot_Config config, PIDController linear_pid, PIDController angular_pid,
-                          double sampling_rate)
+    Linear_Controller(Robot_Config config, PIDController linear_pid, PIDController angular_pid,
+                      double sampling_rate)
         : config(config), linear_pid(linear_pid), angular_pid(angular_pid),
           sampling_rate(sampling_rate)
     {

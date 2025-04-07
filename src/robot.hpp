@@ -1,5 +1,6 @@
 #pragma once
 #include "controller.hpp"
+#include "frame_controller.hpp"
 #include "logger.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
@@ -15,7 +16,7 @@ class Robot
     // SENSOR PROCESSING THREAD
 
   public:
-    Robot(Controller &controller) : controller(controller)
+    Robot(Trajectory_Controller &controller) : trajectory_controller(controller)
     {
         pose_state.position = Eigen::Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
         pose_state.orientation = Eigen::Affine3d::Identity();
@@ -26,7 +27,8 @@ class Robot
 
     Pose_State pose_state;
     Thread_Safe_Queue<Ecef_Coord> path_queue;
-    Controller &controller;
+    Trajectory_Controller &trajectory_controller;
+    Frame_Controller frame_controller = {};
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual void update_state() = 0;
