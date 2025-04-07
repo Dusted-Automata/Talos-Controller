@@ -55,33 +55,15 @@ struct Motion_Constraints
 {
     double max_velocity;
     double min_velocity;
-    double standing_turn_velocity;
     double max_acceleration;
     double max_deceleration;
     double max_jerk;
-    double corner_velocity;
-};
-
-struct Velocity_Profile
-{
-    double time_to_max_speed;
-    double time_to_min_speed;
-    double corner_velocity;
-    double standing_turn_velocity;
-    double acceleration_rate;
-    double deceleration_rate;
 };
 
 struct Robot_Config
 {
     int hz;
     Motion_Constraints motion_constraints;
-    Velocity_Profile velocity_profile;
-    // TODO: Make a real frame and transformation data structure
-    // Matrix4d robot_frame{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0,
-    // 1}}; Matrix4d world_frame{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0,
-    // 0, 1}};
-    Affine3d transform_world_to_robot = Affine3d::Identity();
 };
 
 struct Motion_Step

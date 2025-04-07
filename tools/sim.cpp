@@ -46,37 +46,11 @@ void DrawAbsoluteGrid(Camera2D camera, float gridStep)
     }
 }
 
-void move_robot(Pose_State &state, Velocity2d &velocity)
-{
-
-    double angle_y = M_PI / 4.5;
-    double angle_x = M_PI / 12;
-    /*Eigen::Matrix3d R_z;*/
-    /*R_z << std::cos(angle), -std::sin(angle), 0, std::sin(angle), std::cos(angle), 0, 0, 0, 1;*/
-    Eigen::Matrix3d R_y;
-    R_y << std::cos(angle_y), 0, std::sin(angle_y), 0, 1, 0, -std::sin(angle_y), 0,
-        std::cos(angle_y);
-    Eigen::Matrix3d R_x;
-    R_x << 1, 0, 0, 0, std::cos(angle_x), -std::sin(angle_x), 0, std::sin(angle_x),
-        std::cos(angle_x);
-
-    float dt = GetFrameTime();
-    state.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z() * dt), Vector3d::UnitZ()));
-    Linear_Velocity lv = state.orientation.rotation() * velocity.linear;
-    state.orientation.translation() += lv * dt;
-
-    // Vector3d vel = state.orientation * velocity.linear;
-    lv = R_y * lv;
-    state.position += lv * dt;
-
-    // std::cout << state.position.transpose() << std::endl;
-}
-
-class Quadruped : public Robot
+class Sim_Quadruped : public Robot
 {
 
   public:
-    Quadruped(Trajectory_Controller &controller) : Robot(controller)
+    Sim_Quadruped(Trajectory_Controller &controller) : Robot(controller)
     { // horizon_steps, num_samples, dt, temperature
 
         // Initialize robot state
@@ -86,33 +60,7 @@ class Quadruped : public Robot
         pose_state.velocity.angular = Vector3d::Zero();
     }
 
-    ~Quadruped() = default;
-
-    // Pose_State simulate(Pose_State &current_state, Velocity2d &control, double dt)
-    // {
-    //     // Simplified dynamics model (you'd replace this with your robot's actual dynamics)
-    //     Pose_State next_state = current_state;
-    //
-    //     next_state.orientation.rotate(
-    //         Eigen::AngleAxisd((control.angular.z() * dt), Vector3d::UnitZ()));
-    //
-    //     Linear_Velocity lv = next_state.orientation.rotation() * control.linear;
-    //
-    //     next_state.position += lv * dt;
-    //
-    //     next_state.velocity.linear = control.linear;
-    //
-    //     next_state.velocity.angular = control.angular;
-    //
-    //     return next_state;
-    // }
-
-    // Set a new target position for the robot
-    /*void setTargetPosition(const Ecef_Coord &target)*/
-    /*{*/
-    /*    std::cout << "Setting new target: " << target.transpose() << std::endl;*/
-    /*    mppi_controller.setTarget(target);*/
-    /*}*/
+    ~Sim_Quadruped() = default;
 
     // Apply a disturbance to the robot (e.g., someone pushing it)
     void applyDisturbance(const Eigen::Vector3d &force, const Eigen::Vector3d &torque)
@@ -129,7 +77,6 @@ class Quadruped : public Robot
     {
         pose_state.velocity = velocity;
         pose_state.dt = GetFrameTime();
-        // move_robot(pose_state, velocity);
         velocity.linear *= pose_state.dt;
         velocity.angular *= pose_state.dt;
         frame_controller.move_in_local_frame(velocity);
@@ -140,37 +87,6 @@ class Quadruped : public Robot
 
     Pose_State read_state() override { return pose_state; };
 };
-
-void DrawArrow(Vector2 start, Vector2 end, float thickness, Color color)
-{
-    // Draw main arrow line
-    DrawLineEx(start, end, thickness, color);
-
-    // Compute direction vector
-    Vector2 dir = {end.x - start.x, end.y - start.y};
-    float length = sqrtf(dir.x * dir.x + dir.y * dir.y);
-
-    if (length == 0)
-        return; // Prevent division by zero
-    dir.x /= length;
-    dir.y /= length;
-
-    // Arrowhead size
-    float arrowSize = 10.0f;
-
-    // Compute perpendicular vector for arrowhead
-    Vector2 perp = {-dir.y, dir.x};
-
-    // Compute arrowhead points
-    Vector2 p1 = {end.x - dir.x * arrowSize + perp.x * arrowSize,
-                  end.y - dir.y * arrowSize + perp.y * arrowSize};
-
-    Vector2 p2 = {end.x - dir.x * arrowSize - perp.x * arrowSize,
-                  end.y - dir.y * arrowSize - perp.y * arrowSize};
-
-    // Draw arrowhead
-    DrawTriangle(end, p1, p2, color);
-}
 
 void showcaseTrajectory(Pose_State state, Control_Sequence controls, double dt, double thickness,
                         Color color)
@@ -198,53 +114,19 @@ void showcaseTrajectory(Pose_State state, Control_Sequence controls, double dt, 
     }
 }
 
-// void simbot_mpc(Quadruped &robot)
-// {
-//
-//     robot.controller.dt = GetFrameTime();
-//     robot.control_loop();
-//
-//     {
-//         Eigen::Matrix3d R = robot.pose_state.orientation.rotation();
-//         double yaw = atan2(R(1, 0), R(0, 0));
-//         Rectangle bot = {static_cast<float>(robot.pose_state.position.x()),
-//                          static_cast<float>(-robot.pose_state.position.y()), 2.0, 1.0};
-//         Vector2 origin = {2.0 / 2.0, 1.0 / 2.0};
-//         DrawRectanglePro(bot, origin, (-(yaw * 180) / M_PI), RED);
-//
-//         for (auto trajectory : robot.controller.perturbed_trajectories)
-//         {
-//
-//             showcaseTrajectory(robot.pose_state, trajectory.controls, GetFrameTime(), 0.1, BLUE);
-//         }
-//         showcaseTrajectory(robot.pose_state, robot.controller.nominal_controls, GetFrameTime(),
-//         0.1,
-//                            ORANGE);
-//     }
-// }
-
-void simbot_linear(Quadruped &robot)
+void simbot_linear(Sim_Quadruped &robot)
 {
 
     robot.control_loop();
 
     {
-        // Eigen::Matrix3d R = robot.pose_state.orientation.rotation();
         Eigen::Matrix3d R = robot.frame_controller.local_frame.orientation.rotation();
         double yaw = atan2(R(1, 0), R(0, 0));
-        // Rectangle bot = {static_cast<float>(robot.pose_state.position.x()),
-        //                  static_cast<float>(-robot.pose_state.position.y()), 2.0, 1.0};
-
         Rectangle bot = {static_cast<float>(robot.frame_controller.local_frame.pos.x()),
                          static_cast<float>(-robot.frame_controller.local_frame.pos.y()), 2.0, 1.0};
         Vector2 origin = {2.0 / 2.0, 1.0 / 2.0};
         DrawRectanglePro(bot, origin, (-(yaw * 180) / M_PI), RED);
 
-        // for (auto trajectory : robot.mppi_controller.perturbed_trajectories)
-        // {
-
-        //     showcaseTrajectory(robot.pose_state, trajectory.controls, GetFrameTime(), 0.1, BLUE);
-        // }
         // showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
         // GetFrameTime(),
         //                    0.1, ORANGE);
@@ -257,22 +139,6 @@ int main()
     SetTargetFPS(500);
 
     float dt = 0;
-
-    Velocity_Profile vel_profile = {.time_to_max_speed = 0.1,
-                                    .time_to_min_speed = 0.1,
-                                    .corner_velocity = 0.1,
-                                    .standing_turn_velocity = 0.1,
-                                    .acceleration_rate = 35.0,
-                                    .deceleration_rate = 10.0};
-    Robot_Config config = {.hz = 50,
-                           .motion_constraints = {.max_velocity = 2.0,
-                                                  .min_velocity = 0.1,
-                                                  .standing_turn_velocity = 2.0,
-                                                  .max_acceleration = 0.5,
-                                                  .max_deceleration = 0.5,
-                                                  .max_jerk = 0.0,
-                                                  .corner_velocity = 0.0},
-                           .velocity_profile = vel_profile};
 
     // std::vector<Ecef_Coord> waypoints = {{4100175.625135626, 476368.7899695045,
     // 4846344.356704135},
@@ -316,6 +182,18 @@ int main()
     //     0.0}, {0.464, -1.427, 0.0},  {1.004, -1.115, 0.0},  {1.37, -0.61, 0.0},   {1.5, -0.0,
     //     0.0}};
 
+    Robot_Config config = {
+        .hz = 50,
+        .motion_constraints =
+            {
+                .max_velocity = 2.0,
+                .min_velocity = 0.1,
+                .max_acceleration = 0.5,
+                .max_deceleration = 0.5,
+                .max_jerk = 0.0,
+            },
+    };
+
     PIDGains linear_gains = {1.2, 0.0, 0.0};
     PIDController linear_pid(linear_gains);
     linear_pid.output_max = 100.0;
@@ -325,9 +203,10 @@ int main()
     angular_pid.output_max = 10.0;
     angular_pid.output_min = 0.0;
 
-    Linear_Controller t_c(config, linear_pid, angular_pid, config.hz);
-    Quadruped robot(t_c);
-    // robot.pose_state.position = waypoints[0];
+    Linear_Controller l_c(config, linear_pid, angular_pid, config.hz);
+
+    Sim_Quadruped robot(l_c);
+
     robot.frame_controller.local_frame.origin = waypoints[0];
     LLH llh = wgsecef2llh(waypoints[0]);
     double theta = atan2(llh.y(), llh.x());
@@ -336,7 +215,7 @@ int main()
     robot.frame_controller.global_frame.pos = waypoints[0];
 
     std::function<void()> bound_path_loop = std::bind(
-        &Linear_Controller::path_loop, &t_c, std::ref(robot.path_queue), std::ref(waypoints));
+        &Linear_Controller::path_loop, &l_c, std::ref(robot.path_queue), std::ref(waypoints));
 
     std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
     path_loop.detach();
@@ -378,14 +257,12 @@ int main()
 
         for (int i = 0; i < waypoints.size(); i++)
         {
+            // TODO: Refactor into own vector or something. No need to convert every frame.
             Vector3d waypoint =
                 wgsecef2ned_d(waypoints[i], robot.frame_controller.local_frame.origin);
-            // std::cout << std::fixed;
-            // std::cout << "waypoint i: " << i << " " << waypoint.transpose() << std::endl;
             DrawCircle(waypoint.x(), -waypoint.y(), 0.8, BLUE);
         }
 
-        /*simbot_mpc(robot);*/
         simbot_linear(robot);
 
         EndMode2D();
@@ -394,8 +271,6 @@ int main()
         char coordText[500];
         Ecef_Coord ecef_pos = wgsned2ecef_d({mouseWorldPos.x, -mouseWorldPos.y, 0},
                                             robot.frame_controller.local_frame.origin);
-        // sprintf(coordText, "World: (%.1f, %.1f) Zoom: %.2f Time: %f", mouseWorldPos.x,
-        //         -mouseWorldPos.y, camera.zoom, dt);
         sprintf(coordText, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %f", ecef_pos.x(),
                 ecef_pos.y(), ecef_pos.z(), camera.zoom, dt);
         DrawText(coordText, 10, 10, 20, BLACK);
@@ -430,9 +305,5 @@ int main()
     }
 
     CloseWindow();
-    // saveToFile("waypoints", waypoints);
-    // saveToFile("trajectories", trajectories);
-    // saveToFile("velocities", velocities);
-    // saveToFile("time", trajectories.size());
     return 0;
 }
