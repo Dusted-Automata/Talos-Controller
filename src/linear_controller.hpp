@@ -1,4 +1,5 @@
 #pragma once
+#include "frame_controller.hpp"
 #include "pid.hpp"
 #include "trajectory_controller.hpp"
 #include "types.hpp"
@@ -31,7 +32,8 @@ class Linear_Controller : public Trajectory_Controller
 
     void path_loop(Thread_Safe_Queue<Ecef_Coord> &path, std::vector<Ecef_Coord> &waypoints);
     // void trajectory_loop(Thread_Safe_Queue<Ecef_Coord> &path_queue);
-    Velocity2d get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_Coord> &path_queue) override;
+    Velocity2d get_cmd(Frame_Controller &frame_controller,
+                       Thread_Safe_Queue<Ecef_Coord> &path_queue) override;
 
     Thread_Safe_Queue<Trajectory_Point> trajectories;
 };

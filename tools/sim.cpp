@@ -128,7 +128,7 @@ class Quadruped : public Robot
     {
         pose_state.velocity = velocity;
         pose_state.dt = GetFrameTime();
-        move_robot(pose_state, velocity);
+        // move_robot(pose_state, velocity);
     };
 
     void read_sensors() override {};

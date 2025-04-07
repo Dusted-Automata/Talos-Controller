@@ -142,9 +142,10 @@ void MPPI_Controller::updateNominalTrajectory(const std::vector<Trajectory> &tra
     }
 }
 
-Velocity2d MPPI_Controller::get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_Coord> &path_queue)
+Velocity2d MPPI_Controller::get_cmd(Frame_Controller &frame_controller,
+                                    Thread_Safe_Queue<Ecef_Coord> &path_queue)
 {
-    update(state);
+    // update(state);
     Velocity2d cmd = nominal_controls.velocities[0];
     shiftControlHorizon();
     return cmd;

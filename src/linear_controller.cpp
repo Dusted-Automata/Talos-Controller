@@ -1,4 +1,6 @@
 #include "linear_controller.hpp"
+#include "frame_controller.hpp"
+#include "transformations.hpp"
 #include "types.hpp"
 #include <cmath>
 #include <iostream>
@@ -36,7 +38,8 @@ void Linear_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
     }
 }
 
-Velocity2d Linear_Controller::get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_Coord> &path_queue)
+Velocity2d Linear_Controller::get_cmd(Frame_Controller &frame_controller,
+                                      Thread_Safe_Queue<Ecef_Coord> &path_queue)
 {
     double max_vel_x = 2.0;
     double min_vel_x = -2.0;
@@ -61,18 +64,20 @@ Velocity2d Linear_Controller::get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_
         // angular_pid.reset();
         // path_queue.pop();
     }
-    Ecef_Coord goal = path.value().second;
+    Ecef_Coord start = wgsecef2ned_d(path.value().first, frame_controller.local_frame.origin);
+    Ecef_Coord goal = wgsecef2ned_d(path.value().second, frame_controller.local_frame.origin);
 
-    Ecef_Coord difference = path.value().second - path.value().first;
+    Ecef_Coord difference = goal - start;
     double difference_distance =
         std::sqrt(difference.x() * difference.x() + difference.y() * difference.y());
 
-    double dx = goal.x() - state.position.x();
-    double dy = goal.y() - state.position.y();
-    double dz = goal.z() - state.position.z();
+    double dx = goal.x() - frame_controller.local_frame.pos.x();
+    double dy = goal.y() - frame_controller.local_frame.pos.y();
+    double dz = goal.z() - frame_controller.local_frame.pos.z();
     double dist = sqrt(dx * dx + dy * dy);
 
-    double yaw = atan2(state.orientation.rotation()(1, 0), state.orientation.rotation()(0, 0));
+    double yaw = atan2(frame_controller.local_frame.orientation.rotation()(1, 0),
+                       frame_controller.local_frame.orientation.rotation()(0, 0));
 
     double dx_odom = cos(yaw) * dx + sin(yaw) * dy;
     double dy_odom = -sin(yaw) * dx + cos(yaw) * dy;
@@ -113,17 +118,13 @@ Velocity2d Linear_Controller::get_cmd(Pose_State &state, Thread_Safe_Queue<Ecef_
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
 
-    trajectory_time += state.dt;
-
     // Path_Movement path = readPath();
     // Thread_Safe_Queue<Trajectory_Point> trajectories = readPath();
     // Velocity2d cmd = follow_trajectory(state, path_queue);
 
-    std::ofstream traj_file("poses", std::ios::app);
-
     double t = dist / difference_distance;
     double interpolated = (path.value().first.z() * t + path.value().second.z() * (1 - t));
-    std::cout << t << std::endl;
+    // std::cout << t << std::endl;
 
     return cmd;
 }
