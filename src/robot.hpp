@@ -1,7 +1,7 @@
 #pragma once
-#include "controller.hpp"
 #include "frame_controller.hpp"
 #include "logger.hpp"
+#include "trajectory_controller.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
 

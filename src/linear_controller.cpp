@@ -1,4 +1,4 @@
-#include "trajectory.hpp"
+#include "linear_controller.hpp"
 #include "types.hpp"
 #include <cmath>
 #include <iostream>

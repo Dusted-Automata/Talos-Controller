@@ -2,6 +2,8 @@
 #include "../src/robot.hpp"
 #include "../src/trajectory_controller.hpp"
 #include "../src/types.hpp"
+#include "linear_controller.hpp"
+#include "pid.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include <iostream>

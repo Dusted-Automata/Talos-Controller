@@ -1,5 +1,5 @@
 #include "mppi.hpp"
-#include "controller.hpp"
+#include "trajectory_controller.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
 #include <cmath>

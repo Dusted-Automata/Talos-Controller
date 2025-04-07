@@ -1,6 +1,6 @@
 #pragma once
-#include "controller.hpp"
 #include "pid.hpp"
+#include "trajectory_controller.hpp"
 #include "types.hpp"
 #include <fstream>
 #include <vector>
