@@ -2,6 +2,7 @@
 #include "../src/robot.hpp"
 #include "../src/trajectory_controller.hpp"
 #include "../src/types.hpp"
+#include "cppmap3d.hh"
 #include "linear_controller.hpp"
 #include "pid.hpp"
 #include "raylib.h"
@@ -82,8 +83,8 @@ class Sim_Quadruped : public Robot
         frame_controller.move_in_local_frame(velocity);
     };
 
-    void read_sensors() override {};
-    void update_state() override {};
+    void read_sensors() override{};
+    void update_state() override{};
 
     Pose_State read_state() override { return pose_state; };
 };
@@ -140,26 +141,10 @@ int main()
 
     float dt = 0;
 
-    // std::vector<Ecef_Coord> waypoints = {{4100175.625135626, 476368.7899695045,
-    // 4846344.356704135},
-    //                                      {4100209.6729529747, 476361.2681338759,
-    //                                      4846316.478097512}, {4100218.5394949187,
-    //                                      476445.5598077707, 4846300.796185957},
-    //                                      {4100241.72195791, 476441.0557096391,
-    //                                      4846281.753675706}};
-
-    std::vector<Ecef_Coord> waypoints = {
-        {4100175.501310785, 476368.5810492334, 4846344.481161202},
-        {4100206.413589074, 476361.2785325105, 4846319.216194633},
-        {4100208.2686218983, 476361.8831207554, 4846317.598228671},
-        {4100209.900653061, 476364.4071562134, 4846315.980261215},
-        {4100219.0424836874, 476442.50566599367, 4846300.67172578},
-        {4100218.752532444, 476445.00095228496, 4846300.67172578},
-        {4100219.002473338, 476447.94804803375, 4846300.173884979},
-        {4100221.441998387, 476448.6205962849, 4846298.058059992},
-        {4100223.1262948154, 476446.8709422366, 4846296.813455865},
-        {4100241.5312245293, 476441.4226223994, 4846281.878137232},
-        {4100241.6527441368, 476439.1022889267, 4846282.002598747}};
+    std::vector<Ecef_Coord> waypoints = {{4100175.625135626, 476368.7899695045, 4846344.356704135},
+                                         {4100209.6729529747, 476361.2681338759, 4846316.478097512},
+                                         {4100218.5394949187, 476445.5598077707, 4846300.796185957},
+                                         {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
     // std::vector<Ecef_Coord> waypoints = {{0.0, 0.0, 0.0},    {8.5, 10.5, 0.0},   {10.0, 10.0,
     // 0.0},
@@ -209,10 +194,26 @@ int main()
 
     robot.frame_controller.local_frame.origin = waypoints[0];
     LLH llh = wgsecef2llh(waypoints[0]);
+    Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     double theta = atan2(llh.y(), llh.x());
     Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
     robot.frame_controller.local_frame.orientation = rot_yaw.toRotationMatrix();
+    std::cout << robot.frame_controller.local_frame.orientation.matrix() << std::endl;
     robot.frame_controller.global_frame.pos = waypoints[0];
+    robot.frame_controller.global_frame.orientation = M;
+    robot.frame_controller.global_frame.orientation.rotate(
+        Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
+    robot.frame_controller.global_frame.orientation.rotate(
+        Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));
+    robot.frame_controller.global_frame.orientation.rotate(
+        Eigen::AngleAxisd(M_PI, Vector3d::UnitY()));
+    robot.frame_controller.global_frame.orientation.rotate(
+        Eigen::AngleAxisd(M_PI / 50, Vector3d::UnitY()));
+    /*std::cout << robot.frame_controller.global_frame.orientation.rotation() << std::endl;*/
+    /*robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
+     * Vector3d::UnitY()));*/
+    /*robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
+     * Vector3d::UnitY()));*/
 
     std::function<void()> bound_path_loop = std::bind(
         &Linear_Controller::path_loop, &l_c, std::ref(robot.path_queue), std::ref(waypoints));

@@ -1,7 +1,6 @@
 #include "frame_controller.hpp"
 #include "transformations.hpp"
 #include "types.hpp"
-#include <iostream>
 
 void Frame_Controller::move_in_local_frame(Velocity2d &velocity)
 {
@@ -10,7 +9,8 @@ void Frame_Controller::move_in_local_frame(Velocity2d &velocity)
 
     Vector3d linear_vector =
         wgsned2ecef(local_frame.orientation.rotation() * velocity.linear, local_frame.origin);
-    global_frame.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z()), Vector3d::UnitZ()));
+    Angular_Velocity test = local_frame.orientation.rotation() * velocity.angular;
+    global_frame.orientation.rotate(Eigen::AngleAxisd(velocity.angular.z(), Vector3d::UnitY()));
     global_frame.pos += linear_vector;
 }
 

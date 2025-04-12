@@ -4,8 +4,8 @@
 struct Frame
 {
     // Eigen::Quaterniond orientation;
-    Affine3d orientation;
-    Vector3d pos;
+    Affine3d orientation = Affine3d::Identity();
+    Vector3d pos = Vector3d::Zero();
 };
 
 struct NED_Frame : public Frame

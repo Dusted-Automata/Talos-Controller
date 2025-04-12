@@ -11,17 +11,17 @@ bool Logger::savePosesToFile(const Frame_Controller &controller)
         return false;
     }
     pose_file << std::fixed;
-    pose_file << controller.local_frame.orientation(0, 0) << " "
-              << controller.local_frame.orientation(0, 1) << " "
-              << controller.local_frame.orientation(0, 2) << " " << controller.global_frame.pos.x()
+    pose_file << controller.global_frame.orientation(0, 0) << " "
+              << controller.global_frame.orientation(0, 1) << " "
+              << controller.global_frame.orientation(0, 2) << " " << controller.global_frame.pos.x()
               << " ";
-    pose_file << controller.local_frame.orientation(1, 0) << " "
-              << controller.local_frame.orientation(1, 1) << " "
-              << controller.local_frame.orientation(1, 2) << " " << controller.global_frame.pos.y()
+    pose_file << controller.global_frame.orientation(1, 0) << " "
+              << controller.global_frame.orientation(1, 1) << " "
+              << controller.global_frame.orientation(1, 2) << " " << controller.global_frame.pos.y()
               << " ";
-    pose_file << controller.local_frame.orientation(2, 0) << " "
-              << controller.local_frame.orientation(2, 1) << " "
-              << controller.local_frame.orientation(2, 2) << " " << controller.global_frame.pos.z()
+    pose_file << controller.global_frame.orientation(2, 0) << " "
+              << controller.global_frame.orientation(2, 1) << " "
+              << controller.global_frame.orientation(2, 2) << " " << controller.global_frame.pos.z()
               << " ";
 
     // tracks movement in space from start position.
