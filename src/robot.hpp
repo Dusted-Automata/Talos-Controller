@@ -1,6 +1,8 @@
 #pragma once
 #include "frame_controller.hpp"
 #include "logger.hpp"
+#include "path_controller.hpp"
+#include "sensor_manager.hpp"
 #include "trajectory_controller.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
@@ -11,6 +13,9 @@ class Robot
     float hz = 500;
     Robot_Config config = {};
     Logger logger = {};
+    Sensor_Manager sensor_manager = {};
+    Path_Controller path_controller = {};
+
     // MAIN CONTROL THREAD
     // PATH GENERATION THREAD
     // SENSOR PROCESSING THREAD

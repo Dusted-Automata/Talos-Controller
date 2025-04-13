@@ -16,14 +16,14 @@
 #define SCREEN_HEIGHT 1000
 #define ROBOT_SIZE 20.0
 
-void worker_function(std::function<void()> callback, int period_ms)
-{
-    while (1)
-    {
-        callback();
-        std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
-    }
-}
+// void worker_function(std::function<void()> callback, int period_ms)
+// {
+//     while (1)
+//     {
+//         callback();
+//         std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
+//     }
+// }
 
 void DrawAbsoluteGrid(Camera2D camera, float gridStep)
 {
@@ -83,8 +83,8 @@ class Sim_Quadruped : public Robot
         frame_controller.move_in_local_frame(velocity);
     };
 
-    void read_sensors() override{};
-    void update_state() override{};
+    void read_sensors() override {};
+    void update_state() override {};
 
     Pose_State read_state() override { return pose_state; };
 };

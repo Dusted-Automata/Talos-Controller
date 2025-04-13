@@ -2,27 +2,41 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-int main()
+#include <unistd.h>
+
+bool TCP_Subscriber::connect()
 {
-
-    int status;
-    struct addrinfo hints;
-    struct addrinfo *servinfo; // will point to the results
-
-    memset(&hints, 0, sizeof hints); // make sure the struct is empty
-    hints.ai_family = AF_UNSPEC;     // don't care IPv4 or IPv6
-    hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
-    hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
-
-    if ((status = getaddrinfo(NULL, "3490", &hints, &servinfo)) != 0)
+    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_fd == -1)
     {
-        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
-        exit(1);
+        std::cerr << "Could not create socket" << std::endl;
+        return false;
     }
 
-    // servinfo now points to a linked list of 1 or more struct addrinfos
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = inet_addr(server_ip.c_str());
+    server.sin_port = htons(port);
 
-    // ... do everything until you don't need servinfo anymore ....
+    int con = ::connect(socket_fd, (struct sockaddr *)&server, sizeof(server));
 
-    freeaddrinfo(servinfo); // free the linked-lis
+    if (con < 0)
+    {
+        std::cerr << "Connection failed to " << server_ip << ":" << port << std::endl;
+        ::close(socket_fd);
+        return false;
+    }
+    std::cout << "Connected to " << server_ip << ":" << port << std::endl;
+    return true;
+}
+
+bool TCP_Subscriber::listen()
+{
+    ssize_t bytes_received = recv(socket_fd, buf.data(), buf.size(), 0);
+    if (bytes_received <= 0)
+    {
+        std::cerr << "no bytes received" << std::endl;
+        close(socket_fd);
+        return false;
+    }
+    return true;
 }

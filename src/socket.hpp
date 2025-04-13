@@ -1,7 +1,10 @@
 #pragma once
-#include <netdb.h>
-#include <sys/_types/_u_int16_t.h>
-#include <sys/_types/_u_int32_t.h>
+#include <arpa/inet.h>
+#include <array>
+#include <cstring>
+#include <iostream>
+#include <ostream>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 
@@ -54,3 +57,18 @@
 int getaddrinfo(const char *node,    // e.g. "www.example.com" or IP
                 const char *service, // e.g. "http" or port number
                 const struct addrinfo *hints, struct addrinfo **res);
+
+class TCP_Subscriber
+{
+  private:
+    int socket_fd;
+    struct sockaddr_in server;
+    std::string server_ip;
+    int port;
+    std::array<int, 4096> buf;
+
+  public:
+    TCP_Subscriber(std::string ip, int port) : server_ip(ip), port(port) {};
+    bool connect();
+    bool listen();
+};
