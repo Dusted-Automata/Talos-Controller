@@ -64,4 +64,11 @@ Ubx_Nav_Pvt Ublox::read()
     return val;
 }
 
-void Sensor_Manager::run() {}
+void Sensor_Manager::loop()
+{
+    while (true)
+    {
+        ublox.listen();
+    }
+}
+void Sensor_Manager::readSensors() { ublox.read(); }

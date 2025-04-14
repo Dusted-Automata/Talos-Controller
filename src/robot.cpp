@@ -9,6 +9,8 @@ void Robot::control_loop()
     logger.saveTimesToFile(motion_time);
     // Path_Movement path = readPath();
     // Sensors sensors = readSensors();
+    sensor_manager.readSensors();
+    /*sensor_manager.sm_thread.join();*/
 
     Velocity2d cmd = trajectory_controller.get_cmd(frame_controller, path_queue);
     send_velocity_command(cmd);

@@ -2,6 +2,7 @@
 #include <array>
 #include <netinet/in.h>
 #include <string>
+#include <thread>
 
 struct Ubx_Nav_Pvt
 {
@@ -20,7 +21,7 @@ class Ublox
     Ubx_Nav_Pvt rec_buf;
 
   public:
-    Ublox() {};
+    Ublox(){};
 
     bool connect();
     bool listen();
@@ -29,6 +30,16 @@ class Ublox
 
 class Sensor_Manager
 {
+    Ublox ublox;
 
-    void run();
+  public:
+    Sensor_Manager()
+    {
+        ublox.connect();
+        sensors_thread = std::thread(&Sensor_Manager::loop, this);
+    }
+    ~Sensor_Manager() { sensors_thread.detach(); }
+    std::thread sensors_thread;
+    void loop();
+    void readSensors();
 };
