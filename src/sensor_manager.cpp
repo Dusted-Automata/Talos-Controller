@@ -41,9 +41,9 @@ GGA Ublox::read() { return GGA{}; };
 
 void Sensor_Manager::loop()
 {
-    while (true)
-    {
-        ublox.listen();
-    }
+    /*while (true)*/
+    /*{*/
+    /*    ublox.listen();*/
+    /*}*/
 }
 void Sensor_Manager::readSensors() { ublox.read(); }

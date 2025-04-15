@@ -1,6 +1,8 @@
 #pragma once
 #include "socket.hpp"
+#include <array>
 #include <cstdint>
+#include <iostream>
 #include <netinet/in.h>
 #include <string>
 #include <thread>
@@ -41,7 +43,7 @@ class Sensor_Manager
   public:
     Sensor_Manager()
     {
-        ublox.connect();
+        std::cout << ublox.connect() << std::endl;
         sensors_thread = std::thread(&Sensor_Manager::loop, this);
     }
     ~Sensor_Manager() { sensors_thread.detach(); }
