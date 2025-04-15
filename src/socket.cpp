@@ -1,6 +1,9 @@
 #include "socket.hpp"
+#include <exception>
+#include <ios>
 #include <iostream>
 #include <unistd.h>
+#include <vector>
 
 bool TCP_Socket::connect()
 {
@@ -27,24 +30,34 @@ bool TCP_Socket::connect()
     return true;
 }
 
-bool recv_all(int sockfd, void *buffer, size_t length)
+inline size_t findStart(char *buf, int index)
 {
-    char *ptr = static_cast<char *>(buffer);
-    size_t total = 0;
-
-    while (total < length)
+    for (int i = index; i < TCP_BUFFER_LENGTH - 1; i++)
     {
-        ssize_t n = recv(sockfd, ptr + total, length - total, 0);
-        if (n <= 0)
-            return false;
-        total += n;
+        if (buf[i] == '$')
+        {
+            return i + 1;
+        }
     }
-    return true;
+    return index;
 }
 
-bool TCP_Socket::listen(char *buffer, size_t buffer_size)
+inline size_t findEnd(char *buf, int index)
 {
-    ssize_t bytes_received = recv(socket_fd, buffer, buffer_size, 0);
+
+    for (int i = index; i < TCP_BUFFER_LENGTH - 2; i++)
+    {
+        if (buf[i] == '\r' && buf[i + 1] == '\n')
+        {
+            return i - 1;
+        }
+    }
+    return index;
+}
+
+bool TCP_Socket::recv(std::vector<std::string> &msgs)
+{
+    ssize_t bytes_received = ::recv(socket_fd, stream_buffers.recv, sizeof(stream_buffers.recv), 0);
     if (bytes_received < 1)
     {
         std::cerr << "recv failed" << std::endl;
@@ -52,12 +65,53 @@ bool TCP_Socket::listen(char *buffer, size_t buffer_size)
         return false;
     }
 
-    /*if (!recv_all(socket_fd, buf.data(), buf.size()))*/
-    /*{*/
-    /*    std::cerr << "recv failed" << std::endl;*/
-    /*    close(socket_fd);*/
-    /*    return false;*/
-    /*}*/
+    for (int i = 0; i < TCP_BUFFER_LENGTH - 1;)
+    {
+        if (stream_buffers.half_message.exists == true)
+        {
+            std::string beginning(stream_buffers.half_message.buf, stream_buffers.half_message.end);
+            size_t end = findEnd(stream_buffers.recv, 0);
+            std::string ending(stream_buffers.recv, end);
+            msgs.push_back((beginning + ending));
+            stream_buffers.half_message.exists = false;
+        }
+        size_t start = findStart(stream_buffers.recv, i);
+        if (start == i) // means we did not find a start delimiter, and can exit
+            break;
+        size_t end = findEnd(stream_buffers.recv, start);
+        if (start == end) // means we did not find an end delimiter, and need to save the message
+        {
+
+            memcpy(stream_buffers.half_message.buf, &stream_buffers.recv[end],
+                   TCP_BUFFER_LENGTH - start);
+            stream_buffers.half_message.exists = true;
+            stream_buffers.half_message.end = start;
+            break;
+        }
+        std::string str(&stream_buffers.recv[start], (end - start));
+        msgs.push_back(str);
+        i = end + 1;
+    }
 
     return true;
 }
+
+std::vector<std::string> TCP_Socket::recv_all()
+{
+    std::vector<std::string> msgs;
+    if (recv(msgs))
+    {
+        while (stream_buffers.half_message.exists == true)
+        {
+            recv(msgs);
+        }
+    }
+    return msgs;
+}
+
+std::vector<std::string> extract_messages() { std::vector<std::string> msgs; }
+
+/*std::string TCP_Socket::ublox_Message(char *buffer, size_t buffer_size)*/
+/*{*/
+/*    return parseMessage(buffer, buffer_size);*/
+/*};*/

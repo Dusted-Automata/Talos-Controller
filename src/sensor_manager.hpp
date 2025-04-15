@@ -1,6 +1,5 @@
 #pragma once
 #include "socket.hpp"
-#include <array>
 #include <cstdint>
 #include <iostream>
 #include <netinet/in.h>
@@ -21,18 +20,21 @@ struct GGA
     float Alt;       // Altitude above mean sea level - meters
 };
 
+#define GGA_BUFFER_LENGTH 128
 class Ublox
 {
     TCP_Socket tcp = TCP_Socket("127.0.0.1", 50010);
-    std::array<char, 4096> buf;
-
-    bool parseMessage(std::array<char, 4096> buf);
 
   public:
-    Ublox(){};
+    Ublox()
+    {
+        if (!tcp.connect())
+        {
+            std::cerr << "Ublx couldn't connect" << std::endl;
+        };
+    };
 
-    bool connect();
-    bool listen();
+    bool poll();
     GGA read();
 };
 
@@ -41,11 +43,7 @@ class Sensor_Manager
     Ublox ublox;
 
   public:
-    Sensor_Manager()
-    {
-        std::cout << ublox.connect() << std::endl;
-        sensors_thread = std::thread(&Sensor_Manager::loop, this);
-    }
+    Sensor_Manager() { sensors_thread = std::thread(&Sensor_Manager::loop, this); }
     ~Sensor_Manager() { sensors_thread.detach(); }
     std::thread sensors_thread;
     void loop();

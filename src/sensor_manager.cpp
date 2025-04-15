@@ -2,38 +2,20 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <unistd.h>
+#include <vector>
 
-bool Ublox::parseMessage(std::array<char, 4096> buf)
+bool Ublox::poll()
 {
-    int i = 0;
-    while (i < buf.size() - 1)
+    std::vector<std::string> msgs = tcp.recv_all();
+    for (auto i : msgs)
     {
-        if (buf.at(i) == '\r' && buf.at(i + 1) == '\n')
-            break;
-        i++;
+        std::cout << i << std::endl;
     }
-    std::string string(buf.data(), i);
-    std::cout << string << std::endl;
-
-    return true;
-}
-
-bool Ublox::connect()
-{
-    if (!tcp.connect())
-    {
-        return false;
-    }
-    return true;
-}
-
-bool Ublox::listen()
-{
-    if (!tcp.listen(buf.data(), buf.size()))
-
-    {
-        return false;
-    }
+    /*if (!tcp.recv())*/
+    /*{*/
+    /*    return false;*/
+    /*}*/
+    /*tcp.ublox_Message(buf, buf.size());*/
     return true;
 }
 
@@ -41,6 +23,7 @@ GGA Ublox::read() { return GGA{}; };
 
 void Sensor_Manager::loop()
 {
+    ublox.poll();
     /*while (true)*/
     /*{*/
     /*    ublox.listen();*/
