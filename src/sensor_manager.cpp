@@ -3,66 +3,41 @@
 #include <iostream>
 #include <unistd.h>
 
-bool Ublox::connect()
+bool Ublox::parseMessage(std::array<char, 4096> buf)
 {
-    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_fd == -1)
+    int i = 0;
+    while (i < buf.size() - 1)
     {
-        std::cerr << "Could not create socket" << std::endl;
-        return false;
+        if (buf.at(i) == '\r' && buf.at(i + 1) == '\n')
+            break;
+        i++;
     }
+    std::string string(buf.data(), i);
+    std::cout << string << std::endl;
 
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr(server_ip.c_str());
-    server.sin_port = htons(port);
-
-    int con = ::connect(socket_fd, (struct sockaddr *)&server, sizeof(server));
-
-    if (con < 0)
-    {
-        std::cerr << "Connection failed to " << server_ip << ":" << port << std::endl;
-        ::close(socket_fd);
-        return false;
-    }
-    std::cout << "Connected to " << server_ip << ":" << port << std::endl;
     return true;
 }
 
-bool recv_all(int sockfd, void *buffer, size_t length)
+bool Ublox::connect()
 {
-    char *ptr = static_cast<char *>(buffer);
-    size_t total = 0;
-
-    while (total < length)
+    if (!tcp.connect())
     {
-        ssize_t n = recv(sockfd, ptr + total, length - total, 0);
-        if (n <= 0)
-            return false;
-        total += n;
+        return false;
     }
     return true;
 }
 
 bool Ublox::listen()
 {
-    if (!recv_all(socket_fd, &rec_buf, sizeof(rec_buf)))
+    if (!tcp.listen(buf.data(), buf.size()))
+
     {
-        std::cerr << "recv failed" << std::endl;
-        close(socket_fd);
         return false;
     }
-    ring_buffer.at(buf_head) = rec_buf;
-    buf_head = (++buf_head % ring_buffer.size());
     return true;
 }
 
-Ubx_Nav_Pvt Ublox::read()
-{
-    Ubx_Nav_Pvt val = ring_buffer.at(buf_tail);
-    if (buf_tail != buf_head)
-        buf_tail = (++buf_tail % ring_buffer.size());
-    return val;
-}
+GGA Ublox::read() { return GGA{}; };
 
 void Sensor_Manager::loop()
 {

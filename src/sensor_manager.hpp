@@ -1,31 +1,37 @@
 #pragma once
-#include <array>
+#include "socket.hpp"
+#include <cstdint>
 #include <netinet/in.h>
 #include <string>
 #include <thread>
 
-struct Ubx_Nav_Pvt
+// https://cdn.sparkfun.com/assets/f/7/4/3/5/PM-15136.pdf#%5B%7B%22num%22%3A64%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C0%2C609.45%2Cnull%5D
+struct GGA
 {
+    char Time[10];   // UTC time - hhmmss.ss
+    char Lat[13];    // Latitude (degrees & minutes) - ddmm.mmmmm
+    char NS;         // North/South indicator
+    char Long[14];   // Longitude (degrees & minutes) - dddmm.mmmmm
+    char EW;         // East/West indicator
+    uint8_t Quality; // Quality indicator for position fix
+    uint8_t NumSV;   // Number of satellites used (0-12)
+    float HDOP;      // Horizontal Dilution of Precision
+    float Alt;       // Altitude above mean sea level - meters
 };
 
 class Ublox
 {
+    TCP_Socket tcp = TCP_Socket("127.0.0.1", 50010);
+    std::array<char, 4096> buf;
 
-    int socket_fd;
-    struct sockaddr_in server;
-    std::string server_ip = "127.0.0.1";
-    int port = 50012;
-    std::array<Ubx_Nav_Pvt, 16> ring_buffer;
-    int buf_head = 0;
-    int buf_tail = 0;
-    Ubx_Nav_Pvt rec_buf;
+    bool parseMessage(std::array<char, 4096> buf);
 
   public:
     Ublox(){};
 
     bool connect();
     bool listen();
-    Ubx_Nav_Pvt read();
+    GGA read();
 };
 
 class Sensor_Manager

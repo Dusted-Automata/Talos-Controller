@@ -1,10 +1,8 @@
 #include "socket.hpp"
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
+#include <iostream>
 #include <unistd.h>
 
-bool TCP_Subscriber::connect()
+bool TCP_Socket::connect()
 {
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd == -1)
@@ -29,14 +27,37 @@ bool TCP_Subscriber::connect()
     return true;
 }
 
-bool TCP_Subscriber::listen()
+bool recv_all(int sockfd, void *buffer, size_t length)
 {
-    ssize_t bytes_received = recv(socket_fd, buf.data(), buf.size(), 0);
-    if (bytes_received <= 0)
+    char *ptr = static_cast<char *>(buffer);
+    size_t total = 0;
+
+    while (total < length)
     {
-        std::cerr << "no bytes received" << std::endl;
+        ssize_t n = recv(sockfd, ptr + total, length - total, 0);
+        if (n <= 0)
+            return false;
+        total += n;
+    }
+    return true;
+}
+
+bool TCP_Socket::listen(char *buffer, size_t buffer_size)
+{
+    ssize_t bytes_received = recv(socket_fd, buffer, buffer_size, 0);
+    if (bytes_received < 1)
+    {
+        std::cerr << "recv failed" << std::endl;
         close(socket_fd);
         return false;
     }
+
+    /*if (!recv_all(socket_fd, buf.data(), buf.size()))*/
+    /*{*/
+    /*    std::cerr << "recv failed" << std::endl;*/
+    /*    close(socket_fd);*/
+    /*    return false;*/
+    /*}*/
+
     return true;
 }

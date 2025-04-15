@@ -1,74 +1,19 @@
 #pragma once
 #include <arpa/inet.h>
-#include <array>
-#include <cstring>
-#include <iostream>
-#include <ostream>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 
-/*struct sockaddr*/
-/*{*/
-/*    unsigned short sa_family; // address family, AF_xxx*/
-/*    char sa_data[14];         // 14 bytes of protocol address*/
-/*};*/
-/**/
-/*struct in_addr*/
-/*{*/
-/*    uint32_t s_addr; // that's a 32-bit int (4 bytes)*/
-/*};*/
-
-/*struct sockaddr_in*/
-/*{*/
-/*    short int sin_family;        // Address family, AF_INET*/
-/*    unsigned short int sin_port; // Port number*/
-/*    struct in_addr sin_addr;     // Internet address*/
-/*    unsigned char padding[8];    // Same size as struct sockaddr*/
-/*};*/
-
-/*struct in6_addr*/
-/*{*/
-/*    unsigned char s6_addr[16]; // IPv6 address*/
-/*};*/
-
-/*struct sockaddr_in6*/
-/*{*/
-/*    u_int16_t sin6_family;     // address family, AF_INET6*/
-/*    u_int16_t sin6_port;       // port number, Network Byte Order*/
-/*    u_int32_t sin6_flowinfo;   // IPv6 flow information*/
-/*    struct in6_addr sin6_addr; // IPv6 address*/
-/*    u_int32_t sin6_scope_id;   // Scope ID*/
-/*};*/
-
-/*struct addrinfo*/
-/*{*/
-/*    int ai_flags;             // AI_PASSIVE, AI_CANONNAME, etc.*/
-/*    int ai_family;            // AF_INET, AF_INET6, AF_UNSPEC*/
-/*    int ai_socktype;          // SOCK_STREAM, SOCK_DGRAM*/
-/*    int ai_protocol;          // use 0 for "any"*/
-/*    size_t ai_addrlen;        // size of ai_addr in bytes*/
-/*    struct sockaddr *ai_addr; // struct sockaddr_in or _in6*/
-/*    char *ai_canonname;       // full canonical hostname*/
-/**/
-/*    struct addrinfo *ai_next; // linked list, next node*/
-/*};*/
-
-int getaddrinfo(const char *node,    // e.g. "www.example.com" or IP
-                const char *service, // e.g. "http" or port number
-                const struct addrinfo *hints, struct addrinfo **res);
-
-class TCP_Subscriber
+class TCP_Socket
 {
   private:
     int socket_fd;
     struct sockaddr_in server;
     std::string server_ip;
     int port;
-    std::array<int, 4096> buf;
 
   public:
-    TCP_Subscriber(std::string ip, int port) : server_ip(ip), port(port) {};
+    TCP_Socket(std::string ip, int port) : server_ip(ip), port(port){};
     bool connect();
-    bool listen();
+    bool listen(char *buffer, size_t buffer_size);
 };

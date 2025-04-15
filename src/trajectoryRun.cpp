@@ -1,26 +1,19 @@
+#include "linear_controller.hpp"
+#include "pid.hpp"
 #include "robot.hpp"
-#include "trajectory.hpp"
+#include "trajectory_controller.hpp"
 #include <thread>
 
 class testRobot : public Robot
 {
 
   public:
-    testRobot(Controller &controller) : Robot(controller) {}
+    testRobot(Trajectory_Controller &controller) : Robot(controller) {}
     void send_velocity_command(Velocity2d &cmd) override{};
     void update_state() override{};
     void read_sensors() override{};
     Pose_State read_state() override { return {}; };
 };
-
-void worker_function(std::function<void()> callback, int period_ms)
-{
-    while (1)
-    {
-        callback();
-        std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
-    }
-}
 
 int main()
 {
@@ -33,16 +26,15 @@ int main()
     std::vector<Ecef_Coord> waypoints = {
         {0.0, 0.0, 0.0}, {4.0, -2.0, 0.0}, {4.0, 2.0, 0.0}, {0.0, 0.0, 0.0}};
 
-    Velocity_Profile vel_profile = {.acceleration_rate = 35.0, .deceleration_rate = 10.0};
     Robot_Config config = {
         .hz = 50,
-        .motion_constraints = {.max_velocity = 1.0,
-                               .standing_turn_velocity = 2.0,
-                               .max_acceleration = 0.5,
-                               .max_deceleration = 0.5,
-                               .max_jerk = 0.0,
-                               .corner_velocity = 0.0},
-        .velocity_profile = vel_profile,
+        .motion_constraints =
+            {
+                .max_velocity = 1.0,
+                .max_acceleration = 0.5,
+                .max_deceleration = 0.5,
+                .max_jerk = 0.0,
+            },
 
     };
     PIDGains linear_gains = {1.0, 0.0, 0.0};
@@ -53,7 +45,7 @@ int main()
     PIDController angular_pid(angular_gains);
     angular_pid.output_max = 10, 0;
     angular_pid.output_min = 0, 0;
-    Trajectory_Controller controller(config, linear_pid, angular_pid, config.hz);
+    Linear_Controller controller(config, linear_pid, angular_pid, config.hz);
 
     Ecef_Coord current = waypoints[0];
     Ecef_Coord next = waypoints[1];
@@ -61,13 +53,10 @@ int main()
     testRobot robot(controller);
 
     std::function<void()> bound_path_loop =
-        std::bind(&Trajectory_Controller::path_loop, &controller, std::ref(robot.path_queue),
+        std::bind(&Linear_Controller::path_loop, &controller, std::ref(robot.path_queue),
                   std::ref(waypoints));
-    std::function<void()> bound_trajectory_loop =
-        std::bind(&Trajectory_Controller::trajectory_loop, &controller, std::ref(robot.path_queue));
     std::function<void()> bound_control_loop = std::bind(&testRobot::control_loop, &robot);
     std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
-    std::thread trajectory_loop = std::thread(worker_function, bound_trajectory_loop, 100);
     std::thread control_loop_thread = std::thread(worker_function, bound_control_loop, 2);
     // std::thread control_loop_thread = std::thread(&testRobot::control_loop, &robot);
 
