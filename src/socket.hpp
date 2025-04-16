@@ -1,6 +1,5 @@
 #pragma once
 #include <arpa/inet.h>
-#include <array>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -8,6 +7,7 @@
 
 #define TCP_BUFFER_LENGTH 128
 
+// TODO: Do this with just two pointers that I switch
 struct Half_Message
 {
     char buf[TCP_BUFFER_LENGTH];
