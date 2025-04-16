@@ -41,6 +41,20 @@ struct GGA
     float geoid_seperation; // difference between ellipsoid and mean sea level
     float diff_age;         // Age of differential corrections (null when DGPS is not used)
     float diff_station; // ID of station providing differential corrections (0 when DGPS not used)
+
+    void print()
+    {
+        std::cout << "time: " << (int)time.hh << ":" << (int)time.mm << ":" << (int)time.ss << ":"
+                  << (int)time.ms << std::endl;
+        std::cout << "latlng: " << latlng.lat << " , " << latlng.lng << std::endl;
+        std::cout << "fix: " << static_cast<int>(fix) << std::endl;
+        std::cout << "num_satellites: " << static_cast<int>(num_satalites) << std::endl;
+        std::cout << "hdop: " << hddp << std::endl;
+        std::cout << "altitude: " << alt << " meters" << std::endl;
+        std::cout << "geoid_separation: " << geoid_seperation << " meters" << std::endl;
+        std::cout << "differential_age: " << diff_age << " seconds" << std::endl;
+        std::cout << "differential_station: " << diff_station << std::endl;
+    }
 };
 
 class Ublox

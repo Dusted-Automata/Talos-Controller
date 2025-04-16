@@ -10,9 +10,13 @@
 
 void parse_time(GGA &gga, std::string &time)
 {
+    std::cout << time << std::endl;
+    std::cout << time.substr(2, 2) << std::endl;
+    std::cout << (int)static_cast<uint8_t>(std::stol(time.substr(2, 2))) << std::endl;
+
     gga.time.hh = static_cast<uint8_t>(std::stoul(time.substr(0, 2)));
-    gga.time.mm = static_cast<uint8_t>(std::stoul(time.substr(2, 4)));
-    gga.time.ss = static_cast<uint8_t>(std::stoul(time.substr(4, 6)));
+    gga.time.mm = static_cast<uint8_t>(std::stoul(time.substr(2, 2)));
+    gga.time.ss = static_cast<uint8_t>(std::stoul(time.substr(4, 2)));
     gga.time.ms = static_cast<uint16_t>(std::stoul(time.substr(7)));
 }
 void parse_latlng(GGA &gga, std::string &lat, std::string lat_dir, std::string lng,
@@ -34,8 +38,9 @@ void parse_latlng(GGA &gga, std::string &lat, std::string lat_dir, std::string l
 
     if (!lng.empty() && !lng_dir.empty())
     {
-        double longitude = std::stod(lng.substr(0, 2));
-        longitude += std::stod(lng.substr(2)) / 60.0;
+        double longitude = std::stod(lng.substr(0, 3));
+        std::cout << longitude << std::endl;
+        longitude += std::stod(lng.substr(3)) / 60.0;
         if (lng_dir == "S")
         {
             longitude *= -1.0;
@@ -98,7 +103,7 @@ GGA parse_gga(const std::string &msg)
 
     GGA gga = {};
     parse_time(gga, arr[1]);
-    parse_latlng(gga, arr[2], arr[2], arr[3], arr[4]);
+    parse_latlng(gga, arr[2], arr[3], arr[4], arr[5]);
     parse_fix(gga, arr[6]);
 
     gga.num_satalites = parse_uint8(arr[6]);
@@ -117,6 +122,7 @@ bool Ublox::poll()
     for (auto &i : msgs)
     {
         GGA gga = parse_gga(i);
+        gga.print();
     }
 
     return true;
