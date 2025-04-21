@@ -8,4 +8,7 @@ run:
 controller:
 	./build/controller
 
+traj_run:
+	./build/trajectory_run
+
 .PHONY : run

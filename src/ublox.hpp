@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <iostream>
 
-struct utc_time
+struct UTC_Time
 {
     uint8_t hh;
     uint8_t mm;
@@ -11,10 +11,16 @@ struct utc_time
     uint16_t ms;
 };
 
-struct latlng
+struct LatLng
 {
     double lat;
     double lng;
+};
+
+enum class NMEA_Cmd
+{
+    UNKNOWN,
+    GGA,
 };
 
 struct GGA
@@ -32,8 +38,8 @@ struct GGA
         SIMULATION = 8 ///< Simulation mode.
     };
     // All of the char arrays, have space for null termination.
-    utc_time time; // UTC time - hhmmss.ss
-    latlng latlng;
+    UTC_Time time; // UTC time - hhmmss.ss
+    LatLng latlng;
     Fix fix;                // Quality indicator for position fix
     uint8_t num_satalites;  // Number of satellites used (0-12)
     float hddp;             // Horizontal Dilution of Precision
@@ -57,9 +63,11 @@ struct GGA
     }
 };
 
+
 class Ublox
 {
-    TCP_Socket tcp = TCP_Socket("127.0.0.1", 50010);
+    NMEA_Parser parser = {};
+    TCP_Socket tcp = TCP_Socket("127.0.0.1", 50010, parser);
 
   public:
     Ublox()

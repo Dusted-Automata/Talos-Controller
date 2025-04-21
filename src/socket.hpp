@@ -1,5 +1,8 @@
 #pragma once
+#include "types.hpp"
 #include <arpa/inet.h>
+#include <array>
+#include <cstring>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -7,18 +10,9 @@
 
 #define TCP_BUFFER_LENGTH 128
 
-// TODO: Do this with just two pointers that I switch
-struct Half_Message
-{
-    char buf[TCP_BUFFER_LENGTH];
-    size_t end;
-    bool exists;
-};
-
-struct Stream_Buffers
-{
-    char recv[TCP_BUFFER_LENGTH];
-    Half_Message half_message;
+class Parser {
+  public:
+    virtual void process_data(std::vector<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) = 0;
 };
 
 class TCP_Socket
@@ -28,12 +22,26 @@ class TCP_Socket
     struct sockaddr_in server;
     std::string server_ip;
     int port;
-    Stream_Buffers stream_buffers;
+    std::array<char, TCP_BUFFER_LENGTH> recv_buf;
+    Parser &parser;
 
   public:
-    TCP_Socket(std::string ip, int port) : server_ip(ip), port(port){};
+    TCP_Socket(std::string ip, int port, Parser &parser) : server_ip(ip), port(port), parser(parser) {};
     bool connect();
     bool recv(std::vector<std::string> &msgs);
     std::vector<std::string> recv_all();
     std::string ublox_Message();
 };
+
+class NMEA_Parser : public Parser
+{
+  private:
+    Ring_Buffer<char> ring = Ring_Buffer<char>(TCP_BUFFER_LENGTH*2);
+
+    inline bool findStart(Ring_Buffer<char> &buf, size_t &index);
+    inline bool findEnd(Ring_Buffer<char> &buf, size_t &index);
+
+  public:
+    void process_data(std::vector<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) override;
+};
+
