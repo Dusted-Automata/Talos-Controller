@@ -46,12 +46,11 @@ class Go1_Quadruped : public Robot
     UT::HighCmd moveCmd(Velocity2d &trajectory);
 
   public:
-    Go1_Quadruped()
+    Go1_Quadruped() : 
+		safe(UT::LeggedType::Go1),
+		// udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
+		udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082))
     {
-
-		safe = UT::LeggedType::Go1; 
-		// udp = UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082);
-		udp = UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082);
         udp.InitCmdData(cmd);
 
         pose_state.position = Eigen::Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
@@ -78,9 +77,8 @@ class Go1_Quadruped : public Robot
         PIDController angular_pid(angular_gains);
         angular_pid.output_max = 10.0;
         angular_pid.output_min = 0.0;
-        Linear_Controller controller(linear_pid, angular_pid, config.hz);
-
-        trajectory_controller = &controller;
+		trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
+		trajectory_controller->robot = this;
 
 	}
     ~Go1_Quadruped() = default;

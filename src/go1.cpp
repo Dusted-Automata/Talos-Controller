@@ -111,8 +111,7 @@ int main(void)
                               boost::bind(&Go1_Quadruped::control_loop, &robot));
 
     UT::LoopFunc path_loop("path_loop", 0.030,
-                           boost::bind(&Linear_Controller::path_loop, &robot.trajectory_controller,
-                                       boost::ref(robot.path_queue), waypoints_square));
+                           boost::bind(&Linear_Controller::path_loop, static_cast<Linear_Controller*>(robot.trajectory_controller.get()), waypoints_square));
 
     UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
                               boost::bind(&Go1_Quadruped::UDPRecv, &robot));
