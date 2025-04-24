@@ -112,12 +112,6 @@ GGA parse_gga(std::string &msg)
     return gga;
 }
 
-enum class NMEA_Cmd
-{
-    UNKNOWN,
-    GGA,
-};
-
 NMEA_Cmd to_nmea_cmd(std::string &key)
 {
     if (key == "GPGGA") return NMEA_Cmd::GGA;
@@ -136,12 +130,11 @@ NMEA_Cmd extract_command(const std::string& cmd_str) {
 
 }
 
-bool Ublox::poll()
+void Ublox::poll()
 {
-    std::vector<std::string> msgs;
-    if (tcp.recv(msgs)){
-        for (auto &i : msgs)
-        {
+    if (tcp.recv(buf)){
+		while (!buf.empty()) {
+			std::string i = buf.front();
             NMEA_Cmd cmd = extract_command(i);
             switch (cmd)
             {
@@ -151,12 +144,10 @@ bool Ublox::poll()
             case NMEA_Cmd::GGA:
                 GGA gga = parse_gga(i);
                 gga.print();
+                msgs.push(std::move(gga));
                 break;
             }
-        }
+			buf.pop();
+		}
     }
-
-    return true;
 }
-
-GGA Ublox::read() { return GGA{}; };

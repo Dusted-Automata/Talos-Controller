@@ -1,8 +1,10 @@
 #pragma once
 #include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
+#include "linear_controller.hpp"
+#include "pid.hpp"
 #include "mppi.hpp"
 #include "robot.hpp"
-#include "trajectory.hpp"
+#include "trajectory_controller.hpp"
 #include "unitree_legged_sdk/comm.h"
 #include <stdint.h>
 
@@ -44,13 +46,43 @@ class Go1_Quadruped : public Robot
     UT::HighCmd moveCmd(Velocity2d &trajectory);
 
   public:
-    Go1_Quadruped(Controller &t_c)
-        : Robot(t_c),
-          // udp(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082) {
-          safe(UT::LeggedType::Go1), udp(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082)
+    Go1_Quadruped()
     {
+
+		safe = UT::LeggedType::Go1; 
+		// udp = UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082);
+		udp = UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082);
         udp.InitCmdData(cmd);
-    }
+
+        pose_state.position = Eigen::Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
+        pose_state.orientation = Eigen::Affine3d::Identity();
+        pose_state.velocity.linear = Vector3d::Zero();
+        pose_state.velocity.angular = Vector3d::Zero();
+
+        Robot_Config config = {
+            .hz = 50,
+            .motion_constraints =
+                {
+                    .max_velocity = 0.6,
+                    .max_acceleration = 100.0,
+                    .max_deceleration = 100.0,
+                    .max_jerk = 0.0,
+                },
+        };
+
+        PIDGains linear_gains = {0.4, 0.0, 0.0};
+        PIDController linear_pid(linear_gains);
+        linear_pid.output_max = 10.0;
+        linear_pid.output_min = 0.0;
+        PIDGains angular_gains = {0.2, 0.0, 0.0};
+        PIDController angular_pid(angular_gains);
+        angular_pid.output_max = 10.0;
+        angular_pid.output_min = 0.0;
+        Linear_Controller controller(linear_pid, angular_pid, config.hz);
+
+        trajectory_controller = &controller;
+
+	}
     ~Go1_Quadruped() = default;
 
     UT::Safety safe;
@@ -69,8 +101,6 @@ class Go1_Quadruped : public Robot
     void UDPRecv();
     void UDPSend();
     void send_velocity_command(Velocity2d &velocity) override;
-    void update_state() override;
-    void read_sensors() override;
     Pose_State read_state() override;
 
     int motiontime = 0;

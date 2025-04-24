@@ -2,7 +2,6 @@
 #include "../src/robot.hpp"
 #include "../src/trajectory_controller.hpp"
 #include "../src/types.hpp"
-#include "cppmap3d.hh"
 #include "linear_controller.hpp"
 #include "pid.hpp"
 #include "raylib.h"
@@ -51,7 +50,7 @@ class Sim_Quadruped : public Robot
 {
 
   public:
-    Sim_Quadruped(Trajectory_Controller &controller) : Robot(controller)
+    Sim_Quadruped() 
     { // horizon_steps, num_samples, dt, temperature
 
         // Initialize robot state
@@ -59,6 +58,29 @@ class Sim_Quadruped : public Robot
         pose_state.orientation = Eigen::Affine3d::Identity();
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
+
+        Robot_Config config = {
+            .hz = 50,
+            .motion_constraints =
+                {
+                    .max_velocity = 2.0,
+                    .max_acceleration = 0.5,
+                    .max_deceleration = 0.5,
+                    .max_jerk = 0.0,
+                },
+        };
+
+        PIDGains linear_gains = {1.2, 0.0, 0.0};
+        PIDController linear_pid(linear_gains);
+        linear_pid.output_max = 100.0;
+        linear_pid.output_min = 0.0;
+        PIDGains angular_gains = {0.2, 0.0, 0.0};
+        PIDController angular_pid(angular_gains);
+        angular_pid.output_max = 10.0;
+        angular_pid.output_min = 0.0;
+
+		trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
+		trajectory_controller->robot = this;
     }
 
     ~Sim_Quadruped() = default;
@@ -82,9 +104,6 @@ class Sim_Quadruped : public Robot
         velocity.angular *= pose_state.dt;
         frame_controller.move_in_local_frame(velocity);
     };
-
-    void read_sensors() override {};
-    void update_state() override {};
 
     Pose_State read_state() override { return pose_state; };
 };
@@ -167,30 +186,8 @@ int main()
     //     0.0}, {0.464, -1.427, 0.0},  {1.004, -1.115, 0.0},  {1.37, -0.61, 0.0},   {1.5, -0.0,
     //     0.0}};
 
-    Robot_Config config = {
-        .hz = 50,
-        .motion_constraints =
-            {
-                .max_velocity = 2.0,
-                .min_velocity = 0.1,
-                .max_acceleration = 0.5,
-                .max_deceleration = 0.5,
-                .max_jerk = 0.0,
-            },
-    };
 
-    PIDGains linear_gains = {1.2, 0.0, 0.0};
-    PIDController linear_pid(linear_gains);
-    linear_pid.output_max = 100.0;
-    linear_pid.output_min = 0.0;
-    PIDGains angular_gains = {0.2, 0.0, 0.0};
-    PIDController angular_pid(angular_gains);
-    angular_pid.output_max = 10.0;
-    angular_pid.output_min = 0.0;
-
-    Linear_Controller l_c(config, linear_pid, angular_pid, config.hz);
-
-    Sim_Quadruped robot(l_c);
+    Sim_Quadruped robot;
 
     robot.frame_controller.local_frame.origin = waypoints[0];
     LLH llh = wgsecef2llh(waypoints[0]);
@@ -215,8 +212,13 @@ int main()
     /*robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
      * Vector3d::UnitY()));*/
 
-    std::function<void()> bound_path_loop = std::bind(
-        &Linear_Controller::path_loop, &l_c, std::ref(robot.path_queue), std::ref(waypoints));
+    // std::function<void()> bound_path_loop =
+    //     std::bind(&Linear_Controller::path_loop, robot.trajectory_controller, std::ref(waypoints));
+
+    std::function<void()> bound_path_loop = [&robot, &waypoints]() {
+		static_cast<Linear_Controller*>(robot.trajectory_controller.get())->path_loop(waypoints);
+	
+	};
 
     std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
     path_loop.detach();

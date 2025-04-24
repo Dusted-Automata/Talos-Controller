@@ -2,6 +2,7 @@
 #include "socket.hpp"
 #include <cstdint>
 #include <iostream>
+#include <queue>
 
 struct UTC_Time
 {
@@ -22,6 +23,8 @@ enum class NMEA_Cmd
     UNKNOWN,
     GGA,
 };
+
+// https://cdn.sparkfun.com/assets/f/7/4/3/5/PM-15136.pdf#%5B%7B%22num%22%3A64%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C0%2C609.45%2Cnull%5D
 
 struct GGA
 {
@@ -77,7 +80,8 @@ class Ublox
             std::cerr << "Ublx couldn't connect" << std::endl;
         };
     };
+	std::queue<std::string> buf;
+	std::queue<GGA> msgs;
 
-    bool poll();
-    GGA read();
+    void poll();
 };

@@ -22,7 +22,7 @@ link_directories(lib/cpp/${ARCH})
 set(EXTRA_LIBS -pthread libunitree_legged_sdk.a)
 set(CMAKE_CXX_FLAGS "-O3 -fPIC -ggdb")
 # set(CMAKE_CXX_FLAGS "-O3 -fPIC -Wall -Wextra -ggdb")
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(catkin QUIET)
 if(${catkin_FOUND})

@@ -2,7 +2,6 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
-#include <vector>
 
 bool TCP_Socket::connect()
 {
@@ -29,7 +28,7 @@ bool TCP_Socket::connect()
     return true;
 }
 
-inline bool NMEA_Parser::findStart(Ring_Buffer<char> &buf, size_t &i)
+inline bool NMEA_Parser::findStart(Ring_Buffer<char, TCP_BUFFER_LENGTH*2> &buf, size_t &i)
 {
     for (; i < buf.count(); i++)
     {
@@ -42,7 +41,7 @@ inline bool NMEA_Parser::findStart(Ring_Buffer<char> &buf, size_t &i)
     return false;
 }
 
-inline bool NMEA_Parser::findEnd(Ring_Buffer<char> &buf, size_t &i)
+inline bool NMEA_Parser::findEnd(Ring_Buffer<char, TCP_BUFFER_LENGTH*2> &buf, size_t &i)
 {
 
     for (; i < buf.count(); i++)
@@ -55,35 +54,33 @@ inline bool NMEA_Parser::findEnd(Ring_Buffer<char> &buf, size_t &i)
     return false;
 }
 
-void NMEA_Parser::process_data(std::vector<std::string> &msgs,
+void NMEA_Parser::process_data(std::queue<std::string> &msgs,
                                std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received)
 { 
-    ring.write(buf.data(), bytes_received);
+    ring.write(std::span(buf.data(), bytes_received));
 
     size_t index = 0;
     while (index < ring.count()) {
         index = 0;
-        if (findStart(ring, index))
+        if (!findStart(ring, index))
         {
-            if (findEnd(ring, index))
-            {
-                size_t sentence_length = index + 1;
-                msgs.emplace_back(sentence_length, '\0');
-                ring.read(&msgs.back()[0], sentence_length);
-            }
-            else
-            {
-                break;
-            }
-        }
-        else
-        {
-            ring.clear();
-        }
+			ring.clear();
+			break;
+		}
+
+		if (!findEnd(ring, index))
+		{
+			break;
+		}
+
+		size_t len = index + 1;
+		std::string sentence(len, '\0');
+		ring.read(std::span(sentence.data(), len));
+		msgs.push(std::move(sentence));
     }
 };
 
-bool TCP_Socket::recv(std::vector<std::string> &msgs)
+bool TCP_Socket::recv(std::queue<std::string> &msgs)
 {
     ssize_t bytes_received;
     while ((bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0)) > 0) 

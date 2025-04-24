@@ -1,7 +1,5 @@
 #include "go1.hpp"
 #include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
-#include "mppi.hpp"
-#include "trajectory.hpp"
 #include "unitree_legged_sdk/comm.h"
 #include <iostream>
 #include <math.h>
@@ -45,8 +43,6 @@ void Go1_Quadruped::send_velocity_command(Velocity2d &velocity)
     udp.SetSend(cmd);
 };
 
-void Go1_Quadruped::update_state(){};
-void Go1_Quadruped::read_sensors(){};
 Pose_State Go1_Quadruped::read_state()
 {
     udp.GetRecv(state);
@@ -72,17 +68,6 @@ Pose_State Go1_Quadruped::read_state()
     return ps;
 };
 
-// void Go1_Quadruped::control_loop() {
-//
-//   udp.GetRecv(state);
-//   Velocity2d velocity = {.linear = {}, .angular = {}};
-//   UT::HighCmd cmd = moveCmd(velocity);
-//   udp.SetSend(cmd);
-//   // file << "DT: " << motiontime << " VEL: " << cmd.velocity[0]
-//   //      << " YAW: " << cmd.yawSpeed << " | "
-//   //      << "S.VEL: " << state.velocity[0] << " S.YAW: " << state.yawSpeed
-//   //      << std::endl;
-// }
 
 int main(void)
 {
@@ -117,54 +102,18 @@ int main(void)
         {0.0, 1.5, 0.0}, {0.114, 0.97, 0.0}, {0.439, 0.75, 0.0}, {0.926, 0.97, 0.0},
         {1.5, 1.5, 0.0}};
 
-    Velocity_Profile vel_profile = {.acceleration_rate = 200.0, .deceleration_rate = 200.0};
-    Robot_Config config = {.hz = 50,
-                           .motion_constraints = {.max_velocity = 0.6,
-                                                  .standing_turn_velocity = 2.0,
-                                                  .max_acceleration = 100.0,
-                                                  .max_deceleration = 100.0,
-                                                  .max_jerk = 0.0,
-                                                  .corner_velocity = 0.0},
-                           .velocity_profile = vel_profile
 
-    };
+    Go1_Quadruped robot;
+    robot.trajectory_controller->path_looping = true;
 
-    PIDGains linear_gains = {0.4, 0.0, 0.0};
-    PIDController linear_pid(linear_gains);
-    linear_pid.output_max = 10.0;
-    linear_pid.output_min = 0.0;
-    PIDGains angular_gains = {0.2, 0.0, 0.0};
-    PIDController angular_pid(angular_gains);
-    angular_pid.output_max = 10.0;
-    angular_pid.output_min = 0.0;
-    Trajectory_Controller t_c(config, linear_pid, angular_pid, config.hz);
-    MPPI_Controller m_c(50, 1000, 0.02, 0.5);
-    // Trajectory_Controller controller(config.motion_constraints, vel_profile,
-    //                                  config.hz);
-
-    /*Go1_Quadruped robot(t_c, m_c);*/
-    Go1_Quadruped robot(t_c);
-    robot.controller.path_looping = true;
-
-    // saveToFile("trajectories", trajectories);
-    // std::ofstream info("go1_info");
-
-    // UT::LoopFunc loop_control("control_loop", robot.dt,
-    //                           boost::bind(&Go1_Quadruped::control_loop, &robot,
-    //                                       path_movement, controller, config,
-    //                                       boost::ref(info)));
 
     UT::LoopFunc loop_control("control_loop", robot.dt,
                               boost::bind(&Go1_Quadruped::control_loop, &robot));
 
     UT::LoopFunc path_loop("path_loop", 0.030,
-                           boost::bind(&Trajectory_Controller::path_loop, &t_c,
+                           boost::bind(&Linear_Controller::path_loop, &robot.trajectory_controller,
                                        boost::ref(robot.path_queue), waypoints_square));
-    /*UT::LoopFunc traj_loop("traj_loop", 0.030,*/
-    /*                       boost::bind(&Trajectory_Controller::trajectory_loop, &t_c,*/
-    /*                                   boost::ref(robot.trajectory_queue),*/
-    /*                                   boost::ref(robot.path_queue)));*/
-    /**/
+
     UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
                               boost::bind(&Go1_Quadruped::UDPRecv, &robot));
     UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,

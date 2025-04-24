@@ -4,10 +4,14 @@
 
 void Sensor_Manager::loop()
 {
+	// while (true)
+	// {
+	// }
     ublox.poll();
-    /*while (true)*/
-    /*{*/
-    /*    ublox.listen();*/
-    /*}*/
+	while (!ublox.msgs.empty())
+	{
+		GGA gga = ublox.msgs.front();
+		latest_measurement.ublox_measurement = std::move(gga);
+		ublox.msgs.pop();
+	}
 }
-void Sensor_Manager::readSensors() { ublox.read(); }

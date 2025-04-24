@@ -1,12 +1,12 @@
 #include "linear_controller.hpp"
 #include "frame_controller.hpp"
 #include "transformations.hpp"
+#include "robot.hpp"
 #include "types.hpp"
 #include <cmath>
 #include <iostream>
 
-void Linear_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
-                                  std::vector<Ecef_Coord> &waypoints)
+void Linear_Controller::path_loop(std::vector<Ecef_Coord> &waypoints)
 {
     if (waypoints.empty())
     {
@@ -20,20 +20,20 @@ void Linear_Controller::path_loop(Thread_Safe_Queue<Ecef_Coord> &path,
         {
             std::cout << "Adding Waypoints!" << std::endl;
             std::cout << waypoint.transpose() << std::endl;
-            path.push(waypoint);
+            robot->path_queue.push(waypoint);
         }
         added_paths = true;
     }
 
     // FIXME: One waypoint does not get popped off, so it wont loop
-    if ((path.size() == 1) && path_looping)
+    if ((robot->path_queue.size() == 1) && path_looping)
     {
-        std::cout << path.size() << " EMPTY WAYPOINTS" << std::endl;
+        std::cout << robot->path_queue.size() << " EMPTY WAYPOINTS" << std::endl;
         for (Ecef_Coord &waypoint : waypoints)
         {
             std::cout << "Adding Waypoints!" << std::endl;
             std::cout << waypoint.transpose() << std::endl;
-            path.push(waypoint);
+            robot->path_queue.push(waypoint);
         }
     }
 }

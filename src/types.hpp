@@ -2,6 +2,10 @@
 #include <Eigen/Dense>
 #include <array>
 #include <memory>
+#include <deque>
+#include <mutex>
+#include <optional>
+#include <span>
 
 using Eigen::Affine3d;
 using Eigen::Matrix4d;
@@ -55,7 +59,6 @@ struct Pose
 struct Motion_Constraints
 {
     double max_velocity;
-    double min_velocity;
     double max_acceleration;
     double max_deceleration;
     double max_jerk;
@@ -83,22 +86,16 @@ struct Trajectory_Point
     Velocity2d velocity;
 };
 
-template <typename T>
+template <typename T, std::size_t Capacity>
 class Ring_Buffer {
 private:
-    std::unique_ptr<T[]> buffer;
-    size_t capacity;
+    std::array<T, Capacity> buffer = {};
     size_t head = 0;
     size_t tail = 0;
     size_t num_items = 0;
     bool full = false;
 
 public:
-  explicit Ring_Buffer(size_t size) : capacity(size), buffer(std::make_unique<T[]>(size))
-  {
-      if (size == 0)
-          throw std::invalid_argument("Buffer size cannot be zero");
-  }
 
   T &operator[](size_t index)
   {
@@ -107,7 +104,7 @@ public:
           throw std::out_of_range("Index out of range");
       }
 
-      size_t actual_index = (tail + index) % capacity;
+      size_t actual_index = (tail + index) % buffer.size();
       return buffer[actual_index];
   }
 
@@ -117,7 +114,7 @@ public:
       {
           throw std::out_of_range("Index out of range");
       }
-      size_t actual_index = (head + index) % capacity;
+      size_t actual_index = (tail + index) % buffer.size();
       return buffer[actual_index];
   }
 
@@ -127,7 +124,7 @@ public:
 
   size_t count() const { return num_items; }
 
-  size_t getCapacity() const { return capacity; }
+  size_t getCapacity() const { return buffer.size(); }
 
   bool push(const T &item)
   {
@@ -135,7 +132,7 @@ public:
           return false;
 
       buffer[head] = item;
-      tail = (head + 1) % capacity;
+      head = (head + 1) % buffer.size();
       num_items++;
       full = (head == tail);
       return true;
@@ -147,59 +144,39 @@ public:
           return false;
 
       item = buffer[tail];
-      head = (tail + 1) % capacity;
+      tail = (tail + 1) % buffer.size();
       num_items--;
       full = false;
       return true;
   }
 
-  bool write(const T *foreign_buf, size_t amount)
+  size_t write(std::span<const T> src)
   {
-      if (capacity - num_items < amount)
-          return false;
+      size_t free_slots = buffer.size() - num_items;
+      size_t n = std::min(free_slots, src.size());
 
-      size_t contiguous_space = capacity - head;
-      if (amount <= contiguous_space)
-      {
-          std::memcpy(&buffer[head], foreign_buf, amount * sizeof(T));
-      }
-      else
-      {
-          std::memcpy(&buffer[head], foreign_buf, contiguous_space * sizeof(T));
-          std::memcpy(&buffer[0], foreign_buf + contiguous_space,
-                      (amount - contiguous_space) * sizeof(T));
-      }
+      size_t contiguous_space = std::min(n, buffer.size() - head);
+      std::copy_n(src.begin(), contiguous_space, buffer.data() + head);
 
-      head = (head + amount) % capacity;
-      num_items += amount;
-      full = (head == tail);
-      return true;
+      std::copy_n(src.begin() + contiguous_space, n - contiguous_space, buffer.data());
+
+      num_items += n;
+      head = (head + n) % buffer.size();
+      return n;
   }
 
-  // Read multiple elements from the buffer using memcpy
-  bool read(T *foreign_buf, size_t amount)
+  size_t read(std::span<T> dst)
   {
-      if (num_items < amount)
-          return false;
+      size_t n = std::min(num_items, dst.size());
 
-      // Calculate contiguous elements available at head
-      size_t contiguous_elements = capacity - tail;
+      size_t contiguous_elements = std::min(n, buffer.size() - tail);
+      std::copy_n(buffer.data() + tail, contiguous_elements, dst.begin());
 
-      if (amount <= contiguous_elements)
-      {
-          std::memcpy(foreign_buf, &buffer[tail], amount * sizeof(T));
-      }
-      else
-      {
-          std::memcpy(foreign_buf, &buffer[tail], contiguous_elements * sizeof(T));
-          std::memcpy(foreign_buf + contiguous_elements, &buffer[0],
-                      (amount - contiguous_elements) * sizeof(T));
-      }
+      std::copy_n(buffer.data(), n - contiguous_elements, dst.begin() + contiguous_elements);
 
-      tail = (tail + amount) % capacity;
-      num_items -= amount;
-      full = false;
-      return true;
+      num_items -= n;
+      tail = (tail + n) % buffer.size();
+      return n;
   }
 
   bool peek(T &item) const
@@ -216,5 +193,91 @@ public:
       full = false;
       num_items = 0;
   }
+};
+
+
+template <typename T> class Thread_Safe_Queue
+{
+  private:
+	std::deque<T> queue;
+    std::mutex mutex;
+    const size_t max_size;
+
+  public:
+    Thread_Safe_Queue(size_t max_size = 10000) : max_size(max_size) {}
+
+    bool push(const T &point)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+
+        if (queue.size() >= max_size)
+        {
+            return false;
+        }
+
+        queue.push_back(point);
+        lock.unlock();
+        return true;
+    }
+
+    bool push(T &&point)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+
+        if (queue.size() >= max_size)
+        {
+            return false;
+        }
+
+        queue.push_back(std::move(point));
+        lock.unlock();
+        return true;
+    }
+
+    std::optional<T> front()
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (queue.empty())
+        {
+            return std::nullopt;
+        }
+        T point = queue.front();
+        lock.unlock();
+        return point;
+    }
+
+    std::optional<std::pair<T, T>> front_two()
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (queue.size() < 2)
+        {
+            return std::nullopt;
+        }
+        return std::make_pair(queue[0], queue[1]);
+    }
+
+    bool pop()
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (queue.empty())
+        {
+            return false;
+        }
+        queue.pop_front();
+        lock.unlock();
+        return true;
+    }
+
+    bool empty()
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        return queue.empty();
+    }
+
+    size_t size()
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        return queue.size();
+    }
 };
 

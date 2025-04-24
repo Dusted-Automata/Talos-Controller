@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <array>
 #include <cstring>
+#include <queue>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -12,7 +13,7 @@
 
 class Parser {
   public:
-    virtual void process_data(std::vector<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) = 0;
+    virtual void process_data(std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) = 0;
 };
 
 class TCP_Socket
@@ -28,7 +29,7 @@ class TCP_Socket
   public:
     TCP_Socket(std::string ip, int port, Parser &parser) : server_ip(ip), port(port), parser(parser) {};
     bool connect();
-    bool recv(std::vector<std::string> &msgs);
+    bool recv(std::queue<std::string> &msgs);
     std::vector<std::string> recv_all();
     std::string ublox_Message();
 };
@@ -36,12 +37,12 @@ class TCP_Socket
 class NMEA_Parser : public Parser
 {
   private:
-    Ring_Buffer<char> ring = Ring_Buffer<char>(TCP_BUFFER_LENGTH*2);
+    Ring_Buffer<char, TCP_BUFFER_LENGTH*2> ring;
 
-    inline bool findStart(Ring_Buffer<char> &buf, size_t &index);
-    inline bool findEnd(Ring_Buffer<char> &buf, size_t &index);
+    inline bool findStart(Ring_Buffer<char, TCP_BUFFER_LENGTH*2> &buf, size_t &index);
+    inline bool findEnd(Ring_Buffer<char, TCP_BUFFER_LENGTH*2> &buf, size_t &index);
 
   public:
-    void process_data(std::vector<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) override;
+    void process_data(std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) override;
 };
 
