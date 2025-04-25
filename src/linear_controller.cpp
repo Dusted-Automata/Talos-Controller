@@ -1,7 +1,7 @@
 #include "linear_controller.hpp"
 #include "frame_controller.hpp"
-#include "transformations.hpp"
 #include "robot.hpp"
+#include "transformations.hpp"
 #include "types.hpp"
 #include <cmath>
 #include <iostream>
@@ -38,8 +38,7 @@ void Linear_Controller::path_loop(std::vector<Ecef_Coord> &waypoints)
     }
 }
 
-Velocity2d Linear_Controller::get_cmd(Frame_Controller &frame_controller,
-                                      Thread_Safe_Queue<Ecef_Coord> &path_queue)
+Velocity2d Linear_Controller::get_cmd()
 {
     double max_vel_x = 2.0;
     double min_vel_x = -2.0;
@@ -56,7 +55,7 @@ Velocity2d Linear_Controller::get_cmd(Frame_Controller &frame_controller,
     Velocity2d cmd = {.linear = Linear_Velocity().setZero(),
                       .angular = Angular_Velocity().setZero()};
 
-    std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = path_queue.front_two();
+    std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path_queue.front_two();
     if (!path.has_value())
     {
         return cmd;
@@ -64,20 +63,22 @@ Velocity2d Linear_Controller::get_cmd(Frame_Controller &frame_controller,
         // angular_pid.reset();
         // path_queue.pop();
     }
-    Ecef_Coord start = wgsecef2ned_d(path.value().first, frame_controller.local_frame.origin);
-    Ecef_Coord goal = wgsecef2ned_d(path.value().second, frame_controller.local_frame.origin);
+    Ecef_Coord start =
+        wgsecef2ned_d(path.value().first, robot->frame_controller.local_frame.origin);
+    Ecef_Coord goal =
+        wgsecef2ned_d(path.value().second, robot->frame_controller.local_frame.origin);
 
     Ecef_Coord difference = goal - start;
     double difference_distance =
         std::sqrt(difference.x() * difference.x() + difference.y() * difference.y());
 
-    double dx = goal.x() - frame_controller.local_frame.pos.x();
-    double dy = goal.y() - frame_controller.local_frame.pos.y();
-    double dz = goal.z() - frame_controller.local_frame.pos.z();
+    double dx = goal.x() - robot->frame_controller.local_frame.pos.x();
+    double dy = goal.y() - robot->frame_controller.local_frame.pos.y();
+    double dz = goal.z() - robot->frame_controller.local_frame.pos.z();
     double dist = sqrt(dx * dx + dy * dy);
 
-    double yaw = atan2(frame_controller.local_frame.orientation.rotation()(1, 0),
-                       frame_controller.local_frame.orientation.rotation()(0, 0));
+    double yaw = atan2(robot->frame_controller.local_frame.orientation.rotation()(1, 0),
+                       robot->frame_controller.local_frame.orientation.rotation()(0, 0));
 
     double dx_odom = cos(yaw) * dx + sin(yaw) * dy;
     double dy_odom = -sin(yaw) * dx + cos(yaw) * dy;
@@ -103,7 +104,7 @@ Velocity2d Linear_Controller::get_cmd(Frame_Controller &frame_controller,
 
     if (dist < goal_tolerance && std::abs(dyaw) < yaw_tolerance * M_PI / 180.0)
     {
-        path_queue.pop();
+        robot->path_queue.pop();
         return cmd;
         // goal_reached_msg.data = true;
     }

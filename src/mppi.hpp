@@ -2,7 +2,6 @@
 #include "trajectory_controller.hpp"
 #include "types.hpp"
 #include <Eigen/Dense>
-#include <cmath>
 #include <random>
 #include <vector>
 
@@ -101,8 +100,7 @@ class MPPI_Controller : public Trajectory_Controller
 
     void update(Pose_State &current_state);
     void setTarget(const Ecef_Coord &target) { target_position = target; }
-    Velocity2d get_cmd(Frame_Controller &frame_controller,
-                       Thread_Safe_Queue<Ecef_Coord> &path_queue) override;
+    Velocity2d get_cmd() override;
     void shiftControlHorizon();
     double dt;
     std::vector<Trajectory> perturbed_trajectories;
