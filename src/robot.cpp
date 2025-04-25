@@ -12,9 +12,8 @@ void Robot::control_loop()
     // sensor_manager.readSensors();
     /*sensor_manager.sm_thread.join();*/
 
-    Velocity2d cmd = trajectory_controller->get_cmd(frame_controller, path_queue);
+    Velocity2d cmd = trajectory_controller->get_cmd();
     send_velocity_command(cmd);
     /*motion_time += 1000 / hz;*/
     motion_time += 1.0 / hz;
 }
-
