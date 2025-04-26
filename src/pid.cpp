@@ -2,7 +2,8 @@
 #include <algorithm>
 #include <iostream>
 
-double PIDController::update(double measured_value, double dt)
+double
+PIDController::update(double measured_value, double dt)
 {
 
     double error = setpoint - measured_value;
@@ -14,12 +15,9 @@ double PIDController::update(double measured_value, double dt)
     double i_term = gains.k_i * integral;
 
     double derivative;
-    if (dt > 0.0)
-    {
+    if (dt > 0.0) {
         derivative = (error - prev_error) / dt;
-    }
-    else
-    {
+    } else {
         derivative = 0.0;
     }
     double d_term = gains.k_d * derivative;
@@ -34,7 +32,8 @@ double PIDController::update(double measured_value, double dt)
     return output;
 }
 
-void PIDController::reset()
+void
+PIDController::reset()
 {
     prev_error = 0.0;
     integral = 0.0;

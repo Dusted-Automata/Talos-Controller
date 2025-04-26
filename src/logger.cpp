@@ -2,27 +2,21 @@
 #include "logger.hpp"
 #include "frame_controller.hpp"
 
-bool Logger::savePosesToFile(const Frame_Controller &controller)
+bool
+Logger::savePosesToFile(const Frame_Controller &controller)
 {
-    if (!pose_file.is_open())
-    {
+    if (!pose_file.is_open()) {
         std::cerr << "Unable to open file for writing: "
                   << "poses" << std::endl;
         return false;
     }
     pose_file << std::fixed;
-    pose_file << controller.global_frame.orientation(0, 0) << " "
-              << controller.global_frame.orientation(0, 1) << " "
-              << controller.global_frame.orientation(0, 2) << " " << controller.global_frame.pos.x()
-              << " ";
-    pose_file << controller.global_frame.orientation(1, 0) << " "
-              << controller.global_frame.orientation(1, 1) << " "
-              << controller.global_frame.orientation(1, 2) << " " << controller.global_frame.pos.y()
-              << " ";
-    pose_file << controller.global_frame.orientation(2, 0) << " "
-              << controller.global_frame.orientation(2, 1) << " "
-              << controller.global_frame.orientation(2, 2) << " " << controller.global_frame.pos.z()
-              << " ";
+    pose_file << controller.global_frame.orientation(0, 0) << " " << controller.global_frame.orientation(0, 1) << " "
+              << controller.global_frame.orientation(0, 2) << " " << controller.global_frame.pos.x() << " ";
+    pose_file << controller.global_frame.orientation(1, 0) << " " << controller.global_frame.orientation(1, 1) << " "
+              << controller.global_frame.orientation(1, 2) << " " << controller.global_frame.pos.y() << " ";
+    pose_file << controller.global_frame.orientation(2, 0) << " " << controller.global_frame.orientation(2, 1) << " "
+              << controller.global_frame.orientation(2, 2) << " " << controller.global_frame.pos.z() << " ";
 
     // tracks movement in space from start position.
     // pose_file << state.orientation(0, 3) << " " << state.orientation(1, 3) << " "
@@ -32,10 +26,10 @@ bool Logger::savePosesToFile(const Frame_Controller &controller)
     return true;
 }
 
-bool Logger::saveTimesToFile(const double &timestamp)
+bool
+Logger::saveTimesToFile(const double &timestamp)
 {
-    if (!time_file.is_open())
-    {
+    if (!time_file.is_open()) {
         std::cerr << "Unable to open file for writing: "
                   << "times" << std::endl;
         return false;
@@ -47,28 +41,25 @@ bool Logger::saveTimesToFile(const double &timestamp)
     // time_file << trajectory_time << std::endl;
 }
 
-static bool saveToFile(const std::string &filename, const std::vector<Trajectory_Point> &data)
+static bool
+saveToFile(const std::string &filename, const std::vector<Trajectory_Point> &data)
 {
     std::ofstream outFile(filename);
-    if (!outFile.is_open())
-    {
+    if (!outFile.is_open()) {
         std::cerr << "Unable to open file for writing: " << filename << std::endl;
         return false;
     }
 
-    for (const auto &line : data)
-    {
+    for (const auto &line : data) {
         outFile << std::fixed;
         outFile << " ------------------------------------------------- " << std::endl;
         outFile << "dt: " << line.dt << " " << std::endl;
-        outFile << "pose: " << line.pose.point.x() << " " << line.pose.point.y() << " "
-                << line.pose.point.z() << " " << std::endl;
-        outFile << "Velocity-linear: forward: " << line.velocity.linear.x()
-                << " lateral: " << line.velocity.linear.y()
-                << " vertical: " << line.velocity.linear.z() << std::endl;
-        outFile << "Velocity-angular: pitch: " << line.velocity.angular.x()
-                << " roll: " << line.velocity.angular.y() << " yaw: " << line.velocity.angular.z()
+        outFile << "pose: " << line.pose.point.x() << " " << line.pose.point.y() << " " << line.pose.point.z() << " "
                 << std::endl;
+        outFile << "Velocity-linear: forward: " << line.velocity.linear.x() << " lateral: " << line.velocity.linear.y()
+                << " vertical: " << line.velocity.linear.z() << std::endl;
+        outFile << "Velocity-angular: pitch: " << line.velocity.angular.x() << " roll: " << line.velocity.angular.y()
+                << " yaw: " << line.velocity.angular.z() << std::endl;
         // outFile << " ------------------------------------------------- "
         // << std::endl;
     }

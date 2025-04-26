@@ -8,9 +8,10 @@ class testRobot : public Robot
 {
 
   public:
-    testRobot() {
+    testRobot()
+    {
 
-    Robot_Config config = {
+        Robot_Config config = {
         .hz = 50,
         .motion_constraints =
             {
@@ -22,25 +23,27 @@ class testRobot : public Robot
 
     };
 
-    PIDGains linear_gains = {1.0, 0.0, 0.0};
-    PIDController linear_pid(linear_gains);
-    linear_pid.output_max = 10, 0;
-    linear_pid.output_min = 0, 0;
-    PIDGains angular_gains = {1.0, 0.0, 0.0};
-    PIDController angular_pid(angular_gains);
-    angular_pid.output_max = 10, 0;
-    angular_pid.output_min = 0, 0;
-	trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
-	trajectory_controller->robot = this;
-
-
-
-	}
-    void send_velocity_command(Velocity2d &cmd) override{};
-    Pose_State read_state() override { return {}; };
+        PIDGains linear_gains = { 1.0, 0.0, 0.0 };
+        PIDController linear_pid(linear_gains);
+        linear_pid.output_max = 10, 0;
+        linear_pid.output_min = 0, 0;
+        PIDGains angular_gains = { 1.0, 0.0, 0.0 };
+        PIDController angular_pid(angular_gains);
+        angular_pid.output_max = 10, 0;
+        angular_pid.output_min = 0, 0;
+        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
+        trajectory_controller->robot = this;
+    }
+    void send_velocity_command(Velocity2d &cmd) override {};
+    Pose_State
+    read_state() override
+    {
+        return {};
+    };
 };
 
-int main()
+int
+main()
 {
     // std::vector<Ecef_Coord> waypoints = {
     //     {4100175.625135626, 476368.7899695045, 4846344.356704135},
@@ -49,19 +52,20 @@ int main()
     //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
     std::vector<Ecef_Coord> waypoints = {
-        {0.0, 0.0, 0.0}, {4.0, -2.0, 0.0}, {4.0, 2.0, 0.0}, {0.0, 0.0, 0.0}};
-
+        { 0.0,  0.0, 0.0 },
+        { 4.0, -2.0, 0.0 },
+        { 4.0,  2.0, 0.0 },
+        { 0.0,  0.0, 0.0 }
+    };
 
     Ecef_Coord current = waypoints[0];
     Ecef_Coord next = waypoints[1];
 
     testRobot robot;
 
-
     std::function<void()> bound_path_loop = [&robot, &waypoints]() {
-		static_cast<Linear_Controller*>(robot.trajectory_controller.get())->path_loop(waypoints);
-	
-	};
+        static_cast<Linear_Controller *>(robot.trajectory_controller.get())->path_loop(waypoints);
+    };
     std::function<void()> bound_control_loop = std::bind(&testRobot::control_loop, &robot);
     std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
     std::thread control_loop_thread = std::thread(worker_function, bound_control_loop, 2);

@@ -1,15 +1,13 @@
 #pragma once
 #include "types.hpp"
 
-struct Frame
-{
+struct Frame {
     // Eigen::Quaterniond orientation;
     Affine3d orientation = Affine3d::Identity();
     Vector3d pos = Vector3d::Zero();
 };
 
-struct NED_Frame : public Frame
-{
+struct NED_Frame : public Frame {
     Ecef_Coord origin;
 };
 

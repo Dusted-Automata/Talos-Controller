@@ -11,9 +11,11 @@
 
 #define TCP_BUFFER_LENGTH 128
 
-class Parser {
+class Parser
+{
   public:
-    virtual void process_data(std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) = 0;
+    virtual void process_data(
+        std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) = 0;
 };
 
 class TCP_Socket
@@ -37,12 +39,12 @@ class TCP_Socket
 class NMEA_Parser : public Parser
 {
   private:
-    Ring_Buffer<char, TCP_BUFFER_LENGTH*2> ring;
+    Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> ring;
 
-    inline bool findStart(Ring_Buffer<char, TCP_BUFFER_LENGTH*2> &buf, size_t &index);
-    inline bool findEnd(Ring_Buffer<char, TCP_BUFFER_LENGTH*2> &buf, size_t &index);
+    inline bool findStart(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &index);
+    inline bool findEnd(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &index);
 
   public:
-    void process_data(std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) override;
+    void process_data(
+        std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) override;
 };
-

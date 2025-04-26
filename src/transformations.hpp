@@ -16,7 +16,11 @@
 #define WGS84_E (sqrt(2 * WGS84_F - WGS84_F * WGS84_F))
 #define FLOAT_EQUALITY_EPS 1e-12
 
-static inline bool double_equal(double a, double b) { return fabs(a - b) < FLOAT_EQUALITY_EPS; }
+static inline bool
+double_equal(double a, double b)
+{
+    return fabs(a - b) < FLOAT_EQUALITY_EPS;
+}
 
 /** Converts from WGS84 geodetic coordinates (latitude, longitude and height)
  * into WGS84 Earth Centered, Earth Fixed Cartesian (ECEF) coordinates
@@ -43,7 +47,8 @@ static inline bool double_equal(double a, double b) { return fabs(a - b) < FLOAT
  *             as [X, Y, Z], all in meters.
  */
 // void wgsllh2ecef(const double llh[3], double ecef[3])
-inline Ecef_Coord wgsllh2ecef(const double &lat, const double &lon, const double &height = 0)
+inline Ecef_Coord
+wgsllh2ecef(const double &lat, const double &lon, const double &height = 0)
 {
     Ecef_Coord ecef = {};
     double d = WGS84_E * sin(height);
@@ -81,26 +86,23 @@ inline Ecef_Coord wgsllh2ecef(const double &lat, const double &lon, const double
  * \param llh  Converted geodetic coordinates are written into this array as
  *             [lat, lon, height] in [radians, radians, meters].
  */
-inline LLH wgsecef2llh(const Ecef_Coord &ecef)
+inline LLH
+wgsecef2llh(const Ecef_Coord &ecef)
 {
     LLH llh = {};
     /* Distance from polar axis. */
     const double p = sqrt(ecef[0] * ecef[0] + ecef[1] * ecef[1]);
 
     /* Compute longitude first, this can be done exactly. */
-    if (!double_equal(p, 0))
-    {
+    if (!double_equal(p, 0)) {
         llh[1] = atan2(ecef[1], ecef[0]);
-    }
-    else
-    {
+    } else {
         llh[1] = 0;
     }
 
     /* If we are close to the pole then convergence is very slow, treat this is a
      * special case. */
-    if (p < WGS84_A * 1e-16)
-    {
+    if (p < WGS84_A * 1e-16) {
         llh[0] = copysign(M_PI_2, ecef[2]);
         llh[2] = fabs(ecef[2]) - WGS84_B;
         return llh;
@@ -124,8 +126,7 @@ inline LLH wgsecef2llh(const Ecef_Coord &ecef)
 
     /* Iterate a maximum of 10 times. This should be way more than enough for all
      * sane inputs */
-    for (int i = 0; i < 10; i++)
-    {
+    for (int i = 0; i < 10; i++) {
         /* Calculate some intermediate variables used in the update step based on
          * the current state. */
         A_n = sqrt(S * S + C * C);
@@ -158,20 +159,16 @@ inline LLH wgsecef2llh(const Ecef_Coord &ecef)
          * bears more thought?
          */
 
-        if (S > C)
-        {
+        if (S > C) {
             C = C / S;
             S = 1;
-        }
-        else
-        {
+        } else {
             S = S / C;
             C = 1;
         }
 
         /* Check for convergence and exit early if we have converged. */
-        if (fabs(S - prev_S) < 1e-16 && fabs(C - prev_C) < 1e-16)
-        {
+        if (fabs(S - prev_S) < 1e-16 && fabs(C - prev_C) < 1e-16) {
             break;
         }
         prev_S = S;
@@ -180,8 +177,7 @@ inline LLH wgsecef2llh(const Ecef_Coord &ecef)
 
     A_n = sqrt(S * S + C * C);
     llh[0] = copysign(1.0, ecef[2]) * atan(S / (e_c * C));
-    llh[2] =
-        (p * e_c * C + fabs(ecef[2]) * S - WGS84_A * e_c * A_n) / sqrt(e_c * e_c * C * C + S * S);
+    llh[2] = (p * e_c * C + fabs(ecef[2]) * S - WGS84_A * e_c * A_n) / sqrt(e_c * e_c * C * C + S * S);
     return llh;
 }
 
@@ -194,10 +190,10 @@ inline LLH wgsecef2llh(const Ecef_Coord &ecef)
  *             are assumed to be in radians, height in meters.
  * \param M        3x3 matrix to be populated with rotation matrix.
  */
-inline Eigen::Matrix3d wgs_ecef2ned_matrix(const LLH &llh)
+inline Eigen::Matrix3d
+wgs_ecef2ned_matrix(const LLH &llh)
 {
-    double sin_lat = sin(llh[0]), cos_lat = cos(llh[0]), sin_lon = sin(llh[1]),
-           cos_lon = cos(llh[1]);
+    double sin_lat = sin(llh[0]), cos_lat = cos(llh[0]), sin_lon = sin(llh[1]), cos_lon = cos(llh[1]);
     Eigen::Matrix3d M;
     M(0, 0) = -sin_lat * cos_lon;
     M(0, 1) = -sin_lat * sin_lon;
@@ -219,7 +215,8 @@ inline Eigen::Matrix3d wgs_ecef2ned_matrix(const LLH &llh)
  *                 [X, Y, Z], all in meters.
  * \param M        3x3 matrix to be populated with rotation matrix.
  */
-inline Eigen::Matrix3d ecef2ned_matrix(const Ecef_Coord &ref_ecef)
+inline Eigen::Matrix3d
+ecef2ned_matrix(const Ecef_Coord &ref_ecef)
 {
     LLH llh = wgsecef2llh(ref_ecef);
     Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
@@ -244,7 +241,8 @@ inline Eigen::Matrix3d ecef2ned_matrix(const Ecef_Coord &ref_ecef)
  * \param ned       The North, East, Down vector is written into this array as
  *                  [N, E, D], all in meters.
  */
-inline Vector3d wgsecef2ned(const Ecef_Coord &ecef, const Ecef_Coord &ref_ecef)
+inline Vector3d
+wgsecef2ned(const Ecef_Coord &ecef, const Ecef_Coord &ref_ecef)
 {
     // double M[3][3];
     // ecef2ned_matrix(ref_ecef, M);
@@ -269,7 +267,8 @@ inline Vector3d wgsecef2ned(const Ecef_Coord &ecef, const Ecef_Coord &ref_ecef)
  * \param ned       The North, East, Down vector is written into this array as
  *                  [N, E, D], all in meters.
  */
-inline Vector3d wgsecef2ned_d(const Ecef_Coord &ecef, const Ecef_Coord &ref_ecef)
+inline Vector3d
+wgsecef2ned_d(const Ecef_Coord &ecef, const Ecef_Coord &ref_ecef)
 {
     Eigen::Vector3d new_ecef = ecef - ref_ecef;
     Eigen::Vector3d ned = wgsecef2ned(new_ecef, ref_ecef);
@@ -293,7 +292,8 @@ inline Vector3d wgsecef2ned_d(const Ecef_Coord &ecef, const Ecef_Coord &ref_ecef
  * \param ecef      Cartesian coordinates of the point written into this array,
  *                  [X, Y, Z], all in meters.
  */
-inline Vector3d wgsned2ecef(const Eigen::Vector3d &ned, const Ecef_Coord &ref_ecef)
+inline Vector3d
+wgsned2ecef(const Eigen::Vector3d &ned, const Ecef_Coord &ref_ecef)
 {
     Eigen::Matrix3d M = ecef2ned_matrix(ref_ecef);
     Ecef_Coord ecef = M.transpose() * ned;
@@ -314,7 +314,8 @@ inline Vector3d wgsned2ecef(const Eigen::Vector3d &ned, const Ecef_Coord &ref_ec
  * \param ecef      Cartesian coordinates of the point written into this array,
  *                  [X, Y, Z], all in meters.
  */
-inline Ecef_Coord wgsned2ecef_d(const Eigen::Vector3d &ned, const Ecef_Coord &ref_ecef)
+inline Ecef_Coord
+wgsned2ecef_d(const Eigen::Vector3d &ned, const Ecef_Coord &ref_ecef)
 {
     Ecef_Coord ecef = wgsned2ecef(ned, ref_ecef);
     ecef = ecef + ref_ecef;

@@ -6,8 +6,6 @@
 #include "types.hpp"
 #include <Eigen/Dense>
 
-
-
 class Trajectory_Controller;
 
 class Robot
@@ -23,7 +21,7 @@ class Robot
 
     Pose_State pose_state;
     Thread_Safe_Queue<Ecef_Coord> path_queue;
-	std::unique_ptr<Trajectory_Controller> trajectory_controller;
+    std::unique_ptr<Trajectory_Controller> trajectory_controller;
     Frame_Controller frame_controller = {};
 
     double motion_time = 0;

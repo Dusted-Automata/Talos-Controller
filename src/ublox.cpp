@@ -9,36 +9,33 @@
 #include <string>
 #include <unistd.h>
 
-void parse_time(GGA &gga, std::string &time)
+void
+parse_time(GGA &gga, std::string &time)
 {
     gga.time.hh = static_cast<uint8_t>(std::stoul(time.substr(0, 2)));
     gga.time.mm = static_cast<uint8_t>(std::stoul(time.substr(2, 2)));
     gga.time.ss = static_cast<uint8_t>(std::stoul(time.substr(4, 2)));
     gga.time.ms = static_cast<uint16_t>(std::stoul(time.substr(7)));
 }
-void parse_latlng(GGA &gga, std::string &lat, std::string lat_dir, std::string lng,
-                  std::string lng_dir)
+void
+parse_latlng(GGA &gga, std::string &lat, std::string lat_dir, std::string lng, std::string lng_dir)
 {
 
     // Check that both fields exist.
-    if (!lat.empty() && !lat_dir.empty())
-    {
+    if (!lat.empty() && !lat_dir.empty()) {
         double latitude = std::stod(lat.substr(0, 2));
         latitude += std::stod(lat.substr(2)) / 60.0;
-        if (lat_dir == "S")
-        {
+        if (lat_dir == "S") {
             latitude *= -1.0;
         }
 
         gga.latlng.lat = latitude;
     }
 
-    if (!lng.empty() && !lng_dir.empty())
-    {
+    if (!lng.empty() && !lng_dir.empty()) {
         double longitude = std::stod(lng.substr(0, 3));
         longitude += std::stod(lng.substr(3)) / 60.0;
-        if (lng_dir == "S")
-        {
+        if (lng_dir == "S") {
             longitude *= -1.0;
         }
 
@@ -46,28 +43,28 @@ void parse_latlng(GGA &gga, std::string &lat, std::string lat_dir, std::string l
     }
 }
 
-void parse_fix(GGA &gga, std::string &fix)
+void
+parse_fix(GGA &gga, std::string &fix)
 {
-    if (fix.empty())
-    {
+    if (fix.empty()) {
         return;
     }
     gga.fix = static_cast<GGA::Fix>(std::stoi(fix));
 }
 
-uint8_t parse_uint8(std::string &field)
+uint8_t
+parse_uint8(std::string &field)
 {
-    if (field.empty())
-    {
+    if (field.empty()) {
         return 0;
     }
     return static_cast<uint8_t>(std::stoul(field));
 };
 
-float parse_float(std::string &field)
+float
+parse_float(std::string &field)
 {
-    if (field.empty())
-    {
+    if (field.empty()) {
         return 0.0;
     }
     return static_cast<uint8_t>(std::stof(field));
@@ -79,7 +76,8 @@ void parse_geoid_seperation(GGA &gga, std::string &seperation);
 void parse_diff_age(GGA &gga, std::string &age);
 void parse_diff_station(GGA &gga, std::string &station);
 
-GGA parse_gga(std::string &msg)
+GGA
+parse_gga(std::string &msg)
 {
     msg.replace(msg.size() - 5, 5, "\0"); // remove return and line feed and checksum;
     std::stringstream ss(msg);
@@ -87,15 +85,11 @@ GGA parse_gga(std::string &msg)
     std::array<std::string, SIZE> arr;
     std::string token;
 
-
-    for (int i = 0; i < SIZE; i++)
-    {
-        if (std::getline(ss, token, ','))
-        {
+    for (int i = 0; i < SIZE; i++) {
+        if (std::getline(ss, token, ',')) {
             arr[i] = token;
         }
     }
-
 
     GGA gga = {};
     parse_time(gga, arr[1]);
@@ -112,13 +106,16 @@ GGA parse_gga(std::string &msg)
     return gga;
 }
 
-NMEA_Cmd to_nmea_cmd(std::string &key)
+NMEA_Cmd
+to_nmea_cmd(std::string &key)
 {
     if (key == "GPGGA") return NMEA_Cmd::GGA;
     return NMEA_Cmd::UNKNOWN;
 }
 
-NMEA_Cmd extract_command(const std::string& cmd_str) {
+NMEA_Cmd
+extract_command(const std::string &cmd_str)
+{
     size_t startPos = 1;
     size_t endPos = cmd_str.find(',', startPos);
     if (endPos == std::string::npos) {
@@ -127,27 +124,24 @@ NMEA_Cmd extract_command(const std::string& cmd_str) {
 
     auto cmd = cmd_str.substr(startPos, endPos - 1);
     return to_nmea_cmd(cmd);
-
 }
 
-void Ublox::poll()
+void
+Ublox::poll()
 {
-    if (tcp.recv(buf)){
-		while (!buf.empty()) {
-			std::string i = buf.front();
+    if (tcp.recv(buf)) {
+        while (!buf.empty()) {
+            std::string i = buf.front();
             NMEA_Cmd cmd = extract_command(i);
-            switch (cmd)
-            {
-            case NMEA_Cmd::UNKNOWN:
-                std::cout << "Unknown command" << std::endl;
-                break;
+            switch (cmd) {
+            case NMEA_Cmd::UNKNOWN: std::cout << "Unknown command" << std::endl; break;
             case NMEA_Cmd::GGA:
                 GGA gga = parse_gga(i);
                 gga.print();
                 msgs.push(std::move(gga));
                 break;
             }
-			buf.pop();
-		}
+            buf.pop();
+        }
     }
 }

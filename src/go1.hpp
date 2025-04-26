@@ -1,8 +1,8 @@
 #pragma once
 #include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
 #include "linear_controller.hpp"
-#include "pid.hpp"
 #include "mppi.hpp"
+#include "pid.hpp"
 #include "robot.hpp"
 #include "trajectory_controller.hpp"
 #include "unitree_legged_sdk/comm.h"
@@ -13,15 +13,8 @@
 // // using namespace UNITREE_LEGGED_SDK;
 // #define UT UNITREE_LEGGED_SDK
 
-enum class GaitType : uint8_t
-{
-    Idle,
-    Trot,
-    Climb_stair,
-    Trot_obstacle
-};
-enum class Go1_mode : uint8_t
-{
+enum class GaitType : uint8_t { Idle, Trot, Climb_stair, Trot_obstacle };
+enum class Go1_mode : uint8_t {
     Idle,                             // idle, default stand
     Force_stand,                      // force stand (controlled by dBodyHeight + ypr)
     Target_velocity_walking,          // target velocity walking (controlled by velocity +
@@ -46,10 +39,10 @@ class Go1_Quadruped : public Robot
     UT::HighCmd moveCmd(Velocity2d &trajectory);
 
   public:
-    Go1_Quadruped() : 
-		safe(UT::LeggedType::Go1),
-		// udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
-		udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082))
+    Go1_Quadruped()
+        : safe(UT::LeggedType::Go1),
+          // udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
+          udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082))
     {
         udp.InitCmdData(cmd);
 
@@ -69,26 +62,25 @@ class Go1_Quadruped : public Robot
                 },
         };
 
-        PIDGains linear_gains = {0.4, 0.0, 0.0};
+        PIDGains linear_gains = { 0.4, 0.0, 0.0 };
         PIDController linear_pid(linear_gains);
         linear_pid.output_max = 10.0;
         linear_pid.output_min = 0.0;
-        PIDGains angular_gains = {0.2, 0.0, 0.0};
+        PIDGains angular_gains = { 0.2, 0.0, 0.0 };
         PIDController angular_pid(angular_gains);
         angular_pid.output_max = 10.0;
         angular_pid.output_min = 0.0;
-		trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
-		trajectory_controller->robot = this;
-
-	}
+        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
+        trajectory_controller->robot = this;
+    }
     ~Go1_Quadruped() = default;
 
     UT::Safety safe;
     UT::UDP udp;
-    UT::HighState state = {0};
-    UT::LowState low_state = {0};
+    UT::HighState state = { 0 };
+    UT::LowState low_state = { 0 };
 
-    UT::HighCmd cmd = {0};
+    UT::HighCmd cmd = { 0 };
 
     Go1_mode mode = Go1_mode::Force_stand;
     GaitType gait_type = GaitType::Trot;

@@ -8,15 +8,15 @@
 class QuadrupedModel
 {
   public:
-    Pose_State simulate(Pose_State &current_state, Velocity2d &control, double dt)
+    Pose_State
+    simulate(Pose_State &current_state, Velocity2d &control, double dt)
     {
         Pose_State next_state = current_state;
 
         next_state.position += current_state.velocity.linear * dt;
 
         const double damping = 0.9;
-        next_state.velocity.linear =
-            damping * current_state.velocity.linear + (1.0 - damping) * control.linear;
+        next_state.velocity.linear = damping * current_state.velocity.linear + (1.0 - damping) * control.linear;
 
         // Simple quaternion integration for orientation
         // Eigen::Quaterniond q = current_state.orientation;
@@ -33,25 +33,38 @@ class QuadrupedModel
         // Normalize quaternion
 
         // Update angular velocity with damping and the control input
-        next_state.velocity.angular =
-            damping * current_state.velocity.angular + (1.0 - damping) * control.angular;
+        next_state.velocity.angular = damping * current_state.velocity.angular + (1.0 - damping) * control.angular;
 
         return next_state;
     }
 };
 
-struct Control_Sequence
-{
+struct Control_Sequence {
     std::vector<Velocity2d> velocities;
 
-    auto begin() { return velocities.begin(); }
-    auto end() { return velocities.end(); }
-    auto begin() const { return velocities.begin(); }
-    auto end() const { return velocities.end(); }
+    auto
+    begin()
+    {
+        return velocities.begin();
+    }
+    auto
+    end()
+    {
+        return velocities.end();
+    }
+    auto
+    begin() const
+    {
+        return velocities.begin();
+    }
+    auto
+    end() const
+    {
+        return velocities.end();
+    }
 };
 
-struct Trajectory
-{
+struct Trajectory {
     Control_Sequence controls;
     double cost;
     double weight;
@@ -91,15 +104,18 @@ class MPPI_Controller : public Trajectory_Controller
 
         // surely there is some better way to zero init a vector? like what the hell?
         nominal_controls.velocities.resize(horizon_steps);
-        for (auto &control : nominal_controls)
-        {
+        for (auto &control : nominal_controls) {
             control.linear = Vector3d::Zero();
             control.angular = Vector3d::Zero();
         }
     }
 
     void update(Pose_State &current_state);
-    void setTarget(const Ecef_Coord &target) { target_position = target; }
+    void
+    setTarget(const Ecef_Coord &target)
+    {
+        target_position = target;
+    }
     Velocity2d get_cmd() override;
     void shiftControlHorizon();
     double dt;

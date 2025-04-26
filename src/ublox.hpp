@@ -4,32 +4,27 @@
 #include <iostream>
 #include <queue>
 
-struct UTC_Time
-{
+struct UTC_Time {
     uint8_t hh;
     uint8_t mm;
     uint8_t ss;
     uint16_t ms;
 };
 
-struct LatLng
-{
+struct LatLng {
     double lat;
     double lng;
 };
 
-enum class NMEA_Cmd
-{
+enum class NMEA_Cmd {
     UNKNOWN,
     GGA,
 };
 
 // https://cdn.sparkfun.com/assets/f/7/4/3/5/PM-15136.pdf#%5B%7B%22num%22%3A64%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C0%2C609.45%2Cnull%5D
 
-struct GGA
-{
-    enum class Fix
-    {
+struct GGA {
+    enum class Fix {
         NONE = 0,      ///< No fix.
         GPS = 1,       ///< GPS fix.
         DGPS = 2,      ///< Differential GPS fix.
@@ -49,12 +44,13 @@ struct GGA
     float alt;              // Altitude above mean sea level - meters
     float geoid_seperation; // difference between ellipsoid and mean sea level
     float diff_age;         // Age of differential corrections (null when DGPS is not used)
-    float diff_station; // ID of station providing differential corrections (0 when DGPS not used)
+    float diff_station;     // ID of station providing differential corrections (0 when DGPS not used)
 
-    void print()
+    void
+    print()
     {
-        std::cout << "time: " << (int)time.hh << ":" << (int)time.mm << ":" << (int)time.ss << ":"
-                  << (int)time.ms << std::endl;
+        std::cout << "time: " << (int)time.hh << ":" << (int)time.mm << ":" << (int)time.ss << ":" << (int)time.ms
+                  << std::endl;
         std::cout << "latlng: " << latlng.lat << " , " << latlng.lng << std::endl;
         std::cout << "fix: " << static_cast<int>(fix) << std::endl;
         std::cout << "num_satellites: " << static_cast<int>(num_satalites) << std::endl;
@@ -66,7 +62,6 @@ struct GGA
     }
 };
 
-
 class Ublox
 {
     NMEA_Parser parser = {};
@@ -75,13 +70,12 @@ class Ublox
   public:
     Ublox()
     {
-        if (!tcp.connect())
-        {
+        if (!tcp.connect()) {
             std::cerr << "Ublx couldn't connect" << std::endl;
         };
     };
-	std::queue<std::string> buf;
-	std::queue<GGA> msgs;
+    std::queue<std::string> buf;
+    std::queue<GGA> msgs;
 
     void poll();
 };

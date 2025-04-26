@@ -6,41 +6,38 @@
 #include <random>
 #include <vector>
 
-void MPPI_Controller::update(Pose_State &current_state)
+void
+MPPI_Controller::update(Pose_State &current_state)
 {
     // NOTE might pull this into the class and just reuse it. Probably a performance upgrade.
     // std::vector<Trajectory> perturbed_trajectories(num_samples);
 
-    for (int i = 0; i < num_samples; i++)
-    {
+    for (int i = 0; i < num_samples; i++) {
         perturbed_trajectories[i].controls = generatePerturbedTrajectory();
-        perturbed_trajectories[i].cost =
-            evaluateTrajectory(current_state, perturbed_trajectories[i]);
+        perturbed_trajectories[i].cost = evaluateTrajectory(current_state, perturbed_trajectories[i]);
     }
     computeWeights(perturbed_trajectories);
     updateNominalTrajectory(perturbed_trajectories);
 }
 
-void MPPI_Controller::shiftControlHorizon()
+void
+MPPI_Controller::shiftControlHorizon()
 {
-    for (int i = 0; i < horizon_steps - 1; ++i)
-    {
+    for (int i = 0; i < horizon_steps - 1; ++i) {
         nominal_controls.velocities[i] = nominal_controls.velocities[i + 1];
     }
 
-    if (horizon_steps > 1)
-    {
-        nominal_controls.velocities[horizon_steps - 1] =
-            nominal_controls.velocities[horizon_steps - 2];
+    if (horizon_steps > 1) {
+        nominal_controls.velocities[horizon_steps - 1] = nominal_controls.velocities[horizon_steps - 2];
     }
 }
 
-Control_Sequence MPPI_Controller::generatePerturbedTrajectory()
+Control_Sequence
+MPPI_Controller::generatePerturbedTrajectory()
 {
     Control_Sequence controls = nominal_controls;
 
-    for (Velocity2d &control : controls)
-    {
+    for (Velocity2d &control : controls) {
         // Add noise to each control dimension
         control.linear.x() += 0.5 * dist(gen);
         // control.linear.y() += 0.5 * dist(gen);
@@ -53,95 +50,83 @@ Control_Sequence MPPI_Controller::generatePerturbedTrajectory()
     return controls;
 }
 
-double MPPI_Controller::evaluateTrajectory(Pose_State &initial_state, Trajectory &trajectory)
+double
+MPPI_Controller::evaluateTrajectory(Pose_State &initial_state, Trajectory &trajectory)
 {
     double total_cost = 0.0;
     Pose_State state = initial_state;
 
-    for (int i = 0; i < horizon_steps; ++i)
-    {
+    for (int i = 0; i < horizon_steps; ++i) {
         state = model.simulate(state, trajectory.controls.velocities[i], dt);
 
         Ecef_Coord difference = target_position - state.position;
         double azimuth_rad_world = atan2(difference.y(), difference.x());
         double azimuth_rad_robot = atan2(state.orientation(1, 0), state.orientation(0, 0));
         double azimuth_rad = azimuth_rad_world - azimuth_rad_robot;
-        if (azimuth_rad > M_PI)
-            azimuth_rad -= 2 * M_PI;
-        if (azimuth_rad < -M_PI)
-            azimuth_rad += 2 * M_PI;
+        if (azimuth_rad > M_PI) azimuth_rad -= 2 * M_PI;
+        if (azimuth_rad < -M_PI) azimuth_rad += 2 * M_PI;
 
         double orientation_cost = azimuth_rad * 0.3;
         double position_cost = (state.position - target_position).norm();
         double velocity_cost = state.velocity.linear.norm() * 0.1;
         double angular_vel_cost = state.velocity.angular.norm() * 0.2;
-        double control_cost = trajectory.controls.velocities[i].linear.norm() * 0.05 +
-                              trajectory.controls.velocities[i].angular.norm() * 0.3;
+        double control_cost = trajectory.controls.velocities[i].linear.norm() * 0.05
+                              + trajectory.controls.velocities[i].angular.norm() * 0.3;
 
         // Increase cost weight for later time steps to prioritize reaching the goal
         // double time_weight = 1.0 + 0.1 * i;
         double time_weight = 1.0;
 
-        total_cost += time_weight * (position_cost + orientation_cost + velocity_cost +
-                                     angular_vel_cost + control_cost);
+        total_cost += time_weight
+                      * (position_cost + orientation_cost + velocity_cost + angular_vel_cost + control_cost);
     }
 
     return total_cost;
 }
 
-void MPPI_Controller::computeWeights(std::vector<Trajectory> &trajectories)
+void
+MPPI_Controller::computeWeights(std::vector<Trajectory> &trajectories)
 {
     double min_cost = trajectories[0].cost;
-    for (Trajectory &trajectory : trajectories)
-    {
-        if (trajectory.cost < min_cost)
-            min_cost = trajectory.cost;
+    for (Trajectory &trajectory : trajectories) {
+        if (trajectory.cost < min_cost) min_cost = trajectory.cost;
     }
 
     double sum_weights = 0.0;
-    for (int i = 0; i < num_samples; ++i)
-    {
+    for (int i = 0; i < num_samples; ++i) {
         trajectories[i].weight = std::exp(-(trajectories[i].cost - min_cost) / temperature);
         sum_weights += trajectories[i].weight;
     }
 
-    if (sum_weights > 0.0)
-    {
-        for (int i = 0; i < num_samples; ++i)
-        {
+    if (sum_weights > 0.0) {
+        for (int i = 0; i < num_samples; ++i) {
             trajectories[i].weight /= sum_weights;
         }
-    }
-    else
-    {
-        for (int i = 0; i < num_samples; ++i)
-        {
+    } else {
+        for (int i = 0; i < num_samples; ++i) {
             trajectories[i].weight = 1.0 / num_samples;
         }
     }
 }
 
-void MPPI_Controller::updateNominalTrajectory(const std::vector<Trajectory> &trajectories)
+void
+MPPI_Controller::updateNominalTrajectory(const std::vector<Trajectory> &trajectories)
 {
-    for (Velocity2d &control : nominal_controls)
-    {
+    for (Velocity2d &control : nominal_controls) {
         control.linear.setZero();
         control.angular.setZero();
     }
 
-    for (const Trajectory &trajectory : trajectories)
-    {
-        for (int i = 0; i < horizon_steps; ++i)
-        {
-            nominal_controls.velocities[i].linear +=
-                trajectory.weight * trajectory.controls.velocities[i].linear;
-            nominal_controls.velocities[i].angular +=
-                trajectory.weight * trajectory.controls.velocities[i].angular;
+    for (const Trajectory &trajectory : trajectories) {
+        for (int i = 0; i < horizon_steps; ++i) {
+            nominal_controls.velocities[i].linear += trajectory.weight * trajectory.controls.velocities[i].linear;
+            nominal_controls.velocities[i].angular += trajectory.weight * trajectory.controls.velocities[i].angular;
         }
     }
 }
 
-Velocity2d MPPI_Controller::get_cmd()
+Velocity2d
+MPPI_Controller::get_cmd()
 {
     // update(state);
     Velocity2d cmd = nominal_controls.velocities[0];
@@ -161,16 +146,18 @@ class QuadrupedRobot
         state_.velocity.angular = Vector3d::Zero();
     }
 
-    void setTargetPosition(const Ecef_Coord &target)
+    void
+    setTargetPosition(const Ecef_Coord &target)
     {
         std::cout << "Setting new target: " << target.transpose() << std::endl;
         mppi_.setTarget(target);
     }
 
-    void applyDisturbance(const Eigen::Vector3d &force, const Eigen::Vector3d &torque)
+    void
+    applyDisturbance(const Eigen::Vector3d &force, const Eigen::Vector3d &torque)
     {
-        std::cout << "Applying disturbance: force=" << force.transpose()
-                  << ", torque=" << torque.transpose() << std::endl;
+        std::cout << "Applying disturbance: force=" << force.transpose() << ", torque=" << torque.transpose()
+                  << std::endl;
 
         state_.velocity.linear += force * 0.1;
         state_.velocity.angular += torque * 0.1;

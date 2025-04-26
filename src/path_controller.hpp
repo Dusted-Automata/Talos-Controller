@@ -2,10 +2,10 @@
 #include <functional>
 #include <thread>
 
-inline void worker_function(std::function<void()> callback, int period_ms)
+inline void
+worker_function(std::function<void()> callback, int period_ms)
 {
-    while (1)
-    {
+    while (1) {
         callback();
         std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
     }

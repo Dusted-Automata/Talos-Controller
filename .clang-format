@@ -1,7 +1,23 @@
 ---
-ColumnLimit:     100
-TabWidth:        8
-BreakBeforeBraces: Allman
+BasedOnStyle: GNU
+AlignAfterOpenBracket: DontAlign
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments:
+  PadOperators: false
+AlignEscapedNewlines: LeftWithLastLine
+AlignTrailingComments: {}
+AllowAllArgumentsOnNextLine: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Linux
+BreakBeforeConceptDeclarations: Allowed
+PenaltyBreakAssignment: 1000000
+BreakStringLiterals: false
+ColumnLimit: 120
 IndentWidth: 4
-...
-
+SpaceAfterTemplateKeyword: false
+SpaceBeforeParens: Custom
+TabWidth: 4
+# AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false

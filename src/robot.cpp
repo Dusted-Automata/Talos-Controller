@@ -2,7 +2,8 @@
 #include "trajectory_controller.hpp"
 #include "types.hpp"
 
-void Robot::control_loop()
+void
+Robot::control_loop()
 {
     pose_state = read_state();
     logger.savePosesToFile(frame_controller);

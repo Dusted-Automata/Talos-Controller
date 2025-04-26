@@ -6,11 +6,20 @@
 #include <stdint.h>
 #include <vector>
 
-void Go1_Quadruped::UDPRecv() { udp.Recv(); }
+void
+Go1_Quadruped::UDPRecv()
+{
+    udp.Recv();
+}
 
-void Go1_Quadruped::UDPSend() { udp.Send(); }
+void
+Go1_Quadruped::UDPSend()
+{
+    udp.Send();
+}
 
-UT::HighCmd defaultCmd()
+UT::HighCmd
+defaultCmd()
 {
     UT::HighCmd cmd;
     cmd.footRaiseHeight = 0;
@@ -25,7 +34,8 @@ UT::HighCmd defaultCmd()
     return cmd;
 }
 
-UT::HighCmd Go1_Quadruped ::moveCmd(Velocity2d &velocity)
+UT::HighCmd
+Go1_Quadruped ::moveCmd(Velocity2d &velocity)
 {
     // UT::HighCmd cmd = defaultCmd();
     //
@@ -37,13 +47,15 @@ UT::HighCmd Go1_Quadruped ::moveCmd(Velocity2d &velocity)
     return cmd;
 }
 
-void Go1_Quadruped::send_velocity_command(Velocity2d &velocity)
+void
+Go1_Quadruped::send_velocity_command(Velocity2d &velocity)
 {
     moveCmd(velocity);
     udp.SetSend(cmd);
 };
 
-Pose_State Go1_Quadruped::read_state()
+Pose_State
+Go1_Quadruped::read_state()
 {
     udp.GetRecv(state);
     Pose_State ps;
@@ -68,8 +80,8 @@ Pose_State Go1_Quadruped::read_state()
     return ps;
 };
 
-
-int main(void)
+int
+main(void)
 {
     std::cout << "Robot level set to: HIGH" << std::endl
               << "WARNING: Make sure the robot is standing on the ground." << std::endl
@@ -83,40 +95,62 @@ int main(void)
     //     {4100241.72195791, 476441.0557096391, 4846281.753675706}};
 
     std::vector<Ecef_Coord> waypoints_square = {
-        {0.0, 0.0, 0.0},
-        {2.0, 0.0, 0.0},
-        {2.0, 2.0, 0.0},
-        {0.0, 2.0, 0.0},
+        { 0.0, 0.0, 0.0 },
+        { 2.0, 0.0, 0.0 },
+        { 2.0, 2.0, 0.0 },
+        { 0.0, 2.0, 0.0 },
     };
 
     std::vector<Ecef_Coord> waypoints_circle = {
-        {1.5, 0.0, 0.0},       {1.37, 0.61, 0.0},     {1.004, 1.115, 0.0},  {0.464, 1.427, 0.0},
-        {-0.157, 1.492, 0.0},  {-0.75, 1.299, 0.0},   {-1.214, 0.882, 0.0}, {-1.467, 0.312, 0.0},
-        {-1.467, -0.312, 0.0}, {-1.214, -0.882, 0.0}, {-0.75, -1.299, 0.0}, {-0.157, -1.492, 0.0},
-        {0.464, -1.427, 0.0},  {1.004, -1.115, 0.0},  {1.37, -0.61, 0.0},   {1.5, -0.0, 0.0}};
+        {    1.5,    0.0, 0.0 },
+        {   1.37,   0.61, 0.0 },
+        {  1.004,  1.115, 0.0 },
+        {  0.464,  1.427, 0.0 },
+        { -0.157,  1.492, 0.0 },
+        {  -0.75,  1.299, 0.0 },
+        { -1.214,  0.882, 0.0 },
+        { -1.467,  0.312, 0.0 },
+        { -1.467, -0.312, 0.0 },
+        { -1.214, -0.882, 0.0 },
+        {  -0.75, -1.299, 0.0 },
+        { -0.157, -1.492, 0.0 },
+        {  0.464, -1.427, 0.0 },
+        {  1.004, -1.115, 0.0 },
+        {   1.37,  -0.61, 0.0 },
+        {    1.5,   -0.0, 0.0 }
+    };
 
     std::vector<Ecef_Coord> waypoints_eight = {
-        {1.5, 1.5, 0.0}, {2.074, 2.03, 0.0}, {2.561, 2.25, 0.0}, {2.886, 2.03, 0.0},
-        {3.0, 1.5, 0.0}, {2.886, 0.97, 0.0}, {2.561, 0.75, 0.0}, {2.074, 0.97, 0.0},
-        {1.5, 1.5, 0.0}, {0.926, 2.03, 0.0}, {0.439, 2.25, 0.0}, {0.114, 2.03, 0.0},
-        {0.0, 1.5, 0.0}, {0.114, 0.97, 0.0}, {0.439, 0.75, 0.0}, {0.926, 0.97, 0.0},
-        {1.5, 1.5, 0.0}};
-
+        {   1.5,  1.5, 0.0 },
+        { 2.074, 2.03, 0.0 },
+        { 2.561, 2.25, 0.0 },
+        { 2.886, 2.03, 0.0 },
+        {   3.0,  1.5, 0.0 },
+        { 2.886, 0.97, 0.0 },
+        { 2.561, 0.75, 0.0 },
+        { 2.074, 0.97, 0.0 },
+        {   1.5,  1.5, 0.0 },
+        { 0.926, 2.03, 0.0 },
+        { 0.439, 2.25, 0.0 },
+        { 0.114, 2.03, 0.0 },
+        {   0.0,  1.5, 0.0 },
+        { 0.114, 0.97, 0.0 },
+        { 0.439, 0.75, 0.0 },
+        { 0.926, 0.97, 0.0 },
+        {   1.5,  1.5, 0.0 }
+    };
 
     Go1_Quadruped robot;
     robot.trajectory_controller->path_looping = true;
 
-
-    UT::LoopFunc loop_control("control_loop", robot.dt,
-                              boost::bind(&Go1_Quadruped::control_loop, &robot));
+    UT::LoopFunc loop_control("control_loop", robot.dt, boost::bind(&Go1_Quadruped::control_loop, &robot));
 
     UT::LoopFunc path_loop("path_loop", 0.030,
-                           boost::bind(&Linear_Controller::path_loop, static_cast<Linear_Controller*>(robot.trajectory_controller.get()), waypoints_square));
+        boost::bind(&Linear_Controller::path_loop, static_cast<Linear_Controller *>(robot.trajectory_controller.get()),
+            waypoints_square));
 
-    UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3,
-                              boost::bind(&Go1_Quadruped::UDPRecv, &robot));
-    UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3,
-                              boost::bind(&Go1_Quadruped::UDPSend, &robot));
+    UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3, boost::bind(&Go1_Quadruped::UDPRecv, &robot));
+    UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3, boost::bind(&Go1_Quadruped::UDPSend, &robot));
 
     loop_udpSend.start();
     loop_udpRecv.start();
@@ -124,8 +158,7 @@ int main(void)
     /*traj_loop.start();*/
     loop_control.start();
 
-    while (1)
-    {
+    while (1) {
         sleep(10);
     }
 
