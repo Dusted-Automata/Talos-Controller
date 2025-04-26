@@ -31,6 +31,7 @@ class testRobot : public Robot
     angular_pid.output_max = 10, 0;
     angular_pid.output_min = 0, 0;
 	trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
+	trajectory_controller->robot = this;
 
 
 
