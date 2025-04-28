@@ -58,20 +58,11 @@ main()
         { 0.0,  0.0, 0.0 }
     };
 
-    Ecef_Coord current = waypoints[0];
-    Ecef_Coord next = waypoints[1];
-
     testRobot robot;
-
     robot.path_controller.add_waypoints(waypoints);
 
-    std::function<void()> bound_control_loop = std::bind(&testRobot::control_loop, &robot);
-    std::thread control_loop_thread = std::thread(worker_function, bound_control_loop, 2);
-    // std::thread control_loop_thread = std::thread(&testRobot::control_loop, &robot);
-
     robot.path_controller.start();
-    /*trajectory_loop.join();*/
-    control_loop_thread.join();
+    robot.start();
 
     return 0;
 }
