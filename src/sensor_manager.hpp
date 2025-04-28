@@ -10,6 +10,7 @@
 enum Sensor_Name { UBLOX };
 struct Latest_Measurement {
     GGA ublox_measurement;
+    bool read;
 };
 
 class Sensor
@@ -25,7 +26,7 @@ class Sensor
 
 class Sensor_Manager
 {
-    std::vector<std::unique_ptr<Sensor> > sensors;
+    std::vector<std::unique_ptr<Sensor>> sensors;
     std::atomic_bool running = false;
     Ublox ublox;
 
@@ -36,4 +37,5 @@ class Sensor_Manager
     std::thread sensors_thread;
     void loop();
     void readSensors();
+    void init();
 };

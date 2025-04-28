@@ -1,4 +1,5 @@
 #include "linear_controller.hpp"
+#include "cppmap3d.hh"
 #include "frame_controller.hpp"
 #include "robot.hpp"
 #include "transformations.hpp"
@@ -22,6 +23,29 @@ Linear_Controller::get_cmd()
     double proportional_gain_yaw = 1.0;
 
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
+    if (!robot->sensor_manager.latest_measurement.read) {
+        robot->sensor_manager.latest_measurement.read = true;
+        double lat = robot->sensor_manager.latest_measurement.ublox_measurement.latlng.lat;
+        double lng = robot->sensor_manager.latest_measurement.ublox_measurement.latlng.lng;
+        double alt = robot->sensor_manager.latest_measurement.ublox_measurement.alt;
+
+        if (!(lat == 0.0 && lng == 0.0 && alt == 0.0)) {
+            Vector3d error_vec = robot->frame_controller.get_error_vector_in_NED(lat, lng, alt);
+            robot->frame_controller.update_based_on_measurement(lat, lng, alt);
+        }
+    }
+
+#if 0
+    if ((testCounter % 5000) == 0) {
+        Vector3d push = { 1.0, 2.0, 0.0 };
+        Vector3d fake_measurement = robot->frame_controller.local_frame.pos + push;
+        Ecef_Coord ecef = wgsned2ecef_d(fake_measurement, robot->frame_controller.local_frame.origin);
+        LLH llh = wgsecef2llh(ecef);
+        std::cout << "lat: " << llh[0] << " lng: " << llh[1] << " alt: " << llh[2] << std::endl;
+        robot->frame_controller.update_based_on_measurement(llh[0], llh[1], llh[2]);
+    }
+    testCounter++;
+#endif
 
     std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path_controller.front_two();
     if (!path.has_value()) {
@@ -30,11 +54,8 @@ Linear_Controller::get_cmd()
         // angular_pid.reset();
         // path_queue.pop();
     }
-    Ecef_Coord start = wgsecef2ned_d(path.value().first, robot->frame_controller.local_frame.origin);
+    // Start does not get used obviously.
     Ecef_Coord goal = wgsecef2ned_d(path.value().second, robot->frame_controller.local_frame.origin);
-
-    Vector3d difference = goal - start;
-    double difference_distance = std::sqrt(difference.x() * difference.x() + difference.y() * difference.y());
 
     double dx = goal.x() - robot->frame_controller.local_frame.pos.x();
     double dy = goal.y() - robot->frame_controller.local_frame.pos.y();
@@ -75,14 +96,6 @@ Linear_Controller::get_cmd()
     cmd.angular.z() = vel_yaw;
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
-
-    // Path_Movement path = readPath();
-    // Thread_Safe_Queue<Trajectory_Point> trajectories = readPath();
-    // Velocity2d cmd = follow_trajectory(state, path_queue);
-
-    double t = dist / difference_distance;
-    double interpolated = (path.value().first.z() * t + path.value().second.z() * (1 - t));
-    // std::cout << t << std::endl;
 
     return cmd;
 }

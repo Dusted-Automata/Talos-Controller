@@ -52,6 +52,7 @@ Go1_Quadruped::send_velocity_command(Velocity2d &velocity)
 {
     moveCmd(velocity);
     udp.SetSend(cmd);
+    frame_controller.move_in_local_frame(velocity);
 };
 
 Pose_State

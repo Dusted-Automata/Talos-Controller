@@ -41,7 +41,7 @@ struct GGA {
     Fix fix;                // Quality indicator for position fix
     uint8_t num_satalites;  // Number of satellites used (0-12)
     float hddp;             // Horizontal Dilution of Precision
-    float alt;              // Altitude above mean sea level - meters
+    double alt;             // Altitude above mean sea level - meters
     float geoid_seperation; // difference between ellipsoid and mean sea level
     float diff_age;         // Age of differential corrections (null when DGPS is not used)
     float diff_station;     // ID of station providing differential corrections (0 when DGPS not used)

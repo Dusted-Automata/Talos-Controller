@@ -12,6 +12,7 @@ class Linear_Controller : public Trajectory_Controller
     PIDController angular_pid;
     double trajectory_time = 0.0;
     double sampling_rate = 1.0;
+    int testCounter = 0;
 
   public:
     Linear_Controller(PIDController linear_pid, PIDController angular_pid, double sampling_rate)

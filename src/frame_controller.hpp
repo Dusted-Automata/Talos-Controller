@@ -24,4 +24,7 @@ class Frame_Controller
     void move_in_local_frame(Velocity2d &velocity);
 
     void move_in_global_frame(Velocity2d &velocity);
+
+    void update_based_on_measurement(double &lat, double &lng, double &height);
+    Vector3d get_error_vector_in_NED(double &lat, double &lng, double &height);
 };

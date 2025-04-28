@@ -196,6 +196,7 @@ main()
 
     robot.frame_controller.local_frame.origin = waypoints[0];
     LLH llh = wgsecef2llh(waypoints[0]);
+    std::cout << "lat: " << llh[0] << " lng: " << llh[1] << " alt: " << llh[2] << std::endl;
     Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     double theta = atan2(llh.y(), llh.x());
     Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());

@@ -67,7 +67,16 @@ parse_float(std::string &field)
     if (field.empty()) {
         return 0.0;
     }
-    return static_cast<uint8_t>(std::stof(field));
+    return std::stof(field);
+}
+
+double
+parse_double(std::string &field)
+{
+    if (field.empty()) {
+        return 0.0;
+    }
+    return std::stod(field);
 }
 
 void parse_hddp(GGA &gga, std::string &hddp);
@@ -98,7 +107,7 @@ parse_gga(std::string &msg)
 
     gga.num_satalites = parse_uint8(arr[6]);
     gga.hddp = parse_float(arr[8]);
-    gga.alt = parse_float(arr[9]);
+    gga.alt = parse_double(arr[9]);
     gga.geoid_seperation = parse_float(arr[11]);
     gga.diff_age = parse_float(arr[13]);
     gga.diff_station = parse_float(arr[14]);
