@@ -141,20 +141,18 @@ main(void)
     };
 
     Go1_Quadruped robot;
-    robot.trajectory_controller->path_looping = true;
+    robot.path_controller.path_looping = true;
+    robot.path_controller.add_waypoints(waypoints_square);
+    robot.path_controller.start();
 
     UT::LoopFunc loop_control("control_loop", robot.dt, boost::bind(&Go1_Quadruped::control_loop, &robot));
-
-    UT::LoopFunc path_loop("path_loop", 0.030,
-        boost::bind(&Linear_Controller::path_loop, static_cast<Linear_Controller *>(robot.trajectory_controller.get()),
-            waypoints_square));
 
     UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3, boost::bind(&Go1_Quadruped::UDPRecv, &robot));
     UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3, boost::bind(&Go1_Quadruped::UDPSend, &robot));
 
     loop_udpSend.start();
     loop_udpRecv.start();
-    path_loop.start();
+    // path_loop.start();
     /*traj_loop.start();*/
     loop_control.start();
 

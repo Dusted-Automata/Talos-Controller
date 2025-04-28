@@ -6,34 +6,6 @@
 #include <cmath>
 #include <iostream>
 
-void
-Linear_Controller::path_loop(std::vector<Ecef_Coord> &waypoints)
-{
-    if (waypoints.empty()) {
-        return;
-    }
-    // std::cout << path.size() << "  WAYPOINTS" << std::endl;
-    if (!added_paths) {
-        std::cout << "EMPTY FIRST WAYPOINTS" << std::endl;
-        for (Ecef_Coord &waypoint : waypoints) {
-            std::cout << "Adding Waypoints!" << std::endl;
-            std::cout << waypoint.transpose() << std::endl;
-            robot->path_queue.push(waypoint);
-        }
-        added_paths = true;
-    }
-
-    // FIXME: One waypoint does not get popped off, so it wont loop
-    if ((robot->path_queue.size() == 1) && path_looping) {
-        std::cout << robot->path_queue.size() << " EMPTY WAYPOINTS" << std::endl;
-        for (Ecef_Coord &waypoint : waypoints) {
-            std::cout << "Adding Waypoints!" << std::endl;
-            std::cout << waypoint.transpose() << std::endl;
-            robot->path_queue.push(waypoint);
-        }
-    }
-}
-
 Velocity2d
 Linear_Controller::get_cmd()
 {
@@ -51,7 +23,7 @@ Linear_Controller::get_cmd()
 
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
 
-    std::optional<std::pair<Ecef_Coord, Ecef_Coord> > path = robot->path_queue.front_two();
+    std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path_controller.front_two();
     if (!path.has_value()) {
         return cmd;
         // linear_pid.reset();
@@ -91,7 +63,7 @@ Linear_Controller::get_cmd()
     double vel_yaw = proportional_gain_yaw * dyaw;
 
     if (dist < goal_tolerance && std::abs(dyaw) < yaw_tolerance * M_PI / 180.0) {
-        robot->path_queue.pop();
+        robot->path_controller.goal_reached();
         return cmd;
         // goal_reached_msg.data = true;
     } else {

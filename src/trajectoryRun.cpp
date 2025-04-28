@@ -63,15 +63,13 @@ main()
 
     testRobot robot;
 
-    std::function<void()> bound_path_loop = [&robot, &waypoints]() {
-        static_cast<Linear_Controller *>(robot.trajectory_controller.get())->path_loop(waypoints);
-    };
+    robot.path_controller.add_waypoints(waypoints);
+
     std::function<void()> bound_control_loop = std::bind(&testRobot::control_loop, &robot);
-    std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
     std::thread control_loop_thread = std::thread(worker_function, bound_control_loop, 2);
     // std::thread control_loop_thread = std::thread(&testRobot::control_loop, &robot);
 
-    path_loop.join();
+    robot.path_controller.start();
     /*trajectory_loop.join();*/
     control_loop_thread.join();
 

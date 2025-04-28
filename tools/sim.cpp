@@ -217,12 +217,9 @@ main()
     //     std::bind(&Linear_Controller::path_loop, robot.trajectory_controller,
     //     std::ref(waypoints));
 
-    std::function<void()> bound_path_loop = [&robot, &waypoints]() {
-        static_cast<Linear_Controller *>(robot.trajectory_controller.get())->path_loop(waypoints);
-    };
-
-    std::thread path_loop = std::thread(worker_function, bound_path_loop, 30);
-    path_loop.detach();
+    robot.path_controller.path_looping = true;
+    robot.path_controller.add_waypoints(waypoints);
+    robot.path_controller.start();
 
     Camera2D camera = {
         .target = { (float)robot.frame_controller.local_frame.pos.x(),

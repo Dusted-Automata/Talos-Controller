@@ -1,5 +1,6 @@
 ---
 BasedOnStyle: GNU
+Standard: c++20
 AlignAfterOpenBracket: DontAlign
 AlignArrayOfStructures: Right
 AlignConsecutiveAssignments:
