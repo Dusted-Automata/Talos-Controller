@@ -33,7 +33,7 @@ Linear_Controller::get_cmd()
     Ecef_Coord start = wgsecef2ned_d(path.value().first, robot->frame_controller.local_frame.origin);
     Ecef_Coord goal = wgsecef2ned_d(path.value().second, robot->frame_controller.local_frame.origin);
 
-    Ecef_Coord difference = goal - start;
+    Vector3d difference = goal - start;
     double difference_distance = std::sqrt(difference.x() * difference.x() + difference.y() * difference.y());
 
     double dx = goal.x() - robot->frame_controller.local_frame.pos.x();
