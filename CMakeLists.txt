@@ -14,6 +14,9 @@ endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64.*")
   set(ARCH arm64)
 endif()
+if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm64.*")
+  set(ARCH arm64)
+endif()
 
 include_directories(include)
 include_directories(src)
@@ -32,6 +35,8 @@ if(${catkin_FOUND})
   )
 endif()
 find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
