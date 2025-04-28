@@ -4,11 +4,12 @@
 #include <thread>
 
 inline void
-worker_function(std::function<void()> callback, int period_ms)
+worker_function(std::function<void()> callback, double period_seconds)
 {
+    int period_rounded = static_cast<int>(1000 * period_seconds);
     while (1) {
         callback();
-        std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
+        std::this_thread::sleep_for(std::chrono::milliseconds(period_rounded));
     }
 }
 

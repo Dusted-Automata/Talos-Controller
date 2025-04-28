@@ -213,10 +213,6 @@ main()
     /*robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
      * Vector3d::UnitY()));*/
 
-    // std::function<void()> bound_path_loop =
-    //     std::bind(&Linear_Controller::path_loop, robot.trajectory_controller,
-    //     std::ref(waypoints));
-
     robot.path_controller.path_looping = true;
     robot.path_controller.add_waypoints(waypoints);
     robot.path_controller.start();

@@ -35,7 +35,7 @@ Path_Controller::start()
 {
 
     std::function<void()> bound_path_loop = [this]() { path_loop(); };
-    path_loop_thread = std::thread(worker_function, bound_path_loop, 30);
+    path_loop_thread = std::thread(worker_function, bound_path_loop, 0.030);
 };
 
 std::optional<std::pair<Ecef_Coord, Ecef_Coord>>

@@ -18,3 +18,10 @@ Robot::control_loop()
     /*motion_time += 1000 / hz;*/
     motion_time += 1.0 / hz;
 }
+
+void
+Robot::start()
+{
+    std::function<void()> bound_control_loop = [this]() { control_loop(); };
+    control_loop_thread = std::thread(worker_function, bound_control_loop, 1.0 / hz);
+}

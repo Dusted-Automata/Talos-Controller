@@ -13,6 +13,7 @@ class Robot
     float hz = 500;
 
     // MAIN CONTROL THREAD
+    std::thread control_loop_thread;
     // PATH GENERATION THREAD
     // SENSOR PROCESSING THREAD
 
@@ -33,4 +34,5 @@ class Robot
     virtual Pose_State read_state() = 0;
 
     void control_loop();
+    void start();
 };
