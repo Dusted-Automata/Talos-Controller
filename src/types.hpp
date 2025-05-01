@@ -203,6 +203,18 @@ template<typename T, std::size_t Capacity> class Ring_Buffer
         full = false;
         num_items = 0;
     }
+
+    void
+    clear(size_t amount)
+    {
+        if (amount > num_items) {
+            clear();
+            return;
+        }
+        tail = (tail + amount) % buffer.size();
+        full = false;
+        num_items -= amount;
+    }
 };
 
 template<typename T> class Thread_Safe_Queue
@@ -255,7 +267,7 @@ template<typename T> class Thread_Safe_Queue
         return point;
     }
 
-    std::optional<std::pair<T, T> >
+    std::optional<std::pair<T, T>>
     front_two()
     {
         std::unique_lock<std::mutex> lock(mutex);

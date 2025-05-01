@@ -32,7 +32,6 @@ NMEA_Parser::findStart(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &i)
 {
     for (; i < buf.count(); i++) {
         if (buf[i] == '$') {
-            ++i;
             return true;
         }
     }
@@ -43,8 +42,8 @@ inline bool
 NMEA_Parser::findEnd(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &i)
 {
 
-    for (; i < buf.count(); i++) {
-        if (buf[i - 1] == '\r' && buf[i] == '\n') {
+    for (; i < buf.count() - 1; i++) {
+        if (buf[i] == '\r' && buf[i + 1] == '\n') {
             return true;
         }
     }
@@ -64,7 +63,9 @@ NMEA_Parser::process_data(
             ring.clear();
             break;
         }
-
+        if (index > 0) {
+            ring.clear(index);
+        }
         if (!findEnd(ring, index)) {
             break;
         }
@@ -80,11 +81,8 @@ bool
 TCP_Socket::recv(std::queue<std::string> &msgs)
 {
     ssize_t bytes_received;
-    while ((bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0)) > 0) {
-        // std::cout << "bytes_received: " << bytes_received << std::endl;
-        // std::cout << "recv: " << recv_buf.data() << std::endl;
-        parser.process_data(msgs, recv_buf, bytes_received);
-    }
+    bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0);
+    parser.process_data(msgs, recv_buf, bytes_received);
 
     if (bytes_received == 0) {
         std::cerr << "socket closed" << std::endl;
