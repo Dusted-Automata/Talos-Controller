@@ -145,6 +145,7 @@ main(void)
     robot.path_controller.path_looping = true;
     robot.path_controller.add_waypoints(waypoints_square);
     robot.path_controller.start();
+    robot.sensor_manager.init();
 
     UT::LoopFunc loop_control("control_loop", robot.dt, boost::bind(&Go1_Quadruped::control_loop, &robot));
 
