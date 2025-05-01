@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(Controller)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE debug)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb -no-pie")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
@@ -14,48 +14,60 @@ if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64.*")
     set(RAYLIB_LIB_DIR ${CMAKE_BINARY_DIR}/raylib/lib)
     set(ARCH amd64)
 endif()
-if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64.*")
-    set(RAYLIB_LIB_DIR ${CMAKE_BINARY_DIR}/raylib/lib64)
-    set(ARCH arm64)
-endif()
-if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm64.*")
+if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64.*" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm64.*")
     set(RAYLIB_LIB_DIR ${CMAKE_BINARY_DIR}/raylib/lib64)
     set(ARCH arm64)
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+find_package(raylib QUIET)
+
+
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
 
 include_directories(include src ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
-
 link_directories(unitree_legged_sdk/lib/cpp/${ARCH})
 set(EXTRA_LIBS -pthread libunitree_legged_sdk.a)
 
-set(RAYLIB_INSTALL_DIR ${CMAKE_BINARY_DIR}/raylib)
-set(RAYLIB_INCLUDE_DIR ${CMAKE_BINARY_DIR}/raylib/include)
-set(RAYLIB_LIBRARY ${RAYLIB_LIB_DIR}/libraylib.a)
+# =========== RAYLIB ==============
+if(raylib_FOUND)
+    message(STATUS "Found system-installed Raylib")
+    set(RAYLIB_INCLUDE_DIR ${raylib_INCLUDE_DIRS})
+    set(RAYLIB_LIBRARY ${raylib_LIBRARIES})
+    set(RAYLIB_EXTERNAL OFF)
+else()
+    message(STATUS "System-installed Raylib not found")
+    set(RAYLIB_INSTALL_DIR ${CMAKE_BINARY_DIR}/raylib)
+    set(RAYLIB_INCLUDE_DIR ${CMAKE_BINARY_DIR}/raylib/include)
+    set(RAYLIB_LIBRARY ${RAYLIB_LIB_DIR}/libraylib.a)
+    set(RAYLIB_EXTERNAL ON)
+endif()
 
-if(NOT EXISTS ${RAYLIB_LIBRARY})
-    message(STATUS "Raylib not found, will download and build it")
-    
-    include(ExternalProject)
-    ExternalProject_Add(
-        raylib_ext
-        GIT_REPOSITORY https://github.com/raysan5/raylib.git
-        GIT_TAG master
-        CMAKE_ARGS 
+if (RAYLIB_EXTERNAL)
+    if(NOT EXISTS ${RAYLIB_LIBRARY})
+        message(STATUS "Raylib not found, will download and build it")
+
+        include(ExternalProject)
+        ExternalProject_Add(
+            raylib_ext
+            GIT_REPOSITORY https://github.com/raysan5/raylib.git
+            GIT_TAG master
+            CMAKE_ARGS 
             -DCMAKE_INSTALL_PREFIX=${RAYLIB_INSTALL_DIR}
             -DBUILD_SHARED_LIBS=OFF
-        BUILD_BYPRODUCTS ${RAYLIB_LIBRARY}
-        INSTALL_DIR ${RAYLIB_INSTALL_DIR}
-    )
-    
-    add_custom_target(raylib_target DEPENDS raylib_ext)
+            BUILD_BYPRODUCTS ${RAYLIB_LIBRARY}
+            INSTALL_DIR ${RAYLIB_INSTALL_DIR}
+        )
+
+        add_custom_target(raylib_target DEPENDS raylib_ext)
+    else()
+        message(STATUS "Raylib already built, skipping build")
+        add_custom_target(raylib_target)
+    endif()
 else()
-    message(STATUS "Raylib already built, skipping build")
-    add_custom_target(raylib_target)
+    add_custom_target(raylib_target)  
 endif()
 
 

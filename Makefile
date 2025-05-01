@@ -1,5 +1,6 @@
 build:
-	make -C ./build
+	cmake --build ./build --parallel
+	# make -C ./build
 .PHONY : build
 
 run:
