@@ -30,7 +30,9 @@ class TCP_Socket
 
   public:
     TCP_Socket(std::string ip, int port, Parser &parser) : server_ip(ip), port(port), parser(parser) {};
+    ~TCP_Socket() { disconnect(); };
     bool connect();
+    void disconnect();
     bool recv(std::queue<std::string> &msgs);
     std::vector<std::string> recv_all();
     std::string ublox_Message();

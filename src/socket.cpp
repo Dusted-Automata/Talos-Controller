@@ -27,6 +27,12 @@ TCP_Socket::connect()
     return true;
 }
 
+void
+TCP_Socket::disconnect()
+{
+    ::close(socket_fd);
+}
+
 inline bool
 NMEA_Parser::findStart(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &i)
 {
