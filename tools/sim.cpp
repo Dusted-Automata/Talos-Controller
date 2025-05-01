@@ -217,6 +217,7 @@ main()
     robot.path_controller.path_looping = true;
     robot.path_controller.add_waypoints(waypoints);
     robot.path_controller.start();
+    robot.sensor_manager.init();
 
     Camera2D camera = {
         .target = { (float)robot.frame_controller.local_frame.pos.x(),
