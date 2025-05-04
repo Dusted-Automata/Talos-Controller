@@ -3,6 +3,100 @@
 #include <iostream>
 #include <unistd.h>
 
+uint8_t
+NMEA_Parser::hex_Val(char c)
+{
+    return static_cast<uint8_t>(std::isdigit(c) ? c - '0' : std::toupper(c) - 'A' + 10);
+}
+
+bool
+NMEA_Parser::verify_Checksum(std::string_view s)
+{
+    // "$GPGGA,....*hh\r\n"
+    int star_index = s.length() - 5;
+    assert(s[star_index] == '*');
+
+    uint8_t calc = 0;
+    for (std::size_t i = 1; i < star_index; ++i) { // skipping $
+        calc ^= static_cast<uint8_t>(s[i]);
+    }
+    uint8_t got = (hex_Val(s[star_index + 1]) << 4) | hex_Val(s[star_index + 2]);
+    return calc == got;
+};
+
+bool
+NMEA_Parser::skip_UBX()
+{
+    if (ring.count() < 6) { // sync + class/id + len
+        return false;
+    }
+    uint16_t len = static_cast<uint8_t>(ring[4]) | (static_cast<uint8_t>(ring[5]) << 8);
+    std::size_t frameLen = 6 + len + 2; // + payload + CK_A/B
+
+    if (frameLen > ring.capacity()) {
+        ring.clear(2);
+        return true;
+    }
+    if (ring.count() < frameLen) {
+        return false;
+    }
+    ring.clear(frameLen);
+    return true;
+};
+bool
+NMEA_Parser::extract_NMEA(std::string &out)
+{
+    while (!ring.empty() && ring[0] != '$') {
+        ring.clear();
+    }
+    if (ring.empty()) {
+        return false;
+    }
+
+    std::size_t MAX_LEN = 82; // NMEA frame length max inc. CRLF
+
+    for (std::size_t i = 1; i < ring.count() && i < MAX_LEN; ++i) {
+        char c = ring[i];
+        if ((c < 0x20 || c > 0x7E) && c != '\r' && c != '\n') {
+            break;
+        }
+
+        if (ring[i] == '\n' && ring[i - 1] == '\r') {
+            if (!(ring[i - 4] == '*') || !isxdigit(ring[i - 3]) || !isxdigit(ring[i - 2])) {
+                break;
+            }
+
+            std::size_t len = i + 1; // include CR/LF
+            out.resize(len);
+            ring.read(std::span(out.data(), len));
+            return verify_Checksum(out);
+        }
+    }
+    ring.clear(); // bad data
+    return true;
+};
+
+void
+NMEA_Parser::push(std::queue<std::string> &msgs, std::span<const char> data)
+{
+    ring.write(data);
+    while (true) {
+        // UBX frame at buffer start?  0xB5 0x62
+        if (ring.count() >= 2 && ring[0] == static_cast<char>(0xB5) && ring[1] == static_cast<char>(0x62)) {
+            if (!skip_UBX()) {
+                break;
+            }
+            continue;
+        }
+
+        std::string frame;
+        if (!extract_NMEA(frame)) {
+            break;
+        }
+        if (!frame.empty()) msgs.push(std::move(frame));
+    }
+}
+
 bool
 TCP_Socket::connect()
 {
@@ -33,62 +127,11 @@ TCP_Socket::disconnect()
     ::close(socket_fd);
 }
 
-inline bool
-NMEA_Parser::findStart(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &i)
-{
-    for (; i < buf.count(); i++) {
-        if (buf[i] == '$') {
-            return true;
-        }
-    }
-    return false;
-}
-
-inline bool
-NMEA_Parser::findEnd(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &i)
-{
-
-    for (; i < buf.count() - 1; i++) {
-        if (buf[i] == '\r' && buf[i + 1] == '\n') {
-            return true;
-        }
-    }
-    return false;
-}
-
-void
-NMEA_Parser::process_data(
-    std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received)
-{
-    ring.write(std::span(buf.data(), bytes_received));
-
-    size_t index = 0;
-    while (index < ring.count()) {
-        index = 0;
-        if (!findStart(ring, index)) {
-            ring.clear();
-            break;
-        }
-        if (index > 0) {
-            ring.clear(index);
-        }
-        if (!findEnd(ring, index)) {
-            break;
-        }
-
-        size_t len = index + 1;
-        std::string sentence(len, '\0');
-        ring.read(std::span(sentence.data(), len));
-        msgs.push(std::move(sentence));
-    }
-};
-
 bool
 TCP_Socket::recv(std::queue<std::string> &msgs)
 {
     ssize_t bytes_received;
     bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0);
-    parser.process_data(msgs, recv_buf, bytes_received);
 
     if (bytes_received == 0) {
         std::cerr << "socket closed" << std::endl;
@@ -102,10 +145,7 @@ TCP_Socket::recv(std::queue<std::string> &msgs)
         return false;
     }
 
+    parser.push(msgs, std::span(recv_buf.data(), bytes_received));
+
     return true;
 }
-
-/*std::string TCP_Socket::ublox_Message(char *buffer, size_t buffer_size)*/
-/*{*/
-/*    return parseMessage(buffer, buffer_size);*/
-/*};*/

@@ -9,13 +9,12 @@
 #include <sys/types.h>
 #include <vector>
 
-#define TCP_BUFFER_LENGTH 128
+#define TCP_BUFFER_LENGTH 4096
 
 class Parser
 {
   public:
-    virtual void process_data(
-        std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) = 0;
+    virtual void push(std::queue<std::string> &msgs, std::span<const char> data) = 0;
 };
 
 class TCP_Socket
@@ -43,10 +42,11 @@ class NMEA_Parser : public Parser
   private:
     Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> ring;
 
-    inline bool findStart(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &index);
-    inline bool findEnd(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &buf, size_t &index);
+    inline bool skip_UBX();
+    bool extract_NMEA(std::string &out);
+    inline bool verify_Checksum(std::string_view s);
+    inline uint8_t hex_Val(char c);
 
   public:
-    void process_data(
-        std::queue<std::string> &msgs, std::array<char, TCP_BUFFER_LENGTH> &buf, size_t bytes_received) override;
+    void push(std::queue<std::string> &msgs, std::span<const char> data) override;
 };

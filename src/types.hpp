@@ -110,7 +110,7 @@ template<typename T, std::size_t Capacity> class Ring_Buffer
     }
 
     bool
-    isEmpty() const
+    empty() const
     {
         return (!full && (head == tail));
     }
@@ -128,7 +128,7 @@ template<typename T, std::size_t Capacity> class Ring_Buffer
     }
 
     size_t
-    getCapacity() const
+    capacity() const
     {
         return buffer.size();
     }
@@ -148,7 +148,7 @@ template<typename T, std::size_t Capacity> class Ring_Buffer
     bool
     pop(T &item)
     {
-        if (isEmpty()) return false;
+        if (empty()) return false;
 
         item = buffer[tail];
         tail = (tail + 1) % buffer.size();
@@ -191,7 +191,7 @@ template<typename T, std::size_t Capacity> class Ring_Buffer
     bool
     peek(T &item) const
     {
-        if (isEmpty()) return false;
+        if (empty()) return false;
         item = buffer[head];
         return true;
     }
