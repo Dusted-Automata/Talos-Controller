@@ -1,14 +1,12 @@
 #pragma once
-#include "types.hpp"
 #include "ublox.hpp"
 #include <netinet/in.h>
-#include <optional>
 #include <thread>
 
 enum Sensor_Name { UBLOX };
 struct Latest_Measurement {
     GGA ublox_measurement;
-    bool read;
+    std::atomic_bool read;
 };
 
 class Sensor
