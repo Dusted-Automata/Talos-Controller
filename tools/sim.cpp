@@ -149,11 +149,9 @@ simbot_linear(Sim_Quadruped &robot)
 int
 main()
 {
-    // SetTraceLogLevel(LOG_WARNING);
+    SetTraceLogLevel(LOG_WARNING);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Absolute Coordinate System");
     SetTargetFPS(500);
-
-    float dt = 0;
 
     std::vector<Ecef_Coord> waypoints = {
         { 4100175.6251356260, 476368.7899695045, 4846344.356704135 },
@@ -186,7 +184,6 @@ main()
     };
     camera.offset = (Vector2){ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f };
     camera.zoom = 10.0f;
-    int index = 0;
 
     while (!WindowShouldClose()) {
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
@@ -229,7 +226,7 @@ main()
         Ecef_Coord ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
             robot.frame_controller.local_frame.origin);
         sprintf(coordText, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %f", ecef_pos.x(), ecef_pos.y(), ecef_pos.z(),
-            camera.zoom, dt);
+            camera.zoom, GetTime());
         DrawText(coordText, 10, 10, 20, BLACK);
         auto R = robot.frame_controller.local_frame.orientation.rotation();
         char orientationText[500];
@@ -252,7 +249,6 @@ main()
         DrawText(velocityText, 10, 130, 20, BLACK);
 
         EndDrawing();
-        dt = GetTime();
     }
 
     CloseWindow();
