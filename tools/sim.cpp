@@ -146,6 +146,19 @@ simbot_linear(Sim_Quadruped &robot)
     }
 }
 
+void
+DrawLogLine(int line, const char *format, ...)
+{
+    char buffer[512];
+    va_list args;
+
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    DrawText(buffer, 10, 10 + line * 30, 20, BLACK);
+}
+
 int
 main()
 {
@@ -212,7 +225,6 @@ main()
         DrawAbsoluteGrid(camera, gridStep);
 
         for (int i = 0; i < waypoints.size(); i++) {
-            // TODO: Refactor into own vector or something. No need to convert every frame.
             Vector3d waypoint = wgsecef2ned_d(waypoints[i], robot.frame_controller.local_frame.origin);
             DrawCircle(waypoint.x(), -waypoint.y(), 0.8, BLUE);
         }
@@ -221,32 +233,34 @@ main()
 
         EndMode2D();
 
-        Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
-        char coordText[500];
-        Ecef_Coord ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
-            robot.frame_controller.local_frame.origin);
-        sprintf(coordText, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %f", ecef_pos.x(), ecef_pos.y(), ecef_pos.z(),
-            camera.zoom, GetTime());
-        DrawText(coordText, 10, 10, 20, BLACK);
-        auto R = robot.frame_controller.local_frame.orientation.rotation();
-        char orientationText[500];
-        sprintf(orientationText, "X: %.2f %.2f %.2f - Y: %.2f %.2f %.2f - Z: %.2f %.2f %.2f - YAW: %.2f", R(0, 0),
-            R(0, 1), R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2), atan2(R(1, 0), R(0, 0)));
-        DrawText(orientationText, 10, 40, 20, BLACK);
-        char localPositionText[500];
-        sprintf(localPositionText, "local position: %.2f %.2f %.2f ", robot.frame_controller.local_frame.pos.x(),
-            robot.frame_controller.local_frame.pos.y(), robot.frame_controller.local_frame.pos.z());
-        DrawText(localPositionText, 10, 70, 20, BLACK);
-        char globalPositionText[500];
-        sprintf(globalPositionText, "global position: %.2f %.2f %.2f ", robot.frame_controller.global_frame.pos.x(),
-            robot.frame_controller.global_frame.pos.y(), robot.frame_controller.global_frame.pos.z());
-        DrawText(globalPositionText, 10, 100, 20, BLACK);
-        char velocityText[500];
-        sprintf(velocityText, "velocity: %.2f %.2f %.2f - %.2f %.2f %.2f", robot.pose_state.velocity.linear.x(),
-            robot.pose_state.velocity.linear.y(), robot.pose_state.velocity.linear.z(),
-            robot.pose_state.velocity.angular.x(), robot.pose_state.velocity.angular.y(),
-            robot.pose_state.velocity.angular.z());
-        DrawText(velocityText, 10, 130, 20, BLACK);
+        { // just logging stuff top left of the screen
+            const float currentTime = GetTime();
+            const Vector2 mousePos = GetMousePosition();
+            const Vector2 mouseWorldPos = GetScreenToWorld2D(mousePos, camera);
+
+            const auto R = robot.frame_controller.local_frame.orientation.rotation();
+            const Ecef_Coord ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
+                robot.frame_controller.local_frame.origin);
+
+            const float yaw = atan2(R(1, 0), R(0, 0));
+
+            DrawLogLine(0, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %.2f", ecef_pos.x(), ecef_pos.y(), ecef_pos.z(),
+                camera.zoom, currentTime);
+
+            DrawLogLine(1, "X: %.2f %.2f %.2f | Y: %.2f %.2f %.2f | Z: %.2f %.2f %.2f | YAW: %.1f°", R(0, 0), R(0, 1),
+                R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2), yaw * RAD2DEG);
+
+            DrawLogLine(2, "Local Position: %.2f, %.2f, %.2f", robot.frame_controller.local_frame.pos.x(),
+                robot.frame_controller.local_frame.pos.y(), robot.frame_controller.local_frame.pos.z());
+
+            DrawLogLine(3, "Global Position: %.2f, %.2f, %.2f", robot.frame_controller.global_frame.pos.x(),
+                robot.frame_controller.global_frame.pos.y(), robot.frame_controller.global_frame.pos.z());
+
+            DrawLogLine(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f]",
+                robot.pose_state.velocity.linear.x(), robot.pose_state.velocity.linear.y(),
+                robot.pose_state.velocity.linear.z(), robot.pose_state.velocity.angular.x(),
+                robot.pose_state.velocity.angular.y(), robot.pose_state.velocity.angular.z());
+        }
 
         EndDrawing();
     }
