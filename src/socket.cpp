@@ -101,6 +101,7 @@ NMEA_Parser::push(std::queue<std::string> &msgs, std::span<const char> data)
 bool
 TCP_Socket::connect()
 {
+    disconnect();
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd == -1) {
         std::cerr << "Could not create socket" << std::endl;
@@ -129,7 +130,10 @@ TCP_Socket::connect()
 void
 TCP_Socket::disconnect()
 {
-    ::close(socket_fd);
+    if (socket_fd != -1) {
+        ::close(socket_fd);
+        socket_fd = -1;
+    }
 }
 
 bool
