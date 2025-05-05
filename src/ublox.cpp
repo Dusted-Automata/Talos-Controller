@@ -94,7 +94,7 @@ parse_gga(std::string &msg)
     std::array<std::string, SIZE> arr;
     std::string token;
 
-    for (int i = 0; i < SIZE; i++) {
+    for (size_t i = 0; i < SIZE; i++) {
         if (std::getline(ss, token, ',')) {
             arr[i] = token;
         }

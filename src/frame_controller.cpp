@@ -11,7 +11,7 @@ Frame_Controller::move_in_local_frame(Velocity2d &velocity)
     // std::cout << local_frame.orientation.rotation() * velocity.linear << std::endl;
 
     Vector3d linear_vector = wgsned2ecef(local_frame.orientation.rotation() * velocity.linear, local_frame.origin);
-    Angular_Velocity test = local_frame.orientation.rotation() * velocity.angular;
+    // Angular_Velocity test = local_frame.orientation.rotation() * velocity.angular;
     global_frame.orientation.rotate(Eigen::AngleAxisd(velocity.angular.z(), Vector3d::UnitY()));
     global_frame.pos += linear_vector;
 }

@@ -1,10 +1,8 @@
 #include "sim.hpp"
-#include "linear_controller.hpp"
-#include "pid.hpp"
+#include "mppi.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include "transformations.hpp"
-#include <iostream>
 #include <stdio.h>
 
 #define SCREEN_WIDTH 1000
@@ -33,7 +31,7 @@ DrawAbsoluteGrid(Camera2D camera, float gridStep)
 }
 
 void
-showcaseTrajectory(Pose_State state, Control_Sequence controls, double dt, double thickness, Color color)
+showcaseTrajectory(Pose_State state, Control_Sequence controls, double dt, float thickness, Color color)
 {
     Eigen::Matrix3d traj_R = state.orientation.rotation();
     Ecef_Coord traj_pos = state.position;
@@ -77,7 +75,7 @@ simbot_linear(Sim_Quadruped &robot)
         Rectangle bot = { static_cast<float>(robot.frame_controller.local_frame.pos.x()),
             static_cast<float>(-robot.frame_controller.local_frame.pos.y()), 2.0, 1.0 };
         Vector2 origin = { 2.0 / 2.0, 1.0 / 2.0 };
-        DrawRectanglePro(bot, origin, (-(yaw * 180) / M_PI), RED);
+        DrawRectanglePro(bot, origin, (float)(-(yaw * 180.0) / M_PI), RED);
 
         // showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
         // GetFrameTime(),
@@ -130,11 +128,10 @@ main()
     /*robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
      * Vector3d::UnitY()));*/
 
-    Camera2D camera = {
-        .target = { (float)robot.frame_controller.local_frame.pos.x(),
-                   (float)robot.frame_controller.local_frame.pos.y() }
-    };
-    camera.offset = (Vector2){ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f };
+    Camera2D camera = {};
+    camera.target = { (float)robot.frame_controller.local_frame.pos.x(),
+        (float)robot.frame_controller.local_frame.pos.y() };
+    camera.offset = { .x = SCREEN_WIDTH / 2.0f, .y = SCREEN_HEIGHT / 2.0f };
     camera.zoom = 10.0f;
 
     while (!WindowShouldClose()) {
@@ -163,9 +160,9 @@ main()
         float gridStep = 5.0f;
         DrawAbsoluteGrid(camera, gridStep);
 
-        for (int i = 0; i < waypoints.size(); i++) {
+        for (size_t i = 0; i < waypoints.size(); i++) {
             Vector3d waypoint = wgsecef2ned_d(waypoints[i], robot.frame_controller.local_frame.origin);
-            DrawCircle(waypoint.x(), -waypoint.y(), 0.8, BLUE);
+            DrawCircle((int)waypoint.x(), (int)-waypoint.y(), 0.8f, BLUE);
         }
 
         simbot_linear(robot);
@@ -173,7 +170,7 @@ main()
         EndMode2D();
 
         { // just logging stuff top left of the screen
-            const float currentTime = GetTime();
+            const double currentTime = GetTime();
             const Vector2 mousePos = GetMousePosition();
             const Vector2 mouseWorldPos = GetScreenToWorld2D(mousePos, camera);
 
@@ -181,7 +178,7 @@ main()
             const Ecef_Coord ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
                 robot.frame_controller.local_frame.origin);
 
-            const float yaw = atan2(R(1, 0), R(0, 0));
+            const double yaw = atan2(R(1, 0), R(0, 0));
 
             DrawLogLine(0, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %.2f", ecef_pos.x(), ecef_pos.y(), ecef_pos.z(),
                 camera.zoom, currentTime);

@@ -14,7 +14,6 @@ Linear_Controller::get_cmd()
     double min_vel_x = -2.0;
     double goal_yaw = 0;
     double rotate_dist_threshold = 0.1;
-    int odom_waiting_count = 1;
 
     double yaw_tolerance = 20.0; // degrees
     double goal_tolerance = 0.3; // meters
@@ -30,7 +29,7 @@ Linear_Controller::get_cmd()
         double alt = robot->sensor_manager.latest_measurement.ublox_measurement.alt;
 
         if (lat != 0.0 || lng != 0.0 || alt != 0.0) {
-            Vector3d error_vec = robot->frame_controller.get_error_vector_in_NED(lat, lng, alt);
+            // Vector3d error_vec = robot->frame_controller.get_error_vector_in_NED(lat, lng, alt);
             robot->frame_controller.update_based_on_measurement(lat, lng, alt);
         }
     }
@@ -58,7 +57,7 @@ Linear_Controller::get_cmd()
 
     double dx = goal.x() - robot->frame_controller.local_frame.pos.x();
     double dy = goal.y() - robot->frame_controller.local_frame.pos.y();
-    double dz = goal.z() - robot->frame_controller.local_frame.pos.z();
+    // double dz = goal.z() - robot->frame_controller.local_frame.pos.z();
     double dist = sqrt(dx * dx + dy * dy);
 
     double yaw = atan2(robot->frame_controller.local_frame.orientation.rotation()(1, 0),

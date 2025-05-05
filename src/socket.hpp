@@ -22,12 +22,12 @@ class TCP_Socket
   private:
     struct sockaddr_in server;
     std::string server_ip;
-    int port;
+    uint16_t port;
     std::array<char, TCP_BUFFER_LENGTH> recv_buf;
     Parser &parser;
 
   public:
-    TCP_Socket(std::string ip, int port, Parser &parser) : server_ip(ip), port(port), parser(parser) {};
+    TCP_Socket(std::string ip, uint16_t port, Parser &parser) : server_ip(ip), port(port), parser(parser) {};
     ~TCP_Socket() { disconnect(); };
     bool connect();
     void disconnect();

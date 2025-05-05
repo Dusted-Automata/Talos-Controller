@@ -1,5 +1,4 @@
 #pragma once
-#include "../src/mppi.hpp"
 #include "../src/robot.hpp"
 #include "../src/trajectory_controller.hpp"
 #include "../src/types.hpp"

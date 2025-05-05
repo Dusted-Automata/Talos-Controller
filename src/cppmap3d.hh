@@ -17,45 +17,44 @@ namespace cppmap3d
  * [pymap3d ellipsoid
  * source](https://github.com/geospace-code/pymap3d/blob/main/src/pymap3d/ellipsoid.py)
  */
-enum class Ellipsoid
-{
-  Maupertuis,
-  Plessis,
-  Everest1830,
-  Everest1830Modified,
-  Everest1967,
-  Airy,
-  Bessel,
-  Clarke1866,
-  Clarke1878,
-  Clarke1860,
-  Helmert,
-  Hayford,
-  International1924,
-  Krassovsky1940,
-  WGS66,
-  Australian,
-  International1967,
-  GRS67,
-  SA1969,
-  WGS72,
-  GRS80,
-  WGS84,
-  WGS84Mean,
-  IERS1989,
-  PZ9011,
-  IERS2003,
-  GSK2011,
-  Mercury,
-  Venus,
-  Moon,
-  Mars,
-  Jupyter,
-  Io,
-  Saturn,
-  Uranus,
-  Neptune,
-  Pluto
+enum class Ellipsoid {
+    Maupertuis,
+    Plessis,
+    Everest1830,
+    Everest1830Modified,
+    Everest1967,
+    Airy,
+    Bessel,
+    Clarke1866,
+    Clarke1878,
+    Clarke1860,
+    Helmert,
+    Hayford,
+    International1924,
+    Krassovsky1940,
+    WGS66,
+    Australian,
+    International1967,
+    GRS67,
+    SA1969,
+    WGS72,
+    GRS80,
+    WGS84,
+    WGS84Mean,
+    IERS1989,
+    PZ9011,
+    IERS2003,
+    GSK2011,
+    Mercury,
+    Venus,
+    Moon,
+    Mars,
+    Jupyter,
+    Io,
+    Saturn,
+    Uranus,
+    Neptune,
+    Pluto
 };
 
 namespace internal
@@ -71,8 +70,7 @@ namespace internal
 inline constexpr double
 getMajor(Ellipsoid ellipsoid)
 {
-  switch (ellipsoid)
-    {
+    switch (ellipsoid) {
     case cppmap3d::Ellipsoid::Maupertuis: return 6397300.0;
     case cppmap3d::Ellipsoid::Plessis: return 6376523.0;
     case cppmap3d::Ellipsoid::Everest1830: return 6377299.365;
@@ -125,8 +123,7 @@ getMajor(Ellipsoid ellipsoid)
 inline constexpr double
 getMinor(Ellipsoid ellipsoid)
 {
-  switch (ellipsoid)
-    {
+    switch (ellipsoid) {
     case cppmap3d::Ellipsoid::Maupertuis: return 6363806.283;
     case cppmap3d::Ellipsoid::Plessis: return 6355862.9333;
     case cppmap3d::Ellipsoid::Everest1830: return 6356098.359;
@@ -179,9 +176,9 @@ getMinor(Ellipsoid ellipsoid)
 inline constexpr double
 getFlattening(Ellipsoid ellipsoid)
 {
-  double major = getMajor(ellipsoid);
-  double minor = getMinor(ellipsoid);
-  return (major - minor) / major;
+    double major = getMajor(ellipsoid);
+    double minor = getMinor(ellipsoid);
+    return (major - minor) / major;
 }
 
 /**
@@ -196,35 +193,33 @@ getFlattening(Ellipsoid ellipsoid)
 inline constexpr double
 getSquaredEccentricity(Ellipsoid ellipsoid)
 {
-  double major = getMajor(ellipsoid);
-  double minor = getMinor(ellipsoid);
-  return ((major * major) - (minor * minor)) / (major * major);
+    double major = getMajor(ellipsoid);
+    double minor = getMinor(ellipsoid);
+    return ((major * major) - (minor * minor)) / (major * major);
 }
 
 /**
  * @brief Internal function used in conversions certain coordinate conversions
  */
 inline void
-enu2uvw(double et, double nt, double up, double lat, double lon, double &out_u, double &out_v,
-    double &out_w)
+enu2uvw(double et, double nt, double up, double lat, double lon, double &out_u, double &out_v, double &out_w)
 {
-  double t = std::cos(lat) * up - std::sin(lat) * nt;
-  out_u = std::cos(lon) * t - std::sin(lon) * et;
-  out_v = std::sin(lon) * t + std::cos(lon) * et;
-  out_w = std::sin(lat) * up + std::cos(lat) * nt;
+    double t = std::cos(lat) * up - std::sin(lat) * nt;
+    out_u = std::cos(lon) * t - std::sin(lon) * et;
+    out_v = std::sin(lon) * t + std::cos(lon) * et;
+    out_w = std::sin(lat) * up + std::cos(lat) * nt;
 }
 
 /**
  * @brief Internal function used in conversions certain coordinate conversions
  */
 inline void
-uvw2enu(double u, double v, double w, double lat, double lon, double &out_east, double &out_north,
-    double &out_up)
+uvw2enu(double u, double v, double w, double lat, double lon, double &out_east, double &out_north, double &out_up)
 {
-  double t = std::cos(lon) * u + std::sin(lon) * v;
-  out_east = -1 * std::sin(lon) * u + std::cos(lon) * v;
-  out_north = -1 * std::sin(lat) * t + std::cos(lat) * w;
-  out_up = std::cos(lat) * t + std::sin(lat) * w;
+    double t = std::cos(lon) * u + std::sin(lon) * v;
+    out_east = -1 * std::sin(lon) * u + std::cos(lon) * v;
+    out_north = -1 * std::sin(lat) * t + std::cos(lat) * w;
+    out_up = std::cos(lat) * t + std::sin(lat) * w;
 }
 
 /**
@@ -249,57 +244,53 @@ uvw2enu(double u, double v, double w, double lat, double lon, double &out_east, 
  *
  */
 inline void
-ecef2geodetic_you(double x, double y, double z, double &out_lat, double &out_lon, double &out_alt,
+ecef2geodetic_you(double x,
+    double y,
+    double z,
+    double &out_lat,
+    double &out_lon,
+    double &out_alt,
     Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double major = internal::getMajor(ellipsoid);
-  double minor = internal::getMinor(ellipsoid);
+    double major = internal::getMajor(ellipsoid);
+    double minor = internal::getMinor(ellipsoid);
 
-  double r = std::sqrt(x * x + y * y + z * z);
-  double e = std::sqrt(major * major - minor * minor);
-  double var = r * r - e * e;
-  double u = std::sqrt(0.5 * var + 0.5 * std::sqrt(var * var + 4.0 * e * e * z * z));
+    double r = std::sqrt(x * x + y * y + z * z);
+    double e = std::sqrt(major * major - minor * minor);
+    double var = r * r - e * e;
+    double u = std::sqrt(0.5 * var + 0.5 * std::sqrt(var * var + 4.0 * e * e * z * z));
 
-  double q = std::sqrt(x * x + y * y);
-  double hu_e = std::sqrt(u * u + e * e);
+    double q = std::sqrt(x * x + y * y);
+    double hu_e = std::sqrt(u * u + e * e);
 
-  // it's possible for this to be nan since u
-  double beta = std::atan(hu_e / u * z / q);
+    // it's possible for this to be nan since u
+    double beta = std::atan(hu_e / u * z / q);
 
-  if (std::isnan(beta))
-    {
-      if (std::abs(z) < 1.0e-9)
-        {
-          beta = 0;
-        }
-      else if (z > 0)
-        {
-          beta = 3.14159265358979311599796346854 / 2;
-        }
-      else
-        {
-          beta = -3.14159265358979311599796346854 / 2;
+    if (std::isnan(beta)) {
+        if (std::abs(z) < 1.0e-9) {
+            beta = 0;
+        } else if (z > 0) {
+            beta = 3.14159265358979311599796346854 / 2;
+        } else {
+            beta = -3.14159265358979311599796346854 / 2;
         }
     }
 
-  double eps = ((minor * u - major * hu_e + e * e) * std::sin(beta))
-               / (major * hu_e / std::cos(beta) - e * e * std::cos(beta));
+    double eps = ((minor * u - major * hu_e + e * e) * std::sin(beta))
+                 / (major * hu_e / std::cos(beta) - e * e * std::cos(beta));
 
-  beta += eps;
+    beta += eps;
 
-  out_lat = std::atan(major / minor * std::tan(beta));
-  out_lon = std::atan2(y, x);
+    out_lat = std::atan(major / minor * std::tan(beta));
+    out_lon = std::atan2(y, x);
 
-  double v1 = z - minor * std::sin(beta);
-  double v2 = q - major * std::cos(beta);
+    double v1 = z - minor * std::sin(beta);
+    double v2 = q - major * std::cos(beta);
 
-  if ((x * x / major / major) + (y * y / major / major) + (z * z / minor / minor) < 1.0)
-    {
-      out_alt = -1 * std::sqrt(v1 * v1 + v2 * v2);
-    }
-  else
-    {
-      out_alt = std::sqrt(v1 * v1 + v2 * v2);
+    if ((x * x / major / major) + (y * y / major / major) + (z * z / minor / minor) < 1.0) {
+        out_alt = -1 * std::sqrt(v1 * v1 + v2 * v2);
+    } else {
+        out_alt = std::sqrt(v1 * v1 + v2 * v2);
     }
 }
 
@@ -324,65 +315,65 @@ ecef2geodetic_you(double x, double y, double z, double &out_lat, double &out_lon
  * the Earth.
  */
 inline void
-ecef2geodetic_olson(double x, double y, double z, double &out_lat, double &out_lon, double &out_alt,
+ecef2geodetic_olson(double x,
+    double y,
+    double z,
+    double &out_lat,
+    double &out_lon,
+    double &out_alt,
     Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double zp, w2, w, z2, r2, r, s2, c2, s, c, ss;
-  double g, rg, rf, u, v, m, f, p;
-  double a = internal::getMajor(ellipsoid);
-  double e2 = internal::getSquaredEccentricity(ellipsoid);
-  double a1 = a * e2;
-  double a2 = a1 * a1;
-  double a3 = a1 * e2 / 2.0;
-  double a4 = (5.0 / 2.0) * a2;
-  double a5 = a1 + a3;
-  double a6 = 1 - e2;
+    double zp, w2, w, z2, r2, r, s2, c2, s, c, ss;
+    double g, rg, rf, u, v, m, f, p;
+    double a = internal::getMajor(ellipsoid);
+    double e2 = internal::getSquaredEccentricity(ellipsoid);
+    double a1 = a * e2;
+    double a2 = a1 * a1;
+    double a3 = a1 * e2 / 2.0;
+    double a4 = (5.0 / 2.0) * a2;
+    double a5 = a1 + a3;
+    double a6 = 1 - e2;
 
-  zp = std::fabs(z);
-  w2 = x * x + y * y;
-  w = std::sqrt(w2);
-  z2 = z * z;
-  r2 = w2 + z2;
-  r = std::sqrt(r2);
-  if (r < 100000.)
-    {
-      out_lat = 0.;
-      out_lon = 0.;
-      out_alt = -1.e7;
-      throw std::domain_error("Cannot calculate geodetic of ecef close to center of earth");
+    zp = std::fabs(z);
+    w2 = x * x + y * y;
+    w = std::sqrt(w2);
+    z2 = z * z;
+    r2 = w2 + z2;
+    r = std::sqrt(r2);
+    if (r < 100000.) {
+        out_lat = 0.;
+        out_lon = 0.;
+        out_alt = -1.e7;
+        throw std::domain_error("Cannot calculate geodetic of ecef close to center of earth");
     }
-  out_lon = std::atan2(y, x);
-  s2 = z2 / r2;
-  c2 = w2 / r2;
-  u = a2 / r;
-  v = a3 - a4 / r;
-  if (c2 > .3)
-    {
-      s = (zp / r) * (1. + c2 * (a1 + u + s2 * v) / r);
-      out_lat = std::asin(s);
-      ss = s * s;
-      c = std::sqrt(1. - ss);
+    out_lon = std::atan2(y, x);
+    s2 = z2 / r2;
+    c2 = w2 / r2;
+    u = a2 / r;
+    v = a3 - a4 / r;
+    if (c2 > .3) {
+        s = (zp / r) * (1. + c2 * (a1 + u + s2 * v) / r);
+        out_lat = std::asin(s);
+        ss = s * s;
+        c = std::sqrt(1. - ss);
+    } else {
+        c = (w / r) * (1. - s2 * (a5 - u - c2 * v) / r);
+        out_lat = std::acos(c);
+        ss = 1. - c * c;
+        s = std::sqrt(ss);
     }
-  else
-    {
-      c = (w / r) * (1. - s2 * (a5 - u - c2 * v) / r);
-      out_lat = std::acos(c);
-      ss = 1. - c * c;
-      s = std::sqrt(ss);
-    }
-  g = 1. - e2 * ss;
-  rg = a / std::sqrt(g);
-  rf = a6 * rg;
-  u = w - rg * c;
-  v = zp - rf * s;
-  f = c * u + s * v;
-  m = c * v - s * u;
-  p = m / (rf / g + f);
-  out_lat = out_lat + p;
-  out_alt = f + m * p / 2.;
-  if (z < 0.)
-    {
-      out_lat = -out_lat;
+    g = 1. - e2 * ss;
+    rg = a / std::sqrt(g);
+    rf = a6 * rg;
+    u = w - rg * c;
+    v = zp - rf * s;
+    f = c * u + s * v;
+    m = c * v - s * u;
+    p = m / (rf / g + f);
+    out_lat = out_lat + p;
+    out_alt = f + m * p / 2.;
+    if (z < 0.) {
+        out_lat = -out_lat;
     }
 }
 
@@ -409,14 +400,19 @@ ecef2geodetic_olson(double x, double y, double z, double &out_lat, double &out_l
  * the Earth and CPPMAP3D_ECEF2GEODETIC_OLSON is defined.
  */
 inline void
-ecef2geodetic(double x, double y, double z, double &out_lat, double &out_lon, double &out_alt,
+ecef2geodetic(double x,
+    double y,
+    double z,
+    double &out_lat,
+    double &out_lon,
+    double &out_alt,
     Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
 #ifndef CPPMAP3D_ECEF2GEODETIC_OLSON
-  internal::ecef2geodetic_you(x, y, z, out_lat, out_lon, out_alt, ellipsoid);
+    internal::ecef2geodetic_you(x, y, z, out_lat, out_lon, out_alt, ellipsoid);
 #endif
 #ifdef CPPMAP3D_ECEF2GEODETIC_OLSON
-  internal::ecef2geodetic_olson(x, y, z, out_lat, out_lon, out_alt, ellipsoid);
+    internal::ecef2geodetic_olson(x, y, z, out_lat, out_lon, out_alt, ellipsoid);
 #endif
 }
 
@@ -436,15 +432,14 @@ ecef2geodetic(double x, double y, double z, double &out_lat, double &out_lon, do
 inline void
 aer2enu(double az, double el, double range, double &out_e, double &out_n, double &out_u)
 {
-  if (range < 0)
-    {
-      throw std::domain_error("range should not be negative");
+    if (range < 0) {
+        throw std::domain_error("range should not be negative");
     }
 
-  auto r = range * std::cos(el);
-  out_e = r * std::sin(az);
-  out_n = r * std::cos(az);
-  out_u = range * std::sin(el);
+    auto r = range * std::cos(el);
+    out_e = r * std::sin(az);
+    out_n = r * std::cos(az);
+    out_u = range * std::sin(el);
 }
 
 /**
@@ -462,27 +457,24 @@ aer2enu(double az, double el, double range, double &out_e, double &out_n, double
 inline void
 enu2aer(double east, double north, double up, double &out_az, double &out_el, double &out_range)
 {
-  // 1 millimeter precision for singularity stability - see pymap3d PR#42
-  if (std::abs(east) < 1.0e-3)
-    {
-      east = 0;
+    // 1 millimeter precision for singularity stability - see pymap3d PR#42
+    if (std::abs(east) < 1.0e-3) {
+        east = 0;
     }
-  if (std::abs(north) < 1.0e-3)
-    {
-      north = 0;
+    if (std::abs(north) < 1.0e-3) {
+        north = 0;
     }
-  if (std::abs(up) < 1.0e-3)
-    {
-      up = 0;
+    if (std::abs(up) < 1.0e-3) {
+        up = 0;
     }
 
-  double r = std::hypot(east, north);
+    double r = std::hypot(east, north);
 
-  out_range = std::hypot(r, up);
-  out_el = std::atan2(up, r);
-  const auto pi2 = (2 * 3.14159265358979311599796346854);
+    out_range = std::hypot(r, up);
+    out_el = std::atan2(up, r);
+    const auto pi2 = (2 * 3.14159265358979311599796346854);
 
-  out_az = std::fmod(pi2 + std::fmod(std::atan2(east, north), pi2), pi2);
+    out_az = std::fmod(pi2 + std::fmod(std::atan2(east, north), pi2), pi2);
 }
 
 /**
@@ -500,8 +492,8 @@ enu2aer(double east, double north, double up, double &out_az, double &out_el, do
 inline void
 aer2ned(double az, double el, double range, double &out_north, double &out_east, double &out_down)
 {
-  aer2enu(az, el, range, out_east, out_north, out_down);
-  out_down = out_down * -1;
+    aer2enu(az, el, range, out_east, out_north, out_down);
+    out_down = out_down * -1;
 }
 
 /**
@@ -523,24 +515,28 @@ aer2ned(double az, double el, double range, double &out_north, double &out_east,
  * @throws std::domain_error if latitude is not within -pi/2 and pi/2 inclusive
  */
 inline void
-geodetic2ecef(double lat, double lon, double alt, double &out_x, double &out_y, double &out_z,
+geodetic2ecef(double lat,
+    double lon,
+    double alt,
+    double &out_x,
+    double &out_y,
+    double &out_z,
     Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  const double pi = 3.14159265358979311599796346854;
-  if (std::abs(lat) > pi / 2)
-    {
-      throw std::domain_error("-pi/2 <= latitude <= pi/2");
+    const double pi = 3.14159265358979311599796346854;
+    if (std::abs(lat) > pi / 2) {
+        throw std::domain_error("-pi/2 <= latitude <= pi/2");
     }
 
-  double major = internal::getMajor(ellipsoid);
-  double minor = internal::getMinor(ellipsoid);
-  double se = internal::getSquaredEccentricity(ellipsoid);
+    double major = internal::getMajor(ellipsoid);
+    double minor = internal::getMinor(ellipsoid);
+    double se = internal::getSquaredEccentricity(ellipsoid);
 
-  double n = major / std::sqrt(((1.0 - se * std::sin(lat) * std::sin(lat))));
+    double n = major / std::sqrt(((1.0 - se * std::sin(lat) * std::sin(lat))));
 
-  out_x = (n + alt) * std::cos(lat) * std::cos(lon);
-  out_y = (n + alt) * std::cos(lat) * std::sin(lon);
-  out_z = (n * (minor / major) * (minor / major) + alt) * std::sin(lat);
+    out_x = (n + alt) * std::cos(lat) * std::cos(lon);
+    out_y = (n + alt) * std::cos(lat) * std::sin(lon);
+    out_z = (n * (minor / major) * (minor / major) + alt) * std::sin(lat);
 }
 
 /**
@@ -561,12 +557,20 @@ geodetic2ecef(double lat, double lon, double alt, double &out_x, double &out_y, 
  *
  */
 inline void
-ecef2enu(double x, double y, double z, double lat, double lon, double alt, double &out_east,
-    double &out_north, double &out_up, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+ecef2enu(double x,
+    double y,
+    double z,
+    double lat,
+    double lon,
+    double alt,
+    double &out_east,
+    double &out_north,
+    double &out_up,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double x0, y0, z0;
-  geodetic2ecef(lat, lon, alt, x0, y0, z0, ellipsoid);
-  internal::uvw2enu(x - x0, y - y0, z - z0, lat, lon, out_east, out_north, out_up);
+    double x0, y0, z0;
+    geodetic2ecef(lat, lon, alt, x0, y0, z0, ellipsoid);
+    internal::uvw2enu(x - x0, y - y0, z - z0, lat, lon, out_east, out_north, out_up);
 }
 
 /**
@@ -587,12 +591,20 @@ ecef2enu(double x, double y, double z, double lat, double lon, double alt, doubl
  *
  */
 inline void
-ecef2aer(double x, double y, double z, double lat, double lon, double alt, double &out_az,
-    double &out_el, double &out_range, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+ecef2aer(double x,
+    double y,
+    double z,
+    double lat,
+    double lon,
+    double alt,
+    double &out_az,
+    double &out_el,
+    double &out_range,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double e, n, u;
-  ecef2enu(x, y, z, lat, lon, alt, e, n, u, ellipsoid);
-  enu2aer(e, n, u, out_az, out_el, out_range);
+    double e, n, u;
+    ecef2enu(x, y, z, lat, lon, alt, e, n, u, ellipsoid);
+    enu2aer(e, n, u, out_az, out_el, out_range);
 }
 
 /**
@@ -613,11 +625,19 @@ ecef2aer(double x, double y, double z, double lat, double lon, double alt, doubl
  *
  */
 inline void
-ecef2ned(double x, double y, double z, double lat, double lon, double alt, double &out_north,
-    double &out_east, double &out_down, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+ecef2ned(double x,
+    double y,
+    double z,
+    double lat,
+    double lon,
+    double alt,
+    double &out_north,
+    double &out_east,
+    double &out_down,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  ecef2enu(x, y, z, lat, lon, alt, out_east, out_north, out_down, ellipsoid);
-  out_down = out_down * -1;
+    ecef2enu(x, y, z, lat, lon, alt, out_east, out_north, out_down, ellipsoid);
+    out_down = out_down * -1;
 }
 
 /**
@@ -638,15 +658,23 @@ ecef2ned(double x, double y, double z, double lat, double lon, double alt, doubl
  *
  */
 inline void
-enu2ecef(double east, double north, double up, double lat, double lon, double alt, double &out_x,
-    double &out_y, double &out_z, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+enu2ecef(double east,
+    double north,
+    double up,
+    double lat,
+    double lon,
+    double alt,
+    double &out_x,
+    double &out_y,
+    double &out_z,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double x, y, z;
-  geodetic2ecef(lat, lon, alt, x, y, z, ellipsoid);
-  internal::enu2uvw(east, north, up, lat, lon, out_x, out_y, out_z);
-  out_x = out_x + x;
-  out_y = out_y + y;
-  out_z = out_z + z;
+    double x, y, z;
+    geodetic2ecef(lat, lon, alt, x, y, z, ellipsoid);
+    internal::enu2uvw(east, north, up, lat, lon, out_x, out_y, out_z);
+    out_x = out_x + x;
+    out_y = out_y + y;
+    out_z = out_z + z;
 }
 
 /**
@@ -666,12 +694,20 @@ enu2ecef(double east, double north, double up, double lat, double lon, double al
  *
  */
 inline void
-enu2geodetic(double east, double north, double up, double lat, double lon, double alt,
-    double &out_lat, double &out_lon, double &out_alt, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+enu2geodetic(double east,
+    double north,
+    double up,
+    double lat,
+    double lon,
+    double alt,
+    double &out_lat,
+    double &out_lon,
+    double &out_alt,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double x, y, z;
-  enu2ecef(east, north, up, lat, lon, alt, x, y, z, ellipsoid);
-  ecef2geodetic(x, y, z, out_lat, out_lon, out_alt, ellipsoid);
+    double x, y, z;
+    enu2ecef(east, north, up, lat, lon, alt, x, y, z, ellipsoid);
+    ecef2geodetic(x, y, z, out_lat, out_lon, out_alt, ellipsoid);
 }
 
 /**
@@ -692,16 +728,24 @@ enu2geodetic(double east, double north, double up, double lat, double lon, doubl
  *
  */
 inline void
-geodetic2enu(double lat, double lon, double alt, double lat0, double lon0, double alt0,
-    double &out_east, double &out_north, double &out_up, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+geodetic2enu(double lat,
+    double lon,
+    double alt,
+    double lat0,
+    double lon0,
+    double alt0,
+    double &out_east,
+    double &out_north,
+    double &out_up,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double x1, y1, z1;
-  geodetic2ecef(lat, lon, alt, x1, y1, z1, ellipsoid);
+    double x1, y1, z1;
+    geodetic2ecef(lat, lon, alt, x1, y1, z1, ellipsoid);
 
-  double x2, y2, z2;
-  geodetic2ecef(lat0, lon0, alt0, x2, y2, z2, ellipsoid);
+    double x2, y2, z2;
+    geodetic2ecef(lat0, lon0, alt0, x2, y2, z2, ellipsoid);
 
-  internal::uvw2enu(x1 - x2, y1 - y2, z1 - z2, lat0, lon0, out_east, out_north, out_up);
+    internal::uvw2enu(x1 - x2, y1 - y2, z1 - z2, lat0, lon0, out_east, out_north, out_up);
 }
 
 /**
@@ -722,12 +766,20 @@ geodetic2enu(double lat, double lon, double alt, double lat0, double lon0, doubl
  *
  */
 inline void
-geodetic2aer(double lat, double lon, double alt, double lat0, double lon0, double alt0,
-    double &out_az, double &out_el, double &out_range, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+geodetic2aer(double lat,
+    double lon,
+    double alt,
+    double lat0,
+    double lon0,
+    double alt0,
+    double &out_az,
+    double &out_el,
+    double &out_range,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double e, n, u;
-  geodetic2enu(lat, lon, alt, lat0, lon0, alt0, e, n, u, ellipsoid);
-  enu2aer(e, n, u, out_az, out_el, out_range);
+    double e, n, u;
+    geodetic2enu(lat, lon, alt, lat0, lon0, alt0, e, n, u, ellipsoid);
+    enu2aer(e, n, u, out_az, out_el, out_range);
 }
 
 /**
@@ -748,11 +800,19 @@ geodetic2aer(double lat, double lon, double alt, double lat0, double lon0, doubl
  *
  */
 inline void
-geodetic2ned(double lat, double lon, double alt, double lat0, double lon0, double alt0,
-    double &out_north, double &out_east, double &out_down, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+geodetic2ned(double lat,
+    double lon,
+    double alt,
+    double lat0,
+    double lon0,
+    double alt0,
+    double &out_north,
+    double &out_east,
+    double &out_down,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  geodetic2enu(lat, lon, alt, lat0, lon0, alt0, out_east, out_north, out_down, ellipsoid);
-  out_down = out_down * -1;
+    geodetic2enu(lat, lon, alt, lat0, lon0, alt0, out_east, out_north, out_down, ellipsoid);
+    out_down = out_down * -1;
 }
 
 /**
@@ -776,18 +836,26 @@ geodetic2ned(double lat, double lon, double alt, double lat0, double lon0, doubl
  *
  */
 inline void
-aer2ecef(double az, double el, double range, double lat, double lon, double alt, double &out_x,
-    double &out_y, double &out_z, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+aer2ecef(double az,
+    double el,
+    double range,
+    double lat,
+    double lon,
+    double alt,
+    double &out_x,
+    double &out_y,
+    double &out_z,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double x, y, z;
-  geodetic2ecef(lat, lon, alt, x, y, z, ellipsoid);
-  double e, n, u;
-  aer2enu(az, el, range, e, n, u);
-  double dx, dy, dz;
-  internal::enu2uvw(e, n, u, lat, lon, dx, dy, dz);
-  out_x = x + dx;
-  out_y = y + dy;
-  out_z = z + dz;
+    double x, y, z;
+    geodetic2ecef(lat, lon, alt, x, y, z, ellipsoid);
+    double e, n, u;
+    aer2enu(az, el, range, e, n, u);
+    double dx, dy, dz;
+    internal::enu2uvw(e, n, u, lat, lon, dx, dy, dz);
+    out_x = x + dx;
+    out_y = y + dy;
+    out_z = z + dz;
 }
 
 /**
@@ -808,12 +876,20 @@ aer2ecef(double az, double el, double range, double lat, double lon, double alt,
  *
  */
 inline void
-aer2geodetic(double az, double el, double range, double lat, double lon, double alt,
-    double &out_lat, double &out_lon, double &out_alt, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+aer2geodetic(double az,
+    double el,
+    double range,
+    double lat,
+    double lon,
+    double alt,
+    double &out_lat,
+    double &out_lon,
+    double &out_alt,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  double x, y, z;
-  aer2ecef(az, el, range, lat, lon, alt, x, y, z, ellipsoid);
-  ecef2geodetic(x, y, z, out_lat, out_lon, out_alt, ellipsoid);
+    double x, y, z;
+    aer2ecef(az, el, range, lat, lon, alt, x, y, z, ellipsoid);
+    ecef2geodetic(x, y, z, out_lat, out_lon, out_alt, ellipsoid);
 }
 
 /**
@@ -834,10 +910,18 @@ aer2geodetic(double az, double el, double range, double lat, double lon, double 
  *
  */
 inline void
-ned2ecef(double north, double east, double down, double lat, double lon, double alt, double &out_x,
-    double &out_y, double &out_z, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+ned2ecef(double north,
+    double east,
+    double down,
+    double lat,
+    double lon,
+    double alt,
+    double &out_x,
+    double &out_y,
+    double &out_z,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  enu2ecef(east, north, -1 * down, lat, lon, alt, out_x, out_y, out_z, ellipsoid);
+    enu2ecef(east, north, -1 * down, lat, lon, alt, out_x, out_y, out_z, ellipsoid);
 }
 
 /**
@@ -857,10 +941,18 @@ ned2ecef(double north, double east, double down, double lat, double lon, double 
  *
  */
 inline void
-ned2geodetic(double north, double east, double down, double lat, double lon, double alt,
-    double &out_lat, double &out_lon, double &out_alt, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+ned2geodetic(double north,
+    double east,
+    double down,
+    double lat,
+    double lon,
+    double alt,
+    double &out_lat,
+    double &out_lon,
+    double &out_alt,
+    Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-  enu2geodetic(east, north, -1 * down, lat, lon, alt, out_lat, out_lon, out_alt, ellipsoid);
+    enu2geodetic(east, north, -1 * down, lat, lon, alt, out_lat, out_lon, out_alt, ellipsoid);
 }
 
 /**
@@ -878,7 +970,7 @@ ned2geodetic(double north, double east, double down, double lat, double lon, dou
 inline void
 ned2aer(double north, double east, double down, double &out_az, double &out_el, double &out_range)
 {
-  enu2aer(east, north, -1 * down, out_az, out_el, out_range);
+    enu2aer(east, north, -1 * down, out_az, out_el, out_range);
 }
 
 /*
@@ -904,34 +996,32 @@ inline void
 wrapGeodetic(double lat, double lon, double &out_lat, double &out_lon)
 {
 
-  const double pi = 3.14159265358979311599796346854;
-  int quadrant = static_cast<int>(floor(abs(lat) / (pi / 2))) % 4;
-  double pole = (lat > 0) ? (pi / 2) : -(pi / 2);
-  double offset = std::fmod(lat, (pi / 2));
+    const double pi = 3.14159265358979311599796346854;
+    int quadrant = static_cast<int>(floor(std::abs(lat) / (pi / 2))) % 4;
+    double pole = (lat > 0) ? (pi / 2) : -(pi / 2);
+    double offset = std::fmod(lat, (pi / 2));
 
-  switch (quadrant)
-    {
+    switch (quadrant) {
     case 0:
-      out_lat = offset;
-      out_lon = lon;
-      break;
+        out_lat = offset;
+        out_lon = lon;
+        break;
     case 1:
-      out_lat = pole - offset;
-      out_lon = lon + pi;
-      break;
+        out_lat = pole - offset;
+        out_lon = lon + pi;
+        break;
     case 2:
-      out_lat = -offset;
-      out_lon = lon + pi;
-      break;
+        out_lat = -offset;
+        out_lon = lon + pi;
+        break;
     case 3:
-      out_lat = -pole + offset;
-      out_lon = lon;
-      break;
+        out_lat = -pole + offset;
+        out_lon = lon;
+        break;
     }
 
-  if (out_lon > pi || out_lon < pi)
-    {
-      out_lon -= floor((out_lon + pi) / (pi * 2)) * (pi * 2);
+    if (out_lon > pi || out_lon < pi) {
+        out_lon -= floor((out_lon + pi) / (pi * 2)) * (pi * 2);
     }
 }
 

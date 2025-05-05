@@ -77,10 +77,10 @@ class Go1_Quadruped : public Robot
 
     UT::Safety safe;
     UT::UDP udp;
-    UT::HighState state = { 0 };
-    UT::LowState low_state = { 0 };
+    UT::HighState state = {};
+    UT::LowState low_state = {};
 
-    UT::HighCmd cmd = { 0 };
+    UT::HighCmd cmd = {};
 
     Go1_mode mode = Go1_mode::Force_stand;
     GaitType gait_type = GaitType::Trot;
@@ -93,7 +93,7 @@ class Go1_Quadruped : public Robot
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;
 
-    float dt = 0.002; // 0.001~0.01
+    double dt = 0.002; // 0.001~0.01
 
     // Eigen::Matrix4d go1_config_matrix[4];
     const double trunk_length = 0.3762 / 2;

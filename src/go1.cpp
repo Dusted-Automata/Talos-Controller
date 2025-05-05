@@ -46,9 +46,9 @@ Go1_Quadruped ::moveCmd(Velocity2d &velocity)
     //
     cmd.mode = 2;
     cmd.gaitType = 1;
-    cmd.velocity[0] = velocity.linear.x();
+    cmd.velocity[0] = (float)velocity.linear.x();
     // cmd.velocity[0] = 0.6;
-    cmd.yawSpeed = velocity.angular.z();
+    cmd.yawSpeed = (float)velocity.angular.z();
     return cmd;
 }
 
@@ -153,8 +153,8 @@ main(void)
     robot.sensor_manager.init();
     robot.frame_controller.init(robot.path_controller.path_points_all.front());
 
-    UT::LoopFunc loop_udpSend("udp_send", (1.0 / robot.hz), 3, boost::bind(&Go1_Quadruped::UDPRecv, &robot));
-    UT::LoopFunc loop_udpRecv("udp_recv", (1.0 / robot.hz), 3, boost::bind(&Go1_Quadruped::UDPSend, &robot));
+    UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.hz), 3, boost::bind(&Go1_Quadruped::UDPRecv, &robot));
+    UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot.hz), 3, boost::bind(&Go1_Quadruped::UDPSend, &robot));
 
     loop_udpSend.start();
     loop_udpRecv.start();
@@ -171,7 +171,8 @@ main(void)
         if (finish < next_tick) {
             std::this_thread::sleep_until(next_tick);
         } else {
-            std::cerr << " overrunning by: " << finish - next_tick << " ms" << std::endl;
+            auto overrun = finish - next_tick;
+            std::cerr << " overrunning by: " << overrun.count() << " ms" << std::endl;
         }
     }
 

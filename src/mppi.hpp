@@ -1,7 +1,12 @@
 #pragma once
 #include "trajectory_controller.hpp"
 #include "types.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wconversion"
 #include <Eigen/Dense>
+#pragma GCC diagnostic pop
 #include <random>
 #include <vector>
 
@@ -74,7 +79,7 @@ class MPPI_Controller : public Trajectory_Controller
 {
   private:
     int horizon_steps;
-    int num_samples;
+    size_t num_samples;
     double temperature;
     Ecef_Coord target_position;
     QuadrupedModel model;
@@ -92,8 +97,8 @@ class MPPI_Controller : public Trajectory_Controller
     void updateNominalTrajectory(const std::vector<Trajectory> &trajectories);
 
   public:
-    MPPI_Controller(int horizon_steps, int num_samples, double dt, double temperature)
-        : horizon_steps(horizon_steps), num_samples(num_samples), dt(dt), temperature(temperature),
+    MPPI_Controller(int horizon_steps, size_t num_samples, double dt, double temperature)
+        : horizon_steps(horizon_steps), num_samples(num_samples), temperature(temperature), dt(dt),
           perturbed_trajectories(num_samples)
     {
 
@@ -118,7 +123,7 @@ class MPPI_Controller : public Trajectory_Controller
     }
     Velocity2d get_cmd() override;
     void shiftControlHorizon();
-    double dt;
+    double dt = 0;
     std::vector<Trajectory> perturbed_trajectories;
     Control_Sequence nominal_controls;
 };

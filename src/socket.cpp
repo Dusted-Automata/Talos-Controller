@@ -14,14 +14,14 @@ bool
 NMEA_Parser::verify_Checksum(std::string_view s)
 {
     // "$GPGGA,....*hh\r\n"
-    int star_index = s.length() - 5;
+    size_t star_index = s.length() - 5;
     assert(s[star_index] == '*');
 
     uint8_t calc = 0;
-    for (std::size_t i = 1; i < star_index; ++i) { // skipping $
+    for (size_t i = 1; i < star_index; ++i) { // skipping $
         calc ^= static_cast<uint8_t>(s[i]);
     }
-    uint8_t got = (hex_Val(s[star_index + 1]) << 4) | hex_Val(s[star_index + 2]);
+    uint8_t got = static_cast<uint8_t>(hex_Val(s[star_index + 1]) << 4) | hex_Val(s[star_index + 2]);
     return calc == got;
 };
 
@@ -31,7 +31,7 @@ NMEA_Parser::skip_UBX()
     if (ring.count() < 6) { // sync + class/id + len
         return false;
     }
-    uint16_t len = static_cast<uint8_t>(ring[4]) | (static_cast<uint8_t>(ring[5]) << 8);
+    uint16_t len = static_cast<uint16_t>(static_cast<uint8_t>(ring[4]) | (static_cast<uint8_t>(ring[5]) << 8));
     std::size_t frameLen = 6 + len + 2; // + payload + CK_A/B
 
     if (frameLen > ring.capacity()) {

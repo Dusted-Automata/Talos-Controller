@@ -1,7 +1,12 @@
 #include "mppi.hpp"
 #include "types.hpp"
-#include <Eigen/Dense>
 #include <cmath>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wconversion"
+#include <Eigen/Dense>
+#pragma GCC diagnostic pop
 #include <iostream>
 #include <random>
 #include <vector>
@@ -12,7 +17,7 @@ MPPI_Controller::update(Pose_State &current_state)
     // NOTE might pull this into the class and just reuse it. Probably a performance upgrade.
     // std::vector<Trajectory> perturbed_trajectories(num_samples);
 
-    for (int i = 0; i < num_samples; i++) {
+    for (size_t i = 0; i < num_samples; i++) {
         perturbed_trajectories[i].controls = generatePerturbedTrajectory();
         perturbed_trajectories[i].cost = evaluateTrajectory(current_state, perturbed_trajectories[i]);
     }
@@ -93,18 +98,18 @@ MPPI_Controller::computeWeights(std::vector<Trajectory> &trajectories)
     }
 
     double sum_weights = 0.0;
-    for (int i = 0; i < num_samples; ++i) {
+    for (size_t i = 0; i < num_samples; ++i) {
         trajectories[i].weight = std::exp(-(trajectories[i].cost - min_cost) / temperature);
         sum_weights += trajectories[i].weight;
     }
 
     if (sum_weights > 0.0) {
-        for (int i = 0; i < num_samples; ++i) {
+        for (size_t i = 0; i < num_samples; ++i) {
             trajectories[i].weight /= sum_weights;
         }
     } else {
-        for (int i = 0; i < num_samples; ++i) {
-            trajectories[i].weight = 1.0 / num_samples;
+        for (size_t i = 0; i < num_samples; ++i) {
+            trajectories[i].weight = 1.0 / (double)num_samples;
         }
     }
 }

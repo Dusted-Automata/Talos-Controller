@@ -4,7 +4,13 @@
 #include "path_controller.hpp"
 #include "sensor_manager.hpp"
 #include "types.hpp"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wconversion"
 #include <Eigen/Dense>
+#pragma GCC diagnostic pop
 
 class Trajectory_Controller;
 
@@ -23,7 +29,7 @@ class Robot
     std::unique_ptr<Trajectory_Controller> trajectory_controller;
     Frame_Controller frame_controller = {};
 
-    float hz = 500;
+    double hz = 500;
     double motion_time = 0;
     Robot_Config config = {};
     Logger logger = {};

@@ -5,8 +5,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb -no-pie")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb -no-pie")
 set(CMAKE_CXX_STANDARD 20)
+add_compile_options(-Wall -Wextra -Wpedantic)
 
 # check arch and os
 message("-- CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
@@ -76,7 +77,6 @@ endif()
 # file(GLOB SRC_FILES src/*.cpp tools/*.cpp)
 # add_executable(controller ${SRC_FILES})
 # add_executable(sim ${SRC_FILES})
-# add_executable(trajectory_run ${SRC_FILES})
 
 # === Main Executables ===
 add_executable(controller
@@ -107,32 +107,20 @@ add_executable(sim
     src/ublox.cpp
     src/path_controller.cpp
 )
-add_executable(trajectory_run
-    src/trajectoryRun.cpp
-    src/linear_controller.cpp
-    src/robot.cpp
-    src/pid.cpp
-    src/logger.cpp
-    src/frame_controller.cpp
-    src/sensor_manager.cpp
-    src/socket.cpp
-    src/ublox.cpp
-    src/path_controller.cpp
-)
 
 # Link raylib after it's built
 add_dependencies(sim raylib_target)
 add_dependencies(controller raylib_target)
-add_dependencies(trajectory_run raylib_target)
+
+target_compile_options(sim PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(controller PRIVATE -Wall -Wextra -Wpedantic)
 
 # Link libraries for raylib
 target_link_libraries(sim PRIVATE ${RAYLIB_LIBRARY} -lGL -lm -lpthread -ldl -lrt)
 target_link_libraries(controller PRIVATE ${EXTRA_LIBS})
-target_link_libraries(trajectory_run PRIVATE ${EXTRA_LIBS})
 
 target_include_directories(sim PRIVATE ${RAYLIB_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR})
 target_include_directories(controller PRIVATE ${EIGEN3_INCLUDE_DIR})
-target_include_directories(trajectory_run PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 # install
 install(DIRECTORY lib/cpp/${ARCH}/
