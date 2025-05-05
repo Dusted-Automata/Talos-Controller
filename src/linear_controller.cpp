@@ -40,7 +40,16 @@ Linear_Controller::get_cmd()
         Vector3d fake_measurement = robot->frame_controller.local_frame.pos + push;
         Ecef_Coord ecef = wgsned2ecef_d(fake_measurement, robot->frame_controller.local_frame.origin);
         LLH llh = wgsecef2llh(ecef);
-        std::cout << "lat: " << llh[0] << " lng: " << llh[1] << " alt: " << llh[2] << std::endl;
+        LLH llh_you;
+        cppmap3d::internal::ecef2geodetic_you(ecef[0], ecef[1], ecef[2], llh_you[0], llh_you[1], llh_you[2]);
+        LLH llh_olson;
+        cppmap3d::internal::ecef2geodetic_olson(ecef[0], ecef[1], ecef[2], llh_olson[0], llh_olson[1], llh_olson[2]);
+        std::cout << "DEF: " << "lat: " << llh[0] << " lng: " << llh[1] << " alt: " << llh[2] << std::endl;
+        std::cout << "YOU: " << "lat: " << llh_you[0] << " lng: " << llh_you[1] << " alt: " << llh_you[2] << std::endl;
+        std::cout << "OLS: " << "lat: " << llh_olson[0] << " lng: " << llh_olson[1] << " alt: " << llh_olson[2]
+                  << std::endl;
+        std::cout << std::fixed;
+        std::cout << "BASE: " << robot->frame_controller.global_frame.pos.transpose() << std::endl;
         robot->frame_controller.update_based_on_measurement(llh[0], llh[1], llh[2]);
     }
     testCounter++;
