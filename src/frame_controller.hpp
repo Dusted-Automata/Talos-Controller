@@ -21,6 +21,7 @@ class Frame_Controller
     NED_Frame local_frame;
     Frame global_frame;
 
+    void init(Ecef_Coord &coordinate);
     void move_in_local_frame(Velocity2d &velocity);
 
     void move_in_global_frame(Velocity2d &velocity);

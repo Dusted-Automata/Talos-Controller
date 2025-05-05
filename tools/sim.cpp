@@ -164,16 +164,12 @@ main()
 
     Sim_Quadruped robot;
 
-    robot.frame_controller.local_frame.origin = waypoints[0];
-    LLH llh = wgsecef2llh(waypoints[0]);
-    std::cout << "lat: " << llh[0] << " lng: " << llh[1] << " alt: " << llh[2] << std::endl;
-    Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
-    double theta = atan2(llh.y(), llh.x());
-    Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
-    robot.frame_controller.local_frame.orientation = rot_yaw.toRotationMatrix();
-    std::cout << robot.frame_controller.local_frame.orientation.matrix() << std::endl;
-    robot.frame_controller.global_frame.pos = waypoints[0];
-    robot.frame_controller.global_frame.orientation = M;
+    robot.path_controller.path_looping = true;
+    robot.path_controller.add_waypoints(waypoints);
+    robot.path_controller.start();
+    robot.sensor_manager.init();
+    robot.frame_controller.init(robot.path_controller.path_points_all.front());
+
     robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
     robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));
     robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI, Vector3d::UnitY()));
@@ -183,11 +179,6 @@ main()
      * Vector3d::UnitY()));*/
     /*robot.frame_controller.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
      * Vector3d::UnitY()));*/
-
-    robot.path_controller.path_looping = true;
-    robot.path_controller.add_waypoints(waypoints);
-    robot.path_controller.start();
-    robot.sensor_manager.init();
 
     Camera2D camera = {
         .target = { (float)robot.frame_controller.local_frame.pos.x(),

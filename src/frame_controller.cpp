@@ -44,3 +44,18 @@ Frame_Controller::get_error_vector_in_NED(double &lat, double &lng, double &heig
     Vector3d error_vec = robot_ecef - measured_ecef;
     return wgsecef2ned(error_vec, local_frame.origin);
 }
+
+void
+Frame_Controller::init(Ecef_Coord &coordinate)
+{
+    local_frame.origin = coordinate;
+    global_frame.pos = coordinate;
+
+    LLH llh = wgsecef2llh(local_frame.origin);
+    std::cout << "lat: " << llh[0] << " lng: " << llh[1] << " alt: " << llh[2] << std::endl;
+    Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
+    double theta = atan2(llh.y(), llh.x());
+    Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
+    local_frame.orientation = rot_yaw.toRotationMatrix();
+    global_frame.orientation = M;
+}

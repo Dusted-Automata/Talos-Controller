@@ -15,7 +15,6 @@ worker_function(std::function<void()> callback, double period_seconds)
 
 class Path_Controller
 {
-    Thread_Safe_Queue<Ecef_Coord> path_queue;
     std::atomic_bool running{ false };
 
   public:
@@ -23,6 +22,7 @@ class Path_Controller
     ~Path_Controller() { stop(); }
 
     bool path_looping = false;
+    Thread_Safe_Queue<Ecef_Coord> path_queue;
     std::vector<Ecef_Coord> path_points_all;
     std::thread path_loop_thread;
     std::thread tcp_thread;
