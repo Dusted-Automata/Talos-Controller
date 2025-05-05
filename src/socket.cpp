@@ -116,7 +116,7 @@ TCP_Socket::connect()
 
     if (con < 0) {
         std::cerr << "Connection failed to " << server_ip << ":" << port << std::endl;
-        ::close(socket_fd);
+        disconnect();
         return false;
     }
     std::cout << "Connected to " << server_ip << ":" << port << std::endl;
