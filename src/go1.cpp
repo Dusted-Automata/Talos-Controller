@@ -157,8 +157,6 @@ main(void)
 
     loop_udpSend.start();
     loop_udpRecv.start();
-    // path_loop.start();
-    /*traj_loop.start();*/
 
     ms PERIOD{ static_cast<std::int64_t>(1000 / robot.hz) };
 

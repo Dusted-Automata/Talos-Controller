@@ -9,20 +9,10 @@
 #include "transformations.hpp"
 #include <iostream>
 #include <stdio.h>
-#include <thread>
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
 #define ROBOT_SIZE 20.0
-
-// void worker_function(std::function<void()> callback, int period_ms)
-// {
-//     while (1)
-//     {
-//         callback();
-//         std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
-//     }
-// }
 
 void
 DrawAbsoluteGrid(Camera2D camera, float gridStep)
