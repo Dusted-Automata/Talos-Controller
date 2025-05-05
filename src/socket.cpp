@@ -135,25 +135,28 @@ TCP_Socket::disconnect()
 bool
 TCP_Socket::recv(std::queue<std::string> &msgs)
 {
+    if (socket_fd == -1) {
+        std::cerr << "Socket is closed" << std::endl;
+        return false;
+    }
+
     ssize_t bytes_received;
-    bool socket_closed = false;
-    bool recv_failed = false;
 
     while (true) {
         bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0);
-
         if (bytes_received == 0) {
             std::cerr << "socket closed" << std::endl;
             close(socket_fd);
+            socket_fd = -1;
             return true; // if it returns false that would make it so that poll does not process the msgs.
         }
-
         if (bytes_received < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 break;
             } else {
                 std::cerr << "recv failed" << std::endl;
                 close(socket_fd);
+                socket_fd = -1;
                 return false;
             }
         }
