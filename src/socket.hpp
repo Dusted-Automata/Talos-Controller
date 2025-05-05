@@ -20,7 +20,6 @@ class Parser
 class TCP_Socket
 {
   private:
-    int socket_fd;
     struct sockaddr_in server;
     std::string server_ip;
     int port;
@@ -35,6 +34,7 @@ class TCP_Socket
     bool recv(std::queue<std::string> &msgs);
     std::vector<std::string> recv_all();
     std::string ublox_Message();
+    int socket_fd;
 };
 
 class NMEA_Parser : public Parser

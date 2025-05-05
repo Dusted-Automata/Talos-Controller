@@ -135,22 +135,25 @@ extract_command(const std::string &cmd_str)
     return to_nmea_cmd(cmd);
 }
 
-void
+bool
 Ublox::poll()
 {
-    if (tcp.recv(buf)) {
-        while (!buf.empty()) {
-            std::string i = buf.front();
-            NMEA_Cmd cmd = extract_command(i);
-            switch (cmd) {
-            case NMEA_Cmd::UNKNOWN: std::cout << "Unknown command" << std::endl; break;
-            case NMEA_Cmd::GGA:
-                GGA gga = parse_gga(i);
-                gga.print();
-                msgs.push(std::move(gga));
-                break;
-            }
-            buf.pop();
-        }
+    if (!socket.recv(buf)) {
+        return false;
     }
+
+    while (!buf.empty()) {
+        std::string i = buf.front();
+        NMEA_Cmd cmd = extract_command(i);
+        switch (cmd) {
+        case NMEA_Cmd::UNKNOWN: std::cout << "Unknown command" << std::endl; break;
+        case NMEA_Cmd::GGA:
+            GGA gga = parse_gga(i);
+            gga.print();
+            msgs.push(std::move(gga));
+            break;
+        }
+        buf.pop();
+    }
+    return true;
 }

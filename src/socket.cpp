@@ -1,5 +1,6 @@
 #include "socket.hpp"
 #include <cstring>
+#include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
 
@@ -118,6 +119,10 @@ TCP_Socket::connect()
         return false;
     }
     std::cout << "Connected to " << server_ip << ":" << port << std::endl;
+
+    int flags = fcntl(socket_fd, F_GETFL, 0);
+    fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
+
     return true;
 }
 
@@ -131,21 +136,29 @@ bool
 TCP_Socket::recv(std::queue<std::string> &msgs)
 {
     ssize_t bytes_received;
-    bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0);
+    bool socket_closed = false;
+    bool recv_failed = false;
 
-    if (bytes_received == 0) {
-        std::cerr << "socket closed" << std::endl;
-        close(socket_fd);
-        return true;
+    while (true) {
+        bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0);
+
+        if (bytes_received == 0) {
+            std::cerr << "socket closed" << std::endl;
+            close(socket_fd);
+            return true; // if it returns false that would make it so that poll does not process the msgs.
+        }
+
+        if (bytes_received < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            } else {
+                std::cerr << "recv failed" << std::endl;
+                close(socket_fd);
+                return false;
+            }
+        }
+        parser.push(msgs, std::span(recv_buf.data(), bytes_received));
     }
-
-    if (bytes_received < 0) {
-        std::cerr << "recv failed" << std::endl;
-        close(socket_fd);
-        return false;
-    }
-
-    parser.push(msgs, std::span(recv_buf.data(), bytes_received));
 
     return true;
 }

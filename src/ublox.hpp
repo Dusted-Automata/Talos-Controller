@@ -65,17 +65,17 @@ struct GGA {
 class Ublox
 {
     NMEA_Parser parser = {};
-    TCP_Socket tcp = TCP_Socket("127.0.0.1", 50010, parser);
 
   public:
     Ublox()
     {
-        if (!tcp.connect()) {
+        if (!socket.connect()) {
             std::cerr << "Ublx couldn't connect" << std::endl;
         };
     };
+    TCP_Socket socket = TCP_Socket("127.0.0.1", 50010, parser);
     std::queue<std::string> buf;
     std::queue<GGA> msgs;
 
-    void poll();
+    bool poll();
 };
