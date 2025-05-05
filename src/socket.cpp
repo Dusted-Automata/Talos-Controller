@@ -150,8 +150,7 @@ TCP_Socket::recv(std::queue<std::string> &msgs)
         bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0);
         if (bytes_received == 0) {
             std::cerr << "socket closed" << std::endl;
-            close(socket_fd);
-            socket_fd = -1;
+            disconnect();
             return true; // if it returns false that would make it so that poll does not process the msgs.
         }
         if (bytes_received < 0) {
@@ -159,8 +158,7 @@ TCP_Socket::recv(std::queue<std::string> &msgs)
                 break;
             } else {
                 std::cerr << "recv failed" << std::endl;
-                close(socket_fd);
-                socket_fd = -1;
+                disconnect();
                 return false;
             }
         }
