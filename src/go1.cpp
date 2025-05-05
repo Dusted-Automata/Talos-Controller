@@ -1,10 +1,15 @@
 #include "go1.hpp"
 #include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
 #include "unitree_legged_sdk/comm.h"
+#include <chrono>
 #include <iostream>
 #include <math.h>
 #include <stdint.h>
 #include <vector>
+
+using steady_clock = std::chrono::steady_clock; // monotonic, no wall‑clock jumps
+using ms = std::chrono::milliseconds;
+using time_point = steady_clock::time_point;
 
 void
 Go1_Quadruped::UDPRecv()
@@ -147,19 +152,28 @@ main(void)
     robot.path_controller.start();
     robot.sensor_manager.init();
 
-    UT::LoopFunc loop_control("control_loop", robot.dt, boost::bind(&Go1_Quadruped::control_loop, &robot));
-
-    UT::LoopFunc loop_udpSend("udp_send", robot.dt, 3, boost::bind(&Go1_Quadruped::UDPRecv, &robot));
-    UT::LoopFunc loop_udpRecv("udp_recv", robot.dt, 3, boost::bind(&Go1_Quadruped::UDPSend, &robot));
+    UT::LoopFunc loop_udpSend("udp_send", (1.0 / robot.hz), 3, boost::bind(&Go1_Quadruped::UDPRecv, &robot));
+    UT::LoopFunc loop_udpRecv("udp_recv", (1.0 / robot.hz), 3, boost::bind(&Go1_Quadruped::UDPSend, &robot));
 
     loop_udpSend.start();
     loop_udpRecv.start();
     // path_loop.start();
     /*traj_loop.start();*/
-    loop_control.start();
 
-    while (1) {
-        sleep(10);
+    ms PERIOD{ static_cast<std::int64_t>(1000 / robot.hz) };
+
+    while (true) {
+        auto start = steady_clock::now();
+        time_point next_tick = start + PERIOD;
+        robot.control_loop();
+        auto finish = steady_clock::now();
+        auto execution = finish - start;
+
+        if (finish < next_tick) {
+            std::this_thread::sleep_until(next_tick);
+        } else {
+            std::cerr << " overrunning by: " << finish - next_tick << " ms" << std::endl;
+        }
     }
 
     return 0;

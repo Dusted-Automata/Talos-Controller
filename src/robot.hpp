@@ -10,7 +10,6 @@ class Trajectory_Controller;
 
 class Robot
 {
-    float hz = 500;
 
     // MAIN CONTROL THREAD
     std::thread control_loop_thread;
@@ -24,6 +23,7 @@ class Robot
     std::unique_ptr<Trajectory_Controller> trajectory_controller;
     Frame_Controller frame_controller = {};
 
+    float hz = 500;
     double motion_time = 0;
     Robot_Config config = {};
     Logger logger = {};

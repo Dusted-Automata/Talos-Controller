@@ -93,8 +93,6 @@ class Go1_Quadruped : public Robot
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;
 
-    int motiontime = 0;
-    int relative_motiontime = 0;
     float dt = 0.002; // 0.001~0.01
 
     // Eigen::Matrix4d go1_config_matrix[4];
