@@ -51,7 +51,7 @@ inline Ecef_Coord
 wgsllh2ecef(const double &lat, const double &lon, const double &height = 0)
 {
     Ecef_Coord ecef = {};
-    double d = WGS84_E * sin(height);
+    double d = WGS84_E * sin(lat);
     double N = WGS84_A / sqrt(1. - d * d);
 
     ecef.x() = (N + height) * cos(lat) * cos(lon);
