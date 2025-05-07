@@ -60,7 +60,6 @@ Linear_Controller::get_cmd()
         return cmd;
         // linear_pid.reset();
         // angular_pid.reset();
-        // path_queue.pop();
     }
     Ecef_Coord goal = wgsecef2ned_d(path.value().second, robot->frame_controller.local_frame.origin);
 

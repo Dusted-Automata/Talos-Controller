@@ -17,6 +17,7 @@ class Linear_Controller : public Trajectory_Controller
   public:
     Linear_Controller(PIDController linear_pid, PIDController angular_pid, double sampling_rate)
         : linear_pid(linear_pid), angular_pid(angular_pid), sampling_rate(sampling_rate) {};
+    ~Linear_Controller() = default;
 
     void path_loop(std::vector<Ecef_Coord> &waypoints);
     // void trajectory_loop(Thread_Safe_Queue<Ecef_Coord> &path_queue);

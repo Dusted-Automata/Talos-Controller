@@ -167,6 +167,15 @@ main()
 
         simbot_linear(robot);
 
+        if (IsKeyPressed(KEY_SPACE)) {
+
+            Vector3d push = { 1.0, 2.0, 0.0 };
+            Vector3d fake_measurement = robot.frame_controller.local_frame.pos + push;
+            Ecef_Coord ecef = wgsned2ecef_d(fake_measurement, robot.frame_controller.local_frame.origin);
+            LLH llh = wgsecef2llh(ecef);
+            robot.frame_controller.update_based_on_measurement(llh[0], llh[1], llh[2]);
+        }
+
         EndMode2D();
 
         { // just logging stuff top left of the screen

@@ -5,20 +5,12 @@
 #include "sensor_manager.hpp"
 #include "types.hpp"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wall"
-#pragma GCC diagnostic ignored "-Wextra"
-#pragma GCC diagnostic ignored "-Wconversion"
-#include <Eigen/Dense>
-#pragma GCC diagnostic pop
-
 class Trajectory_Controller;
 
 class Robot
 {
 
     // MAIN CONTROL THREAD
-    std::thread control_loop_thread;
     // PATH GENERATION THREAD
     // SENSOR PROCESSING THREAD
 
@@ -40,5 +32,4 @@ class Robot
     virtual Pose_State read_state() = 0;
 
     void control_loop();
-    void start();
 };
