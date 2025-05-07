@@ -4,8 +4,8 @@ project(Controller)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Debug)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb -no-pie")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb -no-pie")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb")
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
@@ -117,10 +117,10 @@ target_compile_options(controller PRIVATE -Wall -Wextra -Wpedantic)
 
 # Link libraries for raylib
 target_link_libraries(sim PRIVATE ${RAYLIB_LIBRARY} -lGL -lm -lpthread -ldl -lrt)
-target_link_libraries(controller PRIVATE ${EXTRA_LIBS})
+target_link_libraries(controller PRIVATE ${EXTRA_LIBS} ${RAYLIB_LIBRARY} -lGL -lm -lpthread -ldl -lrt)
 
 target_include_directories(sim PRIVATE ${RAYLIB_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR})
-target_include_directories(controller PRIVATE ${EIGEN3_INCLUDE_DIR})
+target_include_directories(controller PRIVATE ${RAYLIB_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR})
 
 # install
 install(DIRECTORY lib/cpp/${ARCH}/
