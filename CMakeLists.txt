@@ -4,8 +4,8 @@ project(Controller)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Debug)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O3 -fPIC -ggdb")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O0 -fPIC -ggdb")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fno-omit-frame-pointer -O0 -fPIC -ggdb")
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
@@ -85,10 +85,10 @@ add_executable(controller
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp
     src/utils/pid.cpp
-    src/utils/frame_updater.cpp
+    src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp
-    src/utils/sim.cpp
+    # src/utils/sim.cpp
 )
 add_executable(sim
     src/robots/robot.cpp
@@ -98,7 +98,7 @@ add_executable(sim
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp
     src/utils/pid.cpp
-    src/utils/frame_updater.cpp
+    src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp
     src/utils/sim.cpp

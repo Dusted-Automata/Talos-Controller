@@ -17,7 +17,7 @@ Sensor_Manager::loop()
 
         if (ret > 0) {
             if (pfd.revents & POLLIN) {
-                if (ublox.poll()) {
+                if (ublox.read()) {
                     while (!ublox.msgs.empty()) {
                         latest_measurement.read = false;
                         GGA gga = std::move(ublox.msgs.front());

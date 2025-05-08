@@ -1,8 +1,8 @@
 #pragma once
+#include "controllers/linear_controller.hpp"
 #include "pid.hpp"
-#include "src/controllers/linear_controller.hpp"
-#include "src/robots/robot.hpp"
-#include "src/types.hpp"
+#include "robots/robot.hpp"
+#include "types.hpp"
 
 class Sim_Quadruped : public Robot
 {

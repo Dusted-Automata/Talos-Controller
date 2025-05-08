@@ -1,9 +1,10 @@
 #pragma once
-#include "include/unitree_legged_sdk/unitree_legged_sdk.h"
+#include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
 #include "linear_controller.hpp"
 #include "pid.hpp"
 #include "robot.hpp"
 #include "unitree_legged_sdk/comm.h"
+#include "utils/types.hpp"
 #include <stdint.h>
 
 enum class GaitType : uint8_t { Idle, Trot, Climb_stair, Trot_obstacle };

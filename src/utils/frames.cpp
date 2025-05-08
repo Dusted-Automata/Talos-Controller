@@ -1,10 +1,10 @@
-#include "frame_controller.hpp"
+#include "frames.hpp"
 #include "transformations.hpp"
 #include "types.hpp"
 #include <iostream>
 
 void
-Frame_Controller::move_in_local_frame(Velocity2d &velocity)
+Frames::move_in_local_frame(Velocity2d &velocity)
 {
     local_frame.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z()), Vector3d::UnitZ()));
     local_frame.pos += local_frame.orientation.rotation() * velocity.linear;
@@ -17,7 +17,7 @@ Frame_Controller::move_in_local_frame(Velocity2d &velocity)
 }
 
 void
-Frame_Controller::move_in_global_frame(Velocity2d &velocity)
+Frames::move_in_global_frame(Velocity2d &velocity)
 {
     local_frame.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z()), Vector3d::UnitZ()));
     Linear_Velocity local_vel = local_frame.orientation.rotation() * velocity.linear;
@@ -25,7 +25,7 @@ Frame_Controller::move_in_global_frame(Velocity2d &velocity)
 }
 
 void
-Frame_Controller::update_based_on_measurement(double &lat, double &lng, double &height)
+Frames::update_based_on_measurement(double &lat, double &lng, double &height)
 {
     // std::cout << "LOCAL_FRAME: " << local_frame.pos.transpose() << std::endl;
     Ecef_Coord measured_ecef = wgsllh2ecef(lat, lng, height);
@@ -37,7 +37,7 @@ Frame_Controller::update_based_on_measurement(double &lat, double &lng, double &
 }
 
 Vector3d
-Frame_Controller::get_error_vector_in_NED(double &lat, double &lng, double &height)
+Frames::get_error_vector_in_NED(double &lat, double &lng, double &height)
 {
     Ecef_Coord measured_ecef = wgsllh2ecef(lat, lng, height);
     Ecef_Coord robot_ecef = wgsned2ecef_d(local_frame.pos, local_frame.origin);
@@ -46,7 +46,7 @@ Frame_Controller::get_error_vector_in_NED(double &lat, double &lng, double &heig
 }
 
 void
-Frame_Controller::init(Ecef_Coord &coordinate)
+Frames::init(Ecef_Coord &coordinate)
 {
     local_frame.origin = coordinate;
     global_frame.pos = coordinate;

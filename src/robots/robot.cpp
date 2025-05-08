@@ -6,7 +6,7 @@ void
 Robot::control_loop()
 {
     pose_state = read_state();
-    logger.savePosesToFile(Frames);
+    logger.savePosesToFile(frames);
     logger.saveTimesToFile(motion_time);
 
     Velocity2d cmd = trajectory_controller->get_cmd();

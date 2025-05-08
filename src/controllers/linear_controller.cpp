@@ -1,11 +1,9 @@
 #include "linear_controller.hpp"
-#include "cppmap3d.hh"
-#include "frame_controller.hpp"
+#include "frames.hpp"
 #include "robot.hpp"
 #include "transformations.hpp"
 #include "types.hpp"
 #include <cmath>
-#include <iostream>
 
 Velocity2d
 Linear_Controller::get_cmd()
@@ -29,8 +27,8 @@ Linear_Controller::get_cmd()
         double alt = robot->sensor_manager.latest_measurement.ublox_measurement.alt;
 
         if (lat != 0.0 || lng != 0.0 || alt != 0.0) {
-            // Vector3d error_vec = robot->frame_controller.get_error_vector_in_NED(lat, lng, alt);
-            robot->frame_controller.update_based_on_measurement(lat, lng, alt);
+            // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
+            robot->frames.update_based_on_measurement(lat, lng, alt);
         }
     }
 
@@ -40,15 +38,15 @@ Linear_Controller::get_cmd()
         // linear_pid.reset();
         // angular_pid.reset();
     }
-    Ecef_Coord goal = wgsecef2ned_d(path.value().second, robot->frame_controller.local_frame.origin);
+    Ecef_Coord goal = wgsecef2ned_d(path.value().second, robot->frames.local_frame.origin);
 
-    double dx = goal.x() - robot->frame_controller.local_frame.pos.x();
-    double dy = goal.y() - robot->frame_controller.local_frame.pos.y();
-    // double dz = goal.z() - robot->frame_controller.local_frame.pos.z();
+    double dx = goal.x() - robot->frames.local_frame.pos.x();
+    double dy = goal.y() - robot->frames.local_frame.pos.y();
+    // double dz = goal.z() - robot->frames.local_frame.pos.z();
     double dist = sqrt(dx * dx + dy * dy);
 
-    double yaw = atan2(robot->frame_controller.local_frame.orientation.rotation()(1, 0),
-        robot->frame_controller.local_frame.orientation.rotation()(0, 0));
+    double yaw = atan2(robot->frames.local_frame.orientation.rotation()(1, 0),
+        robot->frames.local_frame.orientation.rotation()(0, 0));
 
     double dx_odom = cos(yaw) * dx + sin(yaw) * dy;
     double dy_odom = -sin(yaw) * dx + cos(yaw) * dy;

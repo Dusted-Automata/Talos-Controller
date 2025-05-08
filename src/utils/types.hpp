@@ -4,6 +4,7 @@
 #pragma GCC diagnostic ignored "-Wall"
 #pragma GCC diagnostic ignored "-Wextra"
 #pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
 #include <Eigen/Dense>
 #pragma GCC diagnostic pop
 #include <array>

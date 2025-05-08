@@ -77,5 +77,5 @@ class Ublox
     std::queue<std::string> buf;
     std::queue<GGA> msgs;
 
-    bool poll();
+    bool read();
 };

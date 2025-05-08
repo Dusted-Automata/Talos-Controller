@@ -1,9 +1,7 @@
 #include "go1.hpp"
-#include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
 #include "raylib.h"
 #include "raymath.h"
 #include "transformations.hpp"
-#include "unitree_legged_sdk/comm.h"
 #include <chrono>
 #include <iostream>
 #include <math.h>
@@ -258,7 +256,7 @@ main(void)
                 Vector3d fake_measurement = robot.frames.local_frame.pos + push;
                 Ecef_Coord ecef = wgsned2ecef_d(fake_measurement, robot.frames.local_frame.origin);
                 LLH llh = wgsecef2llh(ecef);
-                robot.frame_controller.update_based_on_measurement(llh[0], llh[1], llh[2]);
+                robot.frames.update_based_on_measurement(llh[0], llh[1], llh[2]);
             }
 
             EndMode2D();

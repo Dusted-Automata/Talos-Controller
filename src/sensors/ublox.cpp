@@ -136,7 +136,7 @@ extract_command(const std::string &cmd_str)
 }
 
 bool
-Ublox::poll()
+Ublox::read()
 {
     if (!socket.recv(buf)) {
         return false;
