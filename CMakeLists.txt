@@ -88,9 +88,10 @@ add_executable(controller
     src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp
-    # src/utils/sim.cpp
+    src/utils/sim.cpp
 )
 add_executable(sim
+    src/run_sim.cpp
     src/robots/robot.cpp
     src/controllers/mppi.cpp
     src/controllers/path_controller.cpp

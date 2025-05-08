@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "transformations.hpp"
+#include "utils/sim.hpp"
 #include <chrono>
 #include <iostream>
 #include <math.h>
@@ -87,43 +88,6 @@ Go1_Quadruped::read_state()
     return ps;
 };
 
-#define SCREEN_WIDTH 1000
-#define SCREEN_HEIGHT 1000
-#define ROBOT_SIZE 20.0
-void
-DrawAbsoluteGrid(Camera2D camera, float gridStep)
-{
-    Vector2 zero = { 0, 0 };
-    Vector2 topLeft = GetScreenToWorld2D(zero, camera);
-    Vector2 screen = { SCREEN_WIDTH, SCREEN_HEIGHT };
-    Vector2 bottomRight = GetScreenToWorld2D(screen, camera);
-
-    for (float x = floorf(topLeft.x / gridStep) * gridStep; x < bottomRight.x; x += gridStep) {
-        Vector2 start = { x, topLeft.y };
-        Vector2 end = { x, bottomRight.y };
-        DrawLineV(start, end, (x == 0) ? RED : LIGHTGRAY);
-    }
-
-    for (float y = floorf(topLeft.y / gridStep) * gridStep; y < bottomRight.y; y += gridStep) {
-        Vector2 start = { topLeft.x, y };
-        Vector2 end = { bottomRight.x, y };
-        DrawLineV(start, end, (y == 0) ? RED : LIGHTGRAY);
-    }
-}
-
-void
-DrawLogLine(int line, const char *format, ...)
-{
-    char buffer[512];
-    va_list args;
-
-    va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-
-    DrawText(buffer, 10, 10 + line * 30, 20, BLACK);
-}
-
 int
 main(void)
 {
@@ -201,100 +165,11 @@ main(void)
     loop_udpRecv.start();
     loop_control.start();
 
-    {
+    Sim_Display sim = Sim_Display(robot, waypoints);
 
-        SetTraceLogLevel(LOG_WARNING);
-        InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Absolute Coordinate System");
-        SetTargetFPS(500);
+    sim.display();
 
-        Camera2D camera = {};
-        camera.target = { (float)robot.frames.local_frame.pos.x(), (float)robot.frames.local_frame.pos.y() };
-        camera.offset = { .x = SCREEN_WIDTH / 2.0f, .y = SCREEN_HEIGHT / 2.0f };
-        camera.zoom = 10.0f;
-
-        while (!WindowShouldClose()) {
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-                Vector2 delta = GetMouseDelta();
-                delta = Vector2Scale(delta, -1.0f / camera.zoom);
-                camera.target = Vector2Add(camera.target, delta);
-            }
-
-            float wheel = GetMouseWheelMove();
-            if (wheel != 0) {
-                Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
-                camera.offset = GetMousePosition();
-                camera.target = mouseWorldPos;
-
-                float scaleFactor = 1.0f + (0.25f * fabsf(wheel));
-                camera.zoom *= (wheel > 0) ? scaleFactor : 1.0f / scaleFactor;
-                camera.zoom = Clamp(camera.zoom, 0.125f, 254.0f);
-            }
-
-            BeginDrawing();
-            ClearBackground(RAYWHITE);
-
-            BeginMode2D(camera);
-
-            float gridStep = 5.0f;
-            DrawAbsoluteGrid(camera, gridStep);
-
-            for (size_t i = 0; i < waypoints.size(); i++) {
-                Vector3d waypoint = wgsecef2ned_d(waypoints[i], robot.frames.local_frame.origin);
-                DrawCircle((int)waypoint.x(), (int)-waypoint.y(), 0.8f, BLUE);
-            }
-
-            Eigen::Matrix3d R = robot.frames.local_frame.orientation.rotation();
-            double yaw = atan2(R(1, 0), R(0, 0));
-            Rectangle bot = { static_cast<float>(robot.frames.local_frame.pos.x()),
-                static_cast<float>(-robot.frames.local_frame.pos.y()), 2.0, 1.0 };
-            Vector2 origin = { 2.0 / 2.0, 1.0 / 2.0 };
-            DrawRectanglePro(bot, origin, (float)(-(yaw * 180.0) / M_PI), RED);
-
-            if (IsKeyPressed(KEY_SPACE)) {
-
-                Vector3d push = { 1.0, 2.0, 0.0 };
-                Vector3d fake_measurement = robot.frames.local_frame.pos + push;
-                Ecef_Coord ecef = wgsned2ecef_d(fake_measurement, robot.frames.local_frame.origin);
-                LLH llh = wgsecef2llh(ecef);
-                robot.frames.update_based_on_measurement(llh[0], llh[1], llh[2]);
-            }
-
-            EndMode2D();
-
-            { // just logging stuff top left of the screen
-                const double currentTime = GetTime();
-                const Vector2 mousePos = GetMousePosition();
-                const Vector2 mouseWorldPos = GetScreenToWorld2D(mousePos, camera);
-
-                const auto R = robot.frames.local_frame.orientation.rotation();
-                const Ecef_Coord ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
-                    robot.frames.local_frame.origin);
-
-                const double yaw = atan2(R(1, 0), R(0, 0));
-
-                DrawLogLine(0, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %.2f", ecef_pos.x(), ecef_pos.y(),
-                    ecef_pos.z(), camera.zoom, currentTime);
-
-                DrawLogLine(1, "X: %.2f %.2f %.2f | Y: %.2f %.2f %.2f | Z: %.2f %.2f %.2f | YAW: %.1f°", R(0, 0),
-                    R(0, 1), R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2), yaw * RAD2DEG);
-
-                DrawLogLine(2, "Local Position: %.2f, %.2f, %.2f", robot.frames.local_frame.pos.x(),
-                    robot.frames.local_frame.pos.y(), robot.frames.local_frame.pos.z());
-
-                DrawLogLine(3, "Global Position: %.2f, %.2f, %.2f", robot.frames.global_frame.pos.x(),
-                    robot.frames.global_frame.pos.y(), robot.frames.global_frame.pos.z());
-
-                DrawLogLine(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f]",
-                    robot.pose_state.velocity.linear.x(), robot.pose_state.velocity.linear.y(),
-                    robot.pose_state.velocity.linear.z(), robot.pose_state.velocity.angular.x(),
-                    robot.pose_state.velocity.angular.y(), robot.pose_state.velocity.angular.z());
-            }
-
-            EndDrawing();
-        }
-
-        CloseWindow();
-    }
+    CloseWindow();
 
     return 0;
 }

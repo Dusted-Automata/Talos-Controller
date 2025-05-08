@@ -5,12 +5,8 @@
 #include "transformations.hpp"
 #include <stdio.h>
 
-#define SCREEN_WIDTH 1000
-#define SCREEN_HEIGHT 1000
-#define ROBOT_SIZE 20.0
-
 void
-DrawAbsoluteGrid(Camera2D camera, float gridStep)
+Sim_Display::draw_absolute_grid(Camera2D camera, float gridStep)
 {
     Vector2 zero = { 0, 0 };
     Vector2 topLeft = GetScreenToWorld2D(zero, camera);
@@ -64,27 +60,22 @@ Sim_Quadruped::send_velocity_command(Velocity2d &velocity)
 };
 
 void
-simbot_linear(Sim_Quadruped &robot)
+Sim_Display::draw_robot()
 {
+    Eigen::Matrix3d R = robot.frames.local_frame.orientation.rotation();
+    double yaw = atan2(R(1, 0), R(0, 0));
+    Rectangle bot = { static_cast<float>(robot.frames.local_frame.pos.x()),
+        static_cast<float>(-robot.frames.local_frame.pos.y()), 2.0, 1.0 };
+    Vector2 origin = { 2.0 / 2.0, 1.0 / 2.0 };
+    DrawRectanglePro(bot, origin, (float)(-(yaw * 180.0) / M_PI), RED);
 
-    robot.control_loop();
-
-    {
-        Eigen::Matrix3d R = robot.frames.local_frame.orientation.rotation();
-        double yaw = atan2(R(1, 0), R(0, 0));
-        Rectangle bot = { static_cast<float>(robot.frames.local_frame.pos.x()),
-            static_cast<float>(-robot.frames.local_frame.pos.y()), 2.0, 1.0 };
-        Vector2 origin = { 2.0 / 2.0, 1.0 / 2.0 };
-        DrawRectanglePro(bot, origin, (float)(-(yaw * 180.0) / M_PI), RED);
-
-        // showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
-        // GetFrameTime(),
-        //                    0.1, ORANGE);
-    }
+    // showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
+    // GetFrameTime(),
+    //                    0.1, ORANGE);
 }
 
 void
-DrawLogLine(int line, const char *format, ...)
+Sim_Display::draw_log_line(int line, const char *format, ...)
 {
     char buffer[512];
     va_list args;
@@ -96,43 +87,9 @@ DrawLogLine(int line, const char *format, ...)
     DrawText(buffer, 10, 10 + line * 30, 20, BLACK);
 }
 
-int
-main()
+void
+Sim_Display::display()
 {
-    SetTraceLogLevel(LOG_WARNING);
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Absolute Coordinate System");
-    SetTargetFPS(500);
-
-    std::vector<Ecef_Coord> waypoints = {
-        { 4100175.6251356260, 476368.7899695045, 4846344.356704135 },
-        { 4100209.6729529747, 476361.2681338759, 4846316.478097512 },
-        { 4100218.5394949187, 476445.5598077707, 4846300.796185957 },
-        { 4100241.7219579100, 476441.0557096391, 4846281.753675706 }
-    };
-
-    Sim_Quadruped robot;
-
-    robot.path_controller.path_looping = true;
-    robot.path_controller.add_waypoints(waypoints);
-    robot.path_controller.start();
-    robot.sensor_manager.init();
-    robot.frames.init(robot.path_controller.path_points_all.front());
-
-    robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
-    robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));
-    robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI, Vector3d::UnitY()));
-    robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 50, Vector3d::UnitY()));
-    /*std::cout << robot.frames.global_frame.orientation.rotation() << std::endl;*/
-    /*robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
-     * Vector3d::UnitY()));*/
-    /*robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
-     * Vector3d::UnitY()));*/
-
-    Camera2D camera = {};
-    camera.target = { (float)robot.frames.local_frame.pos.x(), (float)robot.frames.local_frame.pos.y() };
-    camera.offset = { .x = SCREEN_WIDTH / 2.0f, .y = SCREEN_HEIGHT / 2.0f };
-    camera.zoom = 10.0f;
-
     while (!WindowShouldClose()) {
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             Vector2 delta = GetMouseDelta();
@@ -157,14 +114,15 @@ main()
         BeginMode2D(camera);
 
         float gridStep = 5.0f;
-        DrawAbsoluteGrid(camera, gridStep);
+        draw_absolute_grid(camera, gridStep);
 
         for (size_t i = 0; i < waypoints.size(); i++) {
             Vector3d waypoint = wgsecef2ned_d(waypoints[i], robot.frames.local_frame.origin);
             DrawCircle((int)waypoint.x(), (int)-waypoint.y(), 0.8f, BLUE);
         }
 
-        simbot_linear(robot);
+        robot.control_loop();
+        draw_robot();
 
         if (IsKeyPressed(KEY_SPACE)) {
 
@@ -177,38 +135,42 @@ main()
 
         EndMode2D();
 
-        { // just logging stuff top left of the screen
-            const double currentTime = GetTime();
-            const Vector2 mousePos = GetMousePosition();
-            const Vector2 mouseWorldPos = GetScreenToWorld2D(mousePos, camera);
-
-            const auto R = robot.frames.local_frame.orientation.rotation();
-            const Ecef_Coord ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
-                robot.frames.local_frame.origin);
-
-            const double yaw = atan2(R(1, 0), R(0, 0));
-
-            DrawLogLine(0, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %.2f", ecef_pos.x(), ecef_pos.y(), ecef_pos.z(),
-                camera.zoom, currentTime);
-
-            DrawLogLine(1, "X: %.2f %.2f %.2f | Y: %.2f %.2f %.2f | Z: %.2f %.2f %.2f | YAW: %.1f°", R(0, 0), R(0, 1),
-                R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2), yaw * RAD2DEG);
-
-            DrawLogLine(2, "Local Position: %.2f, %.2f, %.2f", robot.frames.local_frame.pos.x(),
-                robot.frames.local_frame.pos.y(), robot.frames.local_frame.pos.z());
-
-            DrawLogLine(3, "Global Position: %.2f, %.2f, %.2f", robot.frames.global_frame.pos.x(),
-                robot.frames.global_frame.pos.y(), robot.frames.global_frame.pos.z());
-
-            DrawLogLine(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f]",
-                robot.pose_state.velocity.linear.x(), robot.pose_state.velocity.linear.y(),
-                robot.pose_state.velocity.linear.z(), robot.pose_state.velocity.angular.x(),
-                robot.pose_state.velocity.angular.y(), robot.pose_state.velocity.angular.z());
-        }
+        hud();
 
         EndDrawing();
     }
+}
 
-    CloseWindow();
-    return 0;
+void
+Sim_Display::hud()
+{
+
+    { // just logging stuff top left of the screen
+        const double currentTime = GetTime();
+        const Vector2 mousePos = GetMousePosition();
+        const Vector2 mouseWorldPos = GetScreenToWorld2D(mousePos, camera);
+
+        const auto R = robot.frames.local_frame.orientation.rotation();
+        const Ecef_Coord ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
+            robot.frames.local_frame.origin);
+
+        const double yaw = atan2(R(1, 0), R(0, 0));
+
+        draw_log_line(0, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %.2f", ecef_pos.x(), ecef_pos.y(), ecef_pos.z(),
+            camera.zoom, currentTime);
+
+        draw_log_line(1, "X: %.2f %.2f %.2f | Y: %.2f %.2f %.2f | Z: %.2f %.2f %.2f | YAW: %.1f°", R(0, 0), R(0, 1),
+            R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2), yaw * RAD2DEG);
+
+        draw_log_line(2, "Local Position: %.2f, %.2f, %.2f", robot.frames.local_frame.pos.x(),
+            robot.frames.local_frame.pos.y(), robot.frames.local_frame.pos.z());
+
+        draw_log_line(3, "Global Position: %.2f, %.2f, %.2f", robot.frames.global_frame.pos.x(),
+            robot.frames.global_frame.pos.y(), robot.frames.global_frame.pos.z());
+
+        draw_log_line(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f]", robot.pose_state.velocity.linear.x(),
+            robot.pose_state.velocity.linear.y(), robot.pose_state.velocity.linear.z(),
+            robot.pose_state.velocity.angular.x(), robot.pose_state.velocity.angular.y(),
+            robot.pose_state.velocity.angular.z());
+    }
 }
