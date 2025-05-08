@@ -1,9 +1,9 @@
 
 #include "logger.hpp"
-#include "frame_controller.hpp"
+#include "frames.hpp"
 
 bool
-Logger::savePosesToFile(const Frame_Controller &controller)
+Logger::savePosesToFile(const Frames &frames)
 {
     if (!pose_file.is_open()) {
         std::cerr << "Unable to open file for writing: "
@@ -11,12 +11,12 @@ Logger::savePosesToFile(const Frame_Controller &controller)
         return false;
     }
     pose_file << std::fixed;
-    pose_file << controller.global_frame.orientation(0, 0) << " " << controller.global_frame.orientation(0, 1) << " "
-              << controller.global_frame.orientation(0, 2) << " " << controller.global_frame.pos.x() << " ";
-    pose_file << controller.global_frame.orientation(1, 0) << " " << controller.global_frame.orientation(1, 1) << " "
-              << controller.global_frame.orientation(1, 2) << " " << controller.global_frame.pos.y() << " ";
-    pose_file << controller.global_frame.orientation(2, 0) << " " << controller.global_frame.orientation(2, 1) << " "
-              << controller.global_frame.orientation(2, 2) << " " << controller.global_frame.pos.z() << " ";
+    pose_file << frames.global_frame.orientation(0, 0) << " " << frames.global_frame.orientation(0, 1) << " "
+              << frames.global_frame.orientation(0, 2) << " " << frames.global_frame.pos.x() << " ";
+    pose_file << frames.global_frame.orientation(1, 0) << " " << frames.global_frame.orientation(1, 1) << " "
+              << frames.global_frame.orientation(1, 2) << " " << frames.global_frame.pos.y() << " ";
+    pose_file << frames.global_frame.orientation(2, 0) << " " << frames.global_frame.orientation(2, 1) << " "
+              << frames.global_frame.orientation(2, 2) << " " << frames.global_frame.pos.z() << " ";
 
     // tracks movement in space from start position.
     // pose_file << state.orientation(0, 3) << " " << state.orientation(1, 3) << " "

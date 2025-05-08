@@ -11,7 +11,7 @@ struct NED_Frame : public Frame {
     Ecef_Coord origin;
 };
 
-class Frame_Controller
+class Frames
 {
   public:
     // Body frame to local_frame to global_frame

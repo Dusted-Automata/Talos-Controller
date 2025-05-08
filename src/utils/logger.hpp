@@ -1,9 +1,10 @@
 #pragma once
 
-#include "frame_controller.hpp"
 #include <chrono>
 #include <fstream>
 #include <iostream>
+
+class Frames;
 
 class Logger
 {
@@ -25,7 +26,7 @@ class Logger
     std::ofstream time_file;
     std::ofstream logging_file;
 
-    bool savePosesToFile(const Frame_Controller &controller);
+    bool savePosesToFile(const Frames &frames);
     bool saveTimesToFile(const double &timestamp);
 };
 

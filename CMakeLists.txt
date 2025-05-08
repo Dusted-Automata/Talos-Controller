@@ -27,8 +27,9 @@ find_package(raylib QUIET)
 
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
+cmake_policy(SET CMP0167 NEW)
 
-include_directories(include src ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
+include_directories(include src src/utils src/robots src/sensors src/controllers ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 link_directories(unitree_legged_sdk/lib/cpp/${ARCH})
 set(EXTRA_LIBS -pthread libunitree_legged_sdk.a)
 
@@ -73,39 +74,34 @@ endif()
 
 
 
-# # Define source files
-# file(GLOB SRC_FILES src/*.cpp tools/*.cpp)
-# add_executable(controller ${SRC_FILES})
-# add_executable(sim ${SRC_FILES})
 
 # === Main Executables ===
 add_executable(controller
-    src/go1.cpp
-    src/linear_controller.cpp
-    src/robot.cpp
-    src/pid.cpp
-    src/mppi.cpp
-    src/linear_controller.cpp
-    src/pid.cpp
-    src/logger.cpp
-    src/frame_controller.cpp
-    src/sensor_manager.cpp
-    src/socket.cpp
-    src/ublox.cpp
-    src/path_controller.cpp
+    src/robots/go1.cpp
+    src/robots/robot.cpp
+    src/controllers/mppi.cpp
+    src/controllers/path_controller.cpp
+    src/controllers/linear_controller.cpp
+    src/sensors/sensor_manager.cpp
+    src/sensors/ublox.cpp
+    src/utils/pid.cpp
+    src/utils/frame_updater.cpp
+    src/utils/logger.cpp
+    src/utils/socket.cpp
+    src/utils/sim.cpp
 )
 add_executable(sim
-    tools/sim.cpp
-    src/robot.cpp
-    src/mppi.cpp
-    src/linear_controller.cpp
-    src/pid.cpp
-    src/logger.cpp
-    src/frame_controller.cpp
-    src/sensor_manager.cpp
-    src/socket.cpp
-    src/ublox.cpp
-    src/path_controller.cpp
+    src/robots/robot.cpp
+    src/controllers/mppi.cpp
+    src/controllers/path_controller.cpp
+    src/controllers/linear_controller.cpp
+    src/sensors/sensor_manager.cpp
+    src/sensors/ublox.cpp
+    src/utils/pid.cpp
+    src/utils/frame_updater.cpp
+    src/utils/logger.cpp
+    src/utils/socket.cpp
+    src/utils/sim.cpp
 )
 
 # Link raylib after it's built

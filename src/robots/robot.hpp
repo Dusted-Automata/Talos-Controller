@@ -1,5 +1,5 @@
 #pragma once
-#include "frame_controller.hpp"
+#include "frames.hpp"
 #include "logger.hpp"
 #include "path_controller.hpp"
 #include "sensor_manager.hpp"
@@ -19,7 +19,7 @@ class Robot
 
     Pose_State pose_state;
     std::unique_ptr<Trajectory_Controller> trajectory_controller;
-    Frame_Controller frame_controller = {};
+    Frames frames = {};
 
     double hz = 500;
     double motion_time = 0;

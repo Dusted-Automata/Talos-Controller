@@ -1,9 +1,8 @@
 #pragma once
-#include "../src/robot.hpp"
-#include "../src/trajectory_controller.hpp"
-#include "../src/types.hpp"
-#include "linear_controller.hpp"
 #include "pid.hpp"
+#include "src/controllers/linear_controller.hpp"
+#include "src/robots/robot.hpp"
+#include "src/types.hpp"
 
 class Sim_Quadruped : public Robot
 {

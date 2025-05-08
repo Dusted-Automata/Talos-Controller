@@ -1,17 +1,10 @@
 #pragma once
-#include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
+#include "include/unitree_legged_sdk/unitree_legged_sdk.h"
 #include "linear_controller.hpp"
-#include "mppi.hpp"
 #include "pid.hpp"
 #include "robot.hpp"
-#include "trajectory_controller.hpp"
 #include "unitree_legged_sdk/comm.h"
 #include <stdint.h>
-
-// #define BOOST_BIND_GLOBAL_PLACEHOLDERS
-//
-// // using namespace UNITREE_LEGGED_SDK;
-// #define UT UNITREE_LEGGED_SDK
 
 enum class GaitType : uint8_t { Idle, Trot, Climb_stair, Trot_obstacle };
 enum class Go1_mode : uint8_t {

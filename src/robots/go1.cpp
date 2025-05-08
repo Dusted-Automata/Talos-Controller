@@ -60,7 +60,7 @@ Go1_Quadruped::send_velocity_command(Velocity2d &velocity)
 {
     moveCmd(velocity);
     udp.SetSend(cmd);
-    frame_controller.move_in_local_frame(velocity);
+    frames.move_in_local_frame(velocity);
 };
 
 Pose_State
@@ -192,7 +192,7 @@ main(void)
     robot.path_controller.add_waypoints(waypoints);
     robot.path_controller.start();
     robot.sensor_manager.init();
-    robot.frame_controller.init(robot.path_controller.path_points_all.front());
+    robot.frames.init(robot.path_controller.path_points_all.front());
 
     UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.hz), 3,
         boost::bind(&Go1_Quadruped::control_loop, &robot));
@@ -210,8 +210,7 @@ main(void)
         SetTargetFPS(500);
 
         Camera2D camera = {};
-        camera.target = { (float)robot.frame_controller.local_frame.pos.x(),
-            (float)robot.frame_controller.local_frame.pos.y() };
+        camera.target = { (float)robot.frames.local_frame.pos.x(), (float)robot.frames.local_frame.pos.y() };
         camera.offset = { .x = SCREEN_WIDTH / 2.0f, .y = SCREEN_HEIGHT / 2.0f };
         camera.zoom = 10.0f;
 
@@ -242,22 +241,22 @@ main(void)
             DrawAbsoluteGrid(camera, gridStep);
 
             for (size_t i = 0; i < waypoints.size(); i++) {
-                Vector3d waypoint = wgsecef2ned_d(waypoints[i], robot.frame_controller.local_frame.origin);
+                Vector3d waypoint = wgsecef2ned_d(waypoints[i], robot.frames.local_frame.origin);
                 DrawCircle((int)waypoint.x(), (int)-waypoint.y(), 0.8f, BLUE);
             }
 
-            Eigen::Matrix3d R = robot.frame_controller.local_frame.orientation.rotation();
+            Eigen::Matrix3d R = robot.frames.local_frame.orientation.rotation();
             double yaw = atan2(R(1, 0), R(0, 0));
-            Rectangle bot = { static_cast<float>(robot.frame_controller.local_frame.pos.x()),
-                static_cast<float>(-robot.frame_controller.local_frame.pos.y()), 2.0, 1.0 };
+            Rectangle bot = { static_cast<float>(robot.frames.local_frame.pos.x()),
+                static_cast<float>(-robot.frames.local_frame.pos.y()), 2.0, 1.0 };
             Vector2 origin = { 2.0 / 2.0, 1.0 / 2.0 };
             DrawRectanglePro(bot, origin, (float)(-(yaw * 180.0) / M_PI), RED);
 
             if (IsKeyPressed(KEY_SPACE)) {
 
                 Vector3d push = { 1.0, 2.0, 0.0 };
-                Vector3d fake_measurement = robot.frame_controller.local_frame.pos + push;
-                Ecef_Coord ecef = wgsned2ecef_d(fake_measurement, robot.frame_controller.local_frame.origin);
+                Vector3d fake_measurement = robot.frames.local_frame.pos + push;
+                Ecef_Coord ecef = wgsned2ecef_d(fake_measurement, robot.frames.local_frame.origin);
                 LLH llh = wgsecef2llh(ecef);
                 robot.frame_controller.update_based_on_measurement(llh[0], llh[1], llh[2]);
             }
@@ -269,9 +268,9 @@ main(void)
                 const Vector2 mousePos = GetMousePosition();
                 const Vector2 mouseWorldPos = GetScreenToWorld2D(mousePos, camera);
 
-                const auto R = robot.frame_controller.local_frame.orientation.rotation();
+                const auto R = robot.frames.local_frame.orientation.rotation();
                 const Ecef_Coord ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
-                    robot.frame_controller.local_frame.origin);
+                    robot.frames.local_frame.origin);
 
                 const double yaw = atan2(R(1, 0), R(0, 0));
 
@@ -281,11 +280,11 @@ main(void)
                 DrawLogLine(1, "X: %.2f %.2f %.2f | Y: %.2f %.2f %.2f | Z: %.2f %.2f %.2f | YAW: %.1f°", R(0, 0),
                     R(0, 1), R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2), yaw * RAD2DEG);
 
-                DrawLogLine(2, "Local Position: %.2f, %.2f, %.2f", robot.frame_controller.local_frame.pos.x(),
-                    robot.frame_controller.local_frame.pos.y(), robot.frame_controller.local_frame.pos.z());
+                DrawLogLine(2, "Local Position: %.2f, %.2f, %.2f", robot.frames.local_frame.pos.x(),
+                    robot.frames.local_frame.pos.y(), robot.frames.local_frame.pos.z());
 
-                DrawLogLine(3, "Global Position: %.2f, %.2f, %.2f", robot.frame_controller.global_frame.pos.x(),
-                    robot.frame_controller.global_frame.pos.y(), robot.frame_controller.global_frame.pos.z());
+                DrawLogLine(3, "Global Position: %.2f, %.2f, %.2f", robot.frames.global_frame.pos.x(),
+                    robot.frames.global_frame.pos.y(), robot.frames.global_frame.pos.z());
 
                 DrawLogLine(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f]",
                     robot.pose_state.velocity.linear.x(), robot.pose_state.velocity.linear.y(),
