@@ -50,16 +50,6 @@ showcaseTrajectory(Pose_State state, Control_Sequence controls, double dt, float
 }
 
 void
-Sim_Quadruped::send_velocity_command(Velocity2d &velocity)
-{
-    pose_state.velocity = velocity;
-    pose_state.dt = GetFrameTime();
-    velocity.linear *= pose_state.dt;
-    velocity.angular *= pose_state.dt;
-    frames.move_in_local_frame(velocity);
-};
-
-void
 Sim_Display::draw_robot()
 {
     Eigen::Matrix3d R = robot.frames.local_frame.orientation.rotation();
@@ -121,7 +111,6 @@ Sim_Display::display()
             DrawCircle((int)waypoint.x(), (int)-waypoint.y(), 0.8f, BLUE);
         }
 
-        robot.control_loop();
         draw_robot();
 
         if (IsKeyPressed(KEY_SPACE)) {
