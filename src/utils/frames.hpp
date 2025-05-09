@@ -21,7 +21,8 @@ class Frames
     NED_Frame local_frame;
     Frame global_frame;
 
-    void init(Ecef_Coord &coordinate);
+    void init(const std::optional<Ecef_Coord> &coordinate);
+    void init(const std::optional<std::pair<Ecef_Coord, Ecef_Coord>> &path);
     void move_in_local_frame(Velocity2d &velocity);
 
     void move_in_global_frame(Velocity2d &velocity);

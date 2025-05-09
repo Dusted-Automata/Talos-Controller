@@ -46,16 +46,39 @@ Frames::get_error_vector_in_NED(double &lat, double &lng, double &height)
 }
 
 void
-Frames::init(Ecef_Coord &coordinate)
+Frames::init(const std::optional<Ecef_Coord> &coordinate)
 {
-    local_frame.origin = coordinate;
-    global_frame.pos = coordinate;
+    if (!coordinate.has_value()) {
+        std::cout << "Could not set Initial Coordinate Frame" << std::endl;
+    }
+    local_frame.origin = coordinate.value();
+    global_frame.pos = coordinate.value();
 
     LLH llh = wgsecef2llh(local_frame.origin);
-    std::cout << "lat: " << llh[0] << " lng: " << llh[1] << " alt: " << llh[2] << std::endl;
-    Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     double theta = atan2(llh.y(), llh.x());
     Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
     local_frame.orientation = rot_yaw.toRotationMatrix();
+
+    Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
+    global_frame.orientation = M;
+}
+
+void
+Frames::init(const std::optional<std::pair<Ecef_Coord, Ecef_Coord>> &path)
+{
+
+    if (!path.has_value()) {
+        std::cout << "Could not set Initial Coordinate Frame" << std::endl;
+    }
+    local_frame.origin = path->first;
+    global_frame.pos = path->first;
+    Vector3d goal = wgsecef2ned_d(path->second, local_frame.origin);
+
+    double theta = atan2(goal.y(), goal.x());
+    Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
+    local_frame.orientation = rot_yaw.toRotationMatrix();
+
+    LLH llh = wgsecef2llh(local_frame.origin);
+    Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     global_frame.orientation = M;
 }

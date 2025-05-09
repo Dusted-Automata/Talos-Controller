@@ -120,7 +120,8 @@ main()
     robot.path_controller.add_waypoints(waypoints);
     robot.path_controller.start();
     robot.sensor_manager.init();
-    robot.frames.init(robot.path_controller.path_points_all.front());
+    // robot.frames.init(robot.path_controller.path_queue.front());
+    robot.frames.init(robot.path_controller.path_queue.front_two());
 
     robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
     robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));

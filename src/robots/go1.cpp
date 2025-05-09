@@ -50,6 +50,8 @@ Go1::read_state()
     ps.velocity.linear.y() = readFromStruct<float>(stateBytes, HighStateOffset::VelocityY);
     ps.velocity.angular.z() = readFromStruct<float>(stateBytes, HighStateOffset::YawSpeed);
 
+    std::cout << "x: " << ps.velocity.linear.x() << " | yaw: " << ps.velocity.angular.z() << std::endl;
+
     return ps;
 }
 
@@ -119,7 +121,8 @@ main(void)
     robot.path_controller.add_waypoints(waypoints);
     robot.path_controller.start();
     robot.sensor_manager.init();
-    robot.frames.init(robot.path_controller.path_points_all.front());
+    robot.frames.init(robot.path_controller.path_queue.front());
+    robot.frames.init(robot.path_controller.path_queue.front_two());
 
     UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::control_loop, &robot));
     UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::UDPRecv, &robot));
