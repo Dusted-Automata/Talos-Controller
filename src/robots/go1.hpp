@@ -97,3 +97,101 @@ class Go1_Quadruped : public Robot
     const double l3 = 0.213; // thigh
     const double l4 = 0.213; // calf
 };
+
+namespace HighCmdOffset
+{
+enum : size_t {
+    // Basic fields
+    Head = 0,
+    LevelFlag = 2,
+    FrameReserve = 3,
+    SN = 4,
+    Version = 12,
+    BandWidth = 20,
+    Mode = 22,
+    GaitType = 23,
+    SpeedLevel = 24,
+    FootRaiseHeight = 25,
+    BodyHeight = 29,
+    Position = 33,
+    Euler = 41,
+    Velocity = 53,
+    YawSpeed = 61,
+    Bms = 65,
+    Led = 69,
+    WirelessRemote = 81,
+    Reserve = 121,
+    Crc = 125,
+
+    // Individual array elements
+    VelocityX = Velocity,
+    VelocityY = Velocity + sizeof(float),
+    PositionX = Position,
+    PositionY = Position + sizeof(float),
+    EulerRoll = Euler,
+    EulerPitch = Euler + sizeof(float),
+    EulerYaw = Euler + sizeof(float) * 2
+};
+}
+
+namespace HighStateOffset
+{
+enum : size_t {
+    // Basic fields
+    Head = 0,                                                                  // std::array<uint8_t, 2>
+    LevelFlag = Head + sizeof(std::array<uint8_t, 2>),                         // uint8_t
+    FrameReserve = LevelFlag + sizeof(uint8_t),                                // uint8_t
+    SN = FrameReserve + sizeof(uint8_t),                                       // std::array<uint32_t, 2>
+    Version = SN + sizeof(std::array<uint32_t, 2>),                            // std::array<uint32_t, 2>
+    BandWidth = Version + sizeof(std::array<uint32_t, 2>),                     // uint16_t
+    IMU = BandWidth + sizeof(uint16_t),                                        // IMU structure
+    MotorState = IMU + sizeof(UT::IMU),                                        // std::array<MotorState, 20>
+    BmsState = MotorState + sizeof(std::array<UT::MotorState, 20>),            // BmsState structure
+    FootForce = BmsState + sizeof(UT::BmsState),                               // std::array<int16_t, 4>
+    FootForceEst = FootForce + sizeof(std::array<int16_t, 4>),                 // std::array<int16_t, 4>
+    Mode = FootForceEst + sizeof(std::array<int16_t, 4>),                      // uint8_t
+    Progress = Mode + sizeof(uint8_t),                                         // float
+    GaitType = Progress + sizeof(float),                                       // uint8_t
+    FootRaiseHeight = GaitType + sizeof(uint8_t),                              // float
+    Position = FootRaiseHeight + sizeof(float),                                // std::array<float, 3>
+    BodyHeight = Position + sizeof(std::array<float, 3>),                      // float
+    Velocity = BodyHeight + sizeof(float),                                     // std::array<float, 3>
+    YawSpeed = Velocity + sizeof(std::array<float, 3>),                        // float
+    RangeObstacle = YawSpeed + sizeof(float),                                  // std::array<float, 4>
+    FootPosition2Body = RangeObstacle + sizeof(std::array<float, 4>),          // std::array<Cartesian, 4>
+    FootSpeed2Body = FootPosition2Body + sizeof(std::array<UT::Cartesian, 4>), // std::array<Cartesian, 4>
+    WirelessRemote = FootSpeed2Body + sizeof(std::array<UT::Cartesian, 4>),    // std::array<uint8_t, 40>
+    Reserve = WirelessRemote + sizeof(std::array<uint8_t, 40>),                // uint32_t
+    Crc = Reserve + sizeof(uint32_t),                                          // uint32_t
+
+    // Individual array elements
+    PositionX = Position,                     // Position[0]
+    PositionY = Position + sizeof(float),     // Position[1]
+    PositionZ = Position + sizeof(float) * 2, // Position[2]
+
+    VelocityX = Velocity,                     // Velocity[0]
+    VelocityY = Velocity + sizeof(float),     // Velocity[1]
+    VelocityZ = Velocity + sizeof(float) * 2, // Velocity[2]
+
+    EulerRoll = IMU + offsetof(UT::IMU, rpy), // IMU.rpy[0]
+    EulerPitch = EulerRoll + sizeof(float),   // IMU.rpy[1]
+    EulerYaw = EulerPitch + sizeof(float),    // IMU.rpy[2]
+
+};
+}
+
+template<typename T>
+void
+writeToStruct(uint8_t *bytes, size_t offset, const T &value)
+{
+    memcpy(bytes + offset, &value, sizeof(T));
+}
+
+template<typename T>
+T
+readFromStruct(const uint8_t *bytes, size_t offset)
+{
+    T result;
+    memcpy(&result, bytes + offset, sizeof(T));
+    return result;
+}
