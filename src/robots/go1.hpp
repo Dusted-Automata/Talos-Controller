@@ -28,12 +28,12 @@ enum class Go1_mode : uint8_t {
                       //  1 first
 };
 
-class Go1_Quadruped : public Robot
+class Go1 : public Robot
 {
     UT::HighCmd moveCmd(Velocity2d &trajectory);
 
   public:
-    Go1_Quadruped()
+    Go1()
         : safe(UT::LeggedType::Go1),
           // udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
           udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082))
@@ -67,7 +67,7 @@ class Go1_Quadruped : public Robot
         trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
         trajectory_controller->robot = this;
     }
-    ~Go1_Quadruped() = default;
+    ~Go1() = default;
 
     UT::Safety safe;
     UT::UDP udp;

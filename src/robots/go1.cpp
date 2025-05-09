@@ -8,19 +8,19 @@
 #include <vector>
 
 void
-Go1_Quadruped::UDPRecv()
+Go1::UDPRecv()
 {
     udp.Recv();
 }
 
 void
-Go1_Quadruped::UDPSend()
+Go1::UDPSend()
 {
     udp.Send();
 }
 
 UT::HighCmd
-Go1_Quadruped ::moveCmd(Velocity2d &velocity)
+Go1::moveCmd(Velocity2d &velocity)
 {
     uint8_t *cmdBytes = reinterpret_cast<uint8_t *>(&cmd);
     float vel_x = static_cast<float>(velocity.linear.x());
@@ -33,14 +33,14 @@ Go1_Quadruped ::moveCmd(Velocity2d &velocity)
 }
 
 void
-Go1_Quadruped::send_velocity_command(Velocity2d &velocity)
+Go1::send_velocity_command(Velocity2d &velocity)
 {
     moveCmd(velocity);
     udp.SetSend(cmd);
 };
 
 Pose_State
-Go1_Quadruped::read_state()
+Go1::read_state()
 {
     const uint8_t *stateBytes = reinterpret_cast<const uint8_t *>(&state);
     udp.GetRecv(state);
@@ -114,17 +114,16 @@ main(void)
         {   1.5,  1.5, 0.0 }
     };
 
-    Go1_Quadruped robot;
+    Go1 robot;
     robot.path_controller.path_looping = true;
     robot.path_controller.add_waypoints(waypoints);
     robot.path_controller.start();
     robot.sensor_manager.init();
     robot.frames.init(robot.path_controller.path_points_all.front());
 
-    UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.hz), 3,
-        boost::bind(&Go1_Quadruped::control_loop, &robot));
-    UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.hz), 3, boost::bind(&Go1_Quadruped::UDPRecv, &robot));
-    UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot.hz), 3, boost::bind(&Go1_Quadruped::UDPSend, &robot));
+    UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::control_loop, &robot));
+    UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::UDPRecv, &robot));
+    UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::UDPSend, &robot));
 
     loop_udpSend.start();
     loop_udpRecv.start();
