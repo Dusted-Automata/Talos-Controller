@@ -26,7 +26,6 @@ PIDController::update(double measured_value, double dt)
 
     output = std::max(output_min, std::min(output_max, output));
 
-    std::cout << i_term << std::endl;
     prev_error = error;
 
     return output;

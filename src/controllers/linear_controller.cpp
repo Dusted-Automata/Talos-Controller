@@ -5,19 +5,22 @@
 #include "types.hpp"
 #include <cmath>
 
+inline double
+wrapAngle(double rad)
+{
+    rad = std::fmod(rad + M_PI, 2.0 * M_PI); // shift, mod 2π  → (0, 2π]
+    if (rad < 0.0) rad += 2.0 * M_PI;        // keep it positive
+    return rad - M_PI;                       // shift back → (−π, π]
+}
+
 Velocity2d
 Linear_Controller::get_cmd()
 {
-    double max_vel_x = 2.0;
-    double min_vel_x = -2.0;
     double goal_yaw = 0;
     double rotate_dist_threshold = 0.1;
 
     double yaw_tolerance = 20.0; // degrees
     double goal_tolerance = 0.3; // meters
-
-    double proportional_gain_x = 0.8;
-    double proportional_gain_yaw = 1.0;
 
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
     if (!robot->sensor_manager.latest_measurement.read) {
@@ -34,9 +37,9 @@ Linear_Controller::get_cmd()
 
     std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path_controller.front_two();
     if (!path.has_value()) {
+        linear_pid.reset();
+        angular_pid.reset();
         return cmd;
-        // linear_pid.reset();
-        // angular_pid.reset();
     }
     Ecef_Coord goal = wgsecef2ned_d(path.value().second, robot->frames.local_frame.origin);
     Vector3d diff = goal - robot->frames.local_frame.pos;
@@ -44,47 +47,27 @@ Linear_Controller::get_cmd()
 
     double yaw = atan2(robot->frames.local_frame.orientation.rotation()(1, 0),
         robot->frames.local_frame.orientation.rotation()(0, 0));
-    // std::cout << yaw << std::endl;
-    std::cout << "rot.x: " << robot->frames.local_frame.orientation.rotation()(0, 0) << " cos(yaw): " << cos(yaw)
-              << " diff.x: " << diff.x() << std::endl;
-    std::cout << "rot.y: " << robot->frames.local_frame.orientation.rotation()(1, 0) << " sin(yaw): " << sin(yaw)
-              << " diff.y: " << diff.y() << std::endl;
-    std::cout << robot->frames.local_frame.orientation.rotation() << std::endl;
 
-    // double dx_odom = cos(yaw) * diff.x() + sin(yaw) * diff.y();
-    // double dy_odom = -sin(yaw) * diff.x() + cos(yaw) * diff.y();
+    diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
 
-    diff = robot->frames.local_frame.orientation.rotation() * diff;
-
-    double dx_odom = diff.x();
-    double dy_odom = diff.y();
-
-    double vel_x = proportional_gain_x * dx_odom;
-    vel_x = std::max(std::min(vel_x, max_vel_x), min_vel_x);
-    double dyaw = atan2(dy_odom, dx_odom);
+    double yaw_error;
     if (dist < rotate_dist_threshold) {
-        // vel_yaw = 0.0;
-        dyaw = goal_yaw - yaw;
-        if (dyaw > M_PI) {
-            dyaw -= 2 * M_PI;
-        } else if (dyaw < -M_PI) {
-            dyaw += 2 * M_PI;
-        }
-    }
-
-    double vel_yaw = proportional_gain_yaw * dyaw;
-
-    if (dist < goal_tolerance && std::abs(dyaw) < yaw_tolerance * M_PI / 180.0) {
-        robot->path_controller.goal_reached();
-        return cmd;
-        // goal_reached_msg.data = true;
+        yaw_error = wrapAngle(goal_yaw - yaw);
     } else {
-        // goal_reached_msg.data = false;
+        yaw_error = atan2(diff.y(), diff.x());
     }
-    cmd.linear.x() = vel_x;
+
+    if (dist < goal_tolerance && std::abs(yaw_error) < yaw_tolerance * M_PI / 180.0) {
+        robot->path_controller.goal_reached();
+        linear_pid.reset();
+        angular_pid.reset();
+        return cmd;
+    }
+
+    cmd.linear.x() = linear_pid.update(-diff.x(), 0.002);
     cmd.linear.y() = 0.0;
     cmd.linear.z() = 0.0;
-    cmd.angular.z() = vel_yaw;
+    cmd.angular.z() = angular_pid.update(-yaw_error, 0.002);
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
 
