@@ -39,17 +39,25 @@ Linear_Controller::get_cmd()
         // angular_pid.reset();
     }
     Ecef_Coord goal = wgsecef2ned_d(path.value().second, robot->frames.local_frame.origin);
-
-    double dx = goal.x() - robot->frames.local_frame.pos.x();
-    double dy = goal.y() - robot->frames.local_frame.pos.y();
-    // double dz = goal.z() - robot->frames.local_frame.pos.z();
-    double dist = sqrt(dx * dx + dy * dy);
+    Vector3d diff = goal - robot->frames.local_frame.pos;
+    double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
 
     double yaw = atan2(robot->frames.local_frame.orientation.rotation()(1, 0),
         robot->frames.local_frame.orientation.rotation()(0, 0));
+    // std::cout << yaw << std::endl;
+    std::cout << "rot.x: " << robot->frames.local_frame.orientation.rotation()(0, 0) << " cos(yaw): " << cos(yaw)
+              << " diff.x: " << diff.x() << std::endl;
+    std::cout << "rot.y: " << robot->frames.local_frame.orientation.rotation()(1, 0) << " sin(yaw): " << sin(yaw)
+              << " diff.y: " << diff.y() << std::endl;
+    std::cout << robot->frames.local_frame.orientation.rotation() << std::endl;
 
-    double dx_odom = cos(yaw) * dx + sin(yaw) * dy;
-    double dy_odom = -sin(yaw) * dx + cos(yaw) * dy;
+    // double dx_odom = cos(yaw) * diff.x() + sin(yaw) * diff.y();
+    // double dy_odom = -sin(yaw) * diff.x() + cos(yaw) * diff.y();
+
+    diff = robot->frames.local_frame.orientation.rotation() * diff;
+
+    double dx_odom = diff.x();
+    double dy_odom = diff.y();
 
     double vel_x = proportional_gain_x * dx_odom;
     vel_x = std::max(std::min(vel_x, max_vel_x), min_vel_x);

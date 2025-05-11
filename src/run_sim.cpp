@@ -30,11 +30,11 @@ class Sim_Quadruped : public Robot
                 },
         };
 
-        PIDGains linear_gains = { 1.2, 0.0, 0.0 };
+        PIDGains linear_gains = { 0.8, 0.0, 0.0 };
         PIDController linear_pid(linear_gains);
-        linear_pid.output_max = 100.0;
+        linear_pid.output_max = 10.0;
         linear_pid.output_min = 0.0;
-        PIDGains angular_gains = { 0.2, 0.0, 0.0 };
+        PIDGains angular_gains = { 1.0, 0.0, 0.0 };
         PIDController angular_pid(angular_gains);
         angular_pid.output_max = 10.0;
         angular_pid.output_min = 0.0;
