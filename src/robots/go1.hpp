@@ -30,7 +30,7 @@ enum class Go1_mode : uint8_t {
 
 class Go1 : public Robot
 {
-    UT::HighCmd moveCmd(Velocity2d &trajectory);
+    UT::HighCmd moveCmd(const Velocity2d &trajectory);
 
   public:
     Go1()

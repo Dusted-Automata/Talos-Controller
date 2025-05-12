@@ -23,10 +23,10 @@ class Frames
 
     void init(const std::optional<Ecef_Coord> &coordinate);
     void init(const std::optional<std::pair<Ecef_Coord, Ecef_Coord>> &path);
-    void move_in_local_frame(Velocity2d &velocity);
+    void move_in_local_frame(const Velocity2d &velocity);
 
-    void move_in_global_frame(Velocity2d &velocity);
+    void move_in_global_frame(const Velocity2d &velocity);
 
-    void update_based_on_measurement(double &lat, double &lng, double &height);
-    Vector3d get_error_vector_in_NED(double &lat, double &lng, double &height);
+    void update_based_on_measurement(const double &lat, const double &lng, const double &height);
+    Vector3d get_error_vector_in_NED(const double &lat, const double &lng, const double &height);
 };

@@ -31,7 +31,7 @@ class Path_Controller
     void start();
     void stop();
 
-    void add_waypoints(std::vector<Ecef_Coord> &waypoints);
+    void add_waypoints(const std::vector<Ecef_Coord> &waypoints);
     std::optional<std::pair<Ecef_Coord, Ecef_Coord>> front_two();
     void goal_reached();
 };

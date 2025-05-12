@@ -2,13 +2,13 @@
 #include <iostream>
 
 void
-Path_Controller::add_waypoints(std::vector<Ecef_Coord> &waypoints)
+Path_Controller::add_waypoints(const std::vector<Ecef_Coord> &waypoints)
 {
     if (waypoints.empty()) {
         return;
     }
 
-    for (Ecef_Coord &waypoint : waypoints) {
+    for (const Ecef_Coord &waypoint : waypoints) {
         std::cout << "Adding Waypoints!" << std::endl;
         std::cout << waypoint.transpose() << std::endl;
         path_queue.push(waypoint);

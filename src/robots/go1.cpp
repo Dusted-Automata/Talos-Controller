@@ -20,7 +20,7 @@ Go1::UDPSend()
 }
 
 UT::HighCmd
-Go1::moveCmd(Velocity2d &velocity)
+Go1::moveCmd(const Velocity2d &velocity)
 {
     uint8_t *cmdBytes = reinterpret_cast<uint8_t *>(&cmd);
     float vel_x = static_cast<float>(velocity.linear.x());

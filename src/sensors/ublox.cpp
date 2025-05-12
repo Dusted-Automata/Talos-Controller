@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 void
-parse_time(GGA &gga, std::string &time)
+parse_time(GGA &gga, const std::string &time)
 {
     gga.time.hh = static_cast<uint8_t>(std::stoul(time.substr(0, 2)));
     gga.time.mm = static_cast<uint8_t>(std::stoul(time.substr(2, 2)));
@@ -18,7 +18,8 @@ parse_time(GGA &gga, std::string &time)
     gga.time.ms = static_cast<uint16_t>(std::stoul(time.substr(7)));
 }
 void
-parse_latlng(GGA &gga, std::string &lat, std::string lat_dir, std::string lng, std::string lng_dir)
+parse_latlng(
+    GGA &gga, const std::string &lat, const std::string lat_dir, const std::string lng, const std::string lng_dir)
 {
 
     // Check that both fields exist.
@@ -44,7 +45,7 @@ parse_latlng(GGA &gga, std::string &lat, std::string lat_dir, std::string lng, s
 }
 
 void
-parse_fix(GGA &gga, std::string &fix)
+parse_fix(GGA &gga, const std::string &fix)
 {
     if (fix.empty()) {
         return;
@@ -53,7 +54,7 @@ parse_fix(GGA &gga, std::string &fix)
 }
 
 uint8_t
-parse_uint8(std::string &field)
+parse_uint8(const std::string &field)
 {
     if (field.empty()) {
         return 0;
@@ -62,7 +63,7 @@ parse_uint8(std::string &field)
 };
 
 float
-parse_float(std::string &field)
+parse_float(const std::string &field)
 {
     if (field.empty()) {
         return 0.0;
@@ -71,19 +72,13 @@ parse_float(std::string &field)
 }
 
 double
-parse_double(std::string &field)
+parse_double(const std::string &field)
 {
     if (field.empty()) {
         return 0.0;
     }
     return std::stod(field);
 }
-
-void parse_hddp(GGA &gga, std::string &hddp);
-void parse_alt(GGA &gga, std::string &alt);
-void parse_geoid_seperation(GGA &gga, std::string &seperation);
-void parse_diff_age(GGA &gga, std::string &age);
-void parse_diff_station(GGA &gga, std::string &station);
 
 GGA
 parse_gga(std::string &msg)
@@ -116,7 +111,7 @@ parse_gga(std::string &msg)
 }
 
 NMEA_Cmd
-to_nmea_cmd(std::string &key)
+to_nmea_cmd(const std::string &key)
 {
     if (key == "GPGGA") return NMEA_Cmd::GGA;
     return NMEA_Cmd::UNKNOWN;
