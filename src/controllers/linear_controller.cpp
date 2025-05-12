@@ -23,26 +23,24 @@ Linear_Controller::get_cmd()
         robot->sensor_manager.latest_measurement.reset();
     }
 
-    std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path_controller.front_two();
+    // std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path.front_two();
+    // std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path.path_queue.front();
+    std::optional<Ecef_Coord> path = robot->path.path_queue.front();
     if (!path.has_value()) {
         linear_pid.reset();
         angular_pid.reset();
         return cmd;
     }
-    Ecef_Coord goal = wgsecef2ned_d(path.value().second, robot->frames.local_frame.origin);
+    Ecef_Coord goal = wgsecef2ned_d(path.value(), robot->frames.local_frame.origin);
     Vector3d diff = goal - robot->frames.local_frame.pos;
     double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
 
-    double yaw = atan2(robot->frames.local_frame.orientation.rotation()(1, 0),
-        robot->frames.local_frame.orientation.rotation()(0, 0));
-
     diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
 
-    double yaw_error;
-    yaw_error = atan2(diff.y(), diff.x());
+    double yaw_error = atan2(diff.y(), diff.x());
 
     if (dist < goal_tolerance) {
-        robot->path_controller.goal_reached();
+        robot->path.goal_reached();
         linear_pid.reset();
         angular_pid.reset();
         return cmd;

@@ -1,7 +1,7 @@
 #pragma once
 #include "frames.hpp"
 #include "logger.hpp"
-#include "path_controller.hpp"
+#include "robot_path.hpp"
 #include "sensor_manager.hpp"
 #include "types.hpp"
 
@@ -26,7 +26,7 @@ class Robot
     Robot_Config config = {};
     Logger logger = {};
     Sensor_Manager sensor_manager = {};
-    Path_Controller path_controller = {};
+    Robot_Path path = {};
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual Pose_State read_state() = 0;

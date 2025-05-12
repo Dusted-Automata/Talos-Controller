@@ -19,16 +19,16 @@ class Sim_Quadruped : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        Robot_Config config = {
-            .hz = 50,
-            .motion_constraints =
-                {
-                    .max_velocity = 2.0,
-                    .max_acceleration = 0.5,
-                    .max_deceleration = 0.5,
-                    .max_jerk = 0.0,
-                },
-        };
+        // Robot_Config config = {
+        //     .hz = 50,
+        //     .motion_constraints =
+        //         {
+        //             .max_velocity = 2.0,
+        //             .max_acceleration = 0.5,
+        //             .max_deceleration = 0.5,
+        //             .max_jerk = 0.0,
+        //         },
+        // };
 
         PIDGains linear_gains = { 0.8, 0.05, 0.15 };
         PIDController linear_pid(linear_gains);
@@ -116,11 +116,11 @@ main()
 
     Sim_Quadruped robot;
 
-    robot.path_controller.path_looping = true;
-    robot.path_controller.add_waypoints(waypoints);
+    robot.path.path_looping = true;
+    robot.path.add_waypoints(waypoints);
     robot.sensor_manager.init();
     // robot.frames.init(robot.path_controller.path_queue.front());
-    robot.frames.init(robot.path_controller.path_queue.front_two());
+    robot.frames.init(robot.path.path_queue.front_two());
 
     robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
     robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));

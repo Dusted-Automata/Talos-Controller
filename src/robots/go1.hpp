@@ -45,16 +45,16 @@ class Go1 : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        Robot_Config config = {
-            .hz = 50,
-            .motion_constraints =
-                {
-                    .max_velocity = 0.6,
-                    .max_acceleration = 100.0,
-                    .max_deceleration = 100.0,
-                    .max_jerk = 0.0,
-                },
-        };
+        // Robot_Config config = {
+        //     .hz = 50,
+        //     .motion_constraints =
+        //         {
+        //             .max_velocity = 0.6,
+        //             .max_acceleration = 100.0,
+        //             .max_deceleration = 100.0,
+        //             .max_jerk = 0.0,
+        //         },
+        // };
 
         PIDGains linear_gains = { 0.4, 0.0, 0.0 };
         PIDController linear_pid(linear_gains);

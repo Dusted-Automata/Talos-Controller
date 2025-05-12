@@ -117,11 +117,11 @@ main(void)
     };
 
     Go1 robot;
-    robot.path_controller.path_looping = true;
-    robot.path_controller.add_waypoints(waypoints);
+    robot.path.path_looping = true;
+    robot.path.add_waypoints(waypoints);
     robot.sensor_manager.init();
-    robot.frames.init(robot.path_controller.path_queue.front());
-    robot.frames.init(robot.path_controller.path_queue.front_two());
+    robot.frames.init(robot.path.path_queue.front());
+    robot.frames.init(robot.path.path_queue.front_two());
 
     UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::control_loop, &robot));
     UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::UDPRecv, &robot));

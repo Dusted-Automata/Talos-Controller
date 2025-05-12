@@ -1,8 +1,8 @@
-#include "path_controller.hpp"
+#include "robot_path.hpp"
 #include <iostream>
 
 void
-Path_Controller::add_waypoints(const std::vector<Ecef_Coord> &waypoints)
+Robot_Path::add_waypoints(const std::vector<Ecef_Coord> &waypoints)
 {
     for (const Ecef_Coord &waypoint : waypoints) {
         std::cout << "Adding Waypoints!" << std::endl;
@@ -13,19 +13,18 @@ Path_Controller::add_waypoints(const std::vector<Ecef_Coord> &waypoints)
 };
 
 std::optional<std::pair<Ecef_Coord, Ecef_Coord>>
-Path_Controller::front_two()
+Robot_Path::front_two()
 {
     return path_queue.front_two();
 }
 
 void
-Path_Controller::goal_reached()
+Robot_Path::goal_reached()
 {
     path_queue.pop();
-    if (path_looping && !path_points_all.empty()) {
+    if (path_queue.empty() && path_looping && !path_points_all.empty()) {
+        std::cout << "looping!" << std::endl;
         for (Ecef_Coord &waypoint : path_points_all) {
-            std::cout << "Adding Waypoints!" << std::endl;
-            std::cout << waypoint.transpose() << std::endl;
             path_queue.push(waypoint);
         }
     }

@@ -80,7 +80,7 @@ add_executable(controller
     src/robots/go1.cpp
     src/robots/robot.cpp
     src/controllers/mppi.cpp
-    src/controllers/path_controller.cpp
+    src/controllers/robot_path.cpp
     src/controllers/linear_controller.cpp
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp
@@ -94,7 +94,7 @@ add_executable(sim
     src/run_sim.cpp
     src/robots/robot.cpp
     src/controllers/mppi.cpp
-    src/controllers/path_controller.cpp
+    src/controllers/robot_path.cpp
     src/controllers/linear_controller.cpp
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp

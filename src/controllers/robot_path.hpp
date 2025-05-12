@@ -1,13 +1,11 @@
 #pragma once
 #include "types.hpp"
-#include <functional>
-#include <thread>
 
-class Path_Controller
+class Robot_Path
 {
 
   public:
-    Path_Controller() = default;
+    Robot_Path() = default;
 
     bool path_looping = false;
     Thread_Safe_Queue<Ecef_Coord> path_queue;
