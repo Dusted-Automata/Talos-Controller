@@ -4,14 +4,16 @@
 class Robot_Path
 {
 
+  private:
+    Thread_Safe_Queue<Ecef_Coord> queue;
+    std::vector<Ecef_Coord> path_points_all;
+
   public:
     Robot_Path() = default;
 
     bool path_looping = false;
-    Thread_Safe_Queue<Ecef_Coord> path_queue;
-    std::vector<Ecef_Coord> path_points_all;
 
     void add_waypoints(const std::vector<Ecef_Coord> &waypoints);
-    std::optional<std::pair<Ecef_Coord, Ecef_Coord>> front_two();
+    std::optional<Ecef_Coord> get_next();
     void goal_reached();
 };

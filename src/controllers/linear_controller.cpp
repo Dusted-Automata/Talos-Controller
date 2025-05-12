@@ -25,7 +25,7 @@ Linear_Controller::get_cmd()
 
     // std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path.front_two();
     // std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path.path_queue.front();
-    std::optional<Ecef_Coord> path = robot->path.path_queue.front();
+    std::optional<Ecef_Coord> path = robot->path.get_next();
     if (!path.has_value()) {
         linear_pid.reset();
         angular_pid.reset();
@@ -33,9 +33,8 @@ Linear_Controller::get_cmd()
     }
     Ecef_Coord goal = wgsecef2ned_d(path.value(), robot->frames.local_frame.origin);
     Vector3d diff = goal - robot->frames.local_frame.pos;
-    double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
-
     diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
+    double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
 
     double yaw_error = atan2(diff.y(), diff.x());
 
