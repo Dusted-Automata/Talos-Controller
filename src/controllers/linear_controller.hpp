@@ -11,12 +11,10 @@ class Linear_Controller : public Trajectory_Controller
     PIDController linear_pid;
     PIDController angular_pid;
     double trajectory_time = 0.0;
-    double sampling_rate = 1.0;
-    int testCounter = 0;
 
   public:
-    Linear_Controller(PIDController linear_pid, PIDController angular_pid, double sampling_rate)
-        : linear_pid(linear_pid), angular_pid(angular_pid), sampling_rate(sampling_rate) {};
+    Linear_Controller(PIDController linear_pid, PIDController angular_pid)
+        : linear_pid(linear_pid), angular_pid(angular_pid) {};
     ~Linear_Controller() = default;
 
     void path_loop(std::vector<Ecef_Coord> &waypoints);

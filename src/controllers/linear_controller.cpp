@@ -5,21 +5,9 @@
 #include "types.hpp"
 #include <cmath>
 
-inline double
-wrapAngle(double rad)
-{
-    rad = std::fmod(rad + M_PI, 2.0 * M_PI); // shift, mod 2π  → (0, 2π]
-    if (rad < 0.0) rad += 2.0 * M_PI;        // keep it positive
-    return rad - M_PI;                       // shift back → (−π, π]
-}
-
 Velocity2d
 Linear_Controller::get_cmd()
 {
-    double goal_yaw = 0;
-    double rotate_dist_threshold = 0.1;
-
-    double yaw_tolerance = 20.0; // degrees
     double goal_tolerance = 0.3; // meters
 
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
@@ -51,23 +39,19 @@ Linear_Controller::get_cmd()
     diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
 
     double yaw_error;
-    if (dist < rotate_dist_threshold) {
-        yaw_error = wrapAngle(goal_yaw - yaw);
-    } else {
-        yaw_error = atan2(diff.y(), diff.x());
-    }
+    yaw_error = atan2(diff.y(), diff.x());
 
-    if (dist < goal_tolerance && std::abs(yaw_error) < yaw_tolerance * M_PI / 180.0) {
+    if (dist < goal_tolerance) {
         robot->path_controller.goal_reached();
         linear_pid.reset();
         angular_pid.reset();
         return cmd;
     }
 
-    cmd.linear.x() = linear_pid.update(-diff.x(), 0.002);
+    cmd.linear.x() = linear_pid.update(-diff.x(), 1 / robot->hz);
     cmd.linear.y() = 0.0;
     cmd.linear.z() = 0.0;
-    cmd.angular.z() = angular_pid.update(-yaw_error, 0.002);
+    cmd.angular.z() = angular_pid.update(-yaw_error, 1 / robot->hz);
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
 
