@@ -20,3 +20,5 @@ Check Navviewer Integration
 # Sensors
 - Change to thread per Sensor
 
+# Sockets
+posix Select.
