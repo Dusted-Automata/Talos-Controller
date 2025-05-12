@@ -119,7 +119,6 @@ main(void)
     Go1 robot;
     robot.path_controller.path_looping = true;
     robot.path_controller.add_waypoints(waypoints);
-    robot.path_controller.start();
     robot.sensor_manager.init();
     robot.frames.init(robot.path_controller.path_queue.front());
     robot.frames.init(robot.path_controller.path_queue.front_two());

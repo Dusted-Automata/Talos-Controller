@@ -21,4 +21,4 @@ Check Navviewer Integration
 - Change to thread per Sensor
 
 # Sockets
-posix Select.
+- use Thread instead of poll

@@ -39,7 +39,7 @@ class Sim_Quadruped : public Robot
         angular_pid.output_max = 2.0;
         angular_pid.output_min = -2.0;
 
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
+        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
         trajectory_controller->robot = this;
     }
 
@@ -118,7 +118,6 @@ main()
 
     robot.path_controller.path_looping = true;
     robot.path_controller.add_waypoints(waypoints);
-    robot.path_controller.start();
     robot.sensor_manager.init();
     // robot.frames.init(robot.path_controller.path_queue.front());
     robot.frames.init(robot.path_controller.path_queue.front_two());

@@ -21,7 +21,7 @@ class Robot
     std::unique_ptr<Trajectory_Controller> trajectory_controller;
     Frames frames = {};
 
-    double hz = 500;
+    double hz = 500.0;
     double motion_time = 0;
     Robot_Config config = {};
     Logger logger = {};

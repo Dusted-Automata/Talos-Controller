@@ -48,10 +48,10 @@ Linear_Controller::get_cmd()
         return cmd;
     }
 
-    cmd.linear.x() = linear_pid.update(-diff.x(), 1 / robot->hz);
+    cmd.linear.x() = linear_pid.update(-diff.x(), 1.0 / robot->hz);
     cmd.linear.y() = 0.0;
     cmd.linear.z() = 0.0;
-    cmd.angular.z() = angular_pid.update(-yaw_error, 1 / robot->hz);
+    cmd.angular.z() = angular_pid.update(-yaw_error, 1.0 / robot->hz);
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
 

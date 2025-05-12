@@ -64,7 +64,7 @@ class Go1 : public Robot
         PIDController angular_pid(angular_gains);
         angular_pid.output_max = 10.0;
         angular_pid.output_min = 0.0;
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config.hz);
+        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
         trajectory_controller->robot = this;
     }
     ~Go1() = default;
