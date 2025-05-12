@@ -23,8 +23,7 @@ Linear_Controller::get_cmd()
     double goal_tolerance = 0.3; // meters
 
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-    std::optional<Measurement> measurement = robot->sensor_manager.get_latest();
-    if (measurement.has_value()) {
+    if (robot->sensor_manager.get_latest().has_value()) {
         double lat = robot->sensor_manager.latest_measurement.value().ublox_measurement.latlng.lat;
         double lng = robot->sensor_manager.latest_measurement.value().ublox_measurement.latlng.lng;
         double alt = robot->sensor_manager.latest_measurement.value().ublox_measurement.alt;
