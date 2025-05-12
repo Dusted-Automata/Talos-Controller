@@ -18,12 +18,14 @@ Sensor_Manager::loop()
         if (ret > 0) {
             if (pfd.revents & POLLIN) {
                 if (ublox.read()) {
+                    Measurement measurement;
                     while (!ublox.msgs.empty()) {
-                        latest_measurement.read = false;
-                        GGA gga = std::move(ublox.msgs.front());
-                        latest_measurement.ublox_measurement = std::move(gga);
+                        GGA gga = ublox.msgs.front();
+                        measurement = { .ublox_measurement = gga };
                         ublox.msgs.pop();
                     }
+                    std::unique_lock<std::mutex> lock(sensor_mutex);
+                    latest_measurement = measurement;
                 }
             }
             if (pfd.revents & (POLLERR | POLLHUP)) {
@@ -58,4 +60,15 @@ Sensor_Manager::shutdown()
     if (sensors_thread.joinable()) {
         sensors_thread.join();
     }
+}
+
+// if (latest_measurement.has_value()) {
+//     GGA gga = std::move(latest_measurement->ublox_measurement);
+//     latest_measurement.reset(); // equivalent to setting read = true or marking as processed
+// }
+std::optional<Measurement>
+Sensor_Manager::get_latest()
+{
+    std::unique_lock<std::mutex> lock(sensor_mutex);
+    return latest_measurement;
 }

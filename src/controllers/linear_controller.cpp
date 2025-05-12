@@ -23,16 +23,17 @@ Linear_Controller::get_cmd()
     double goal_tolerance = 0.3; // meters
 
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-    if (!robot->sensor_manager.latest_measurement.read) {
-        robot->sensor_manager.latest_measurement.read = true;
-        double lat = robot->sensor_manager.latest_measurement.ublox_measurement.latlng.lat;
-        double lng = robot->sensor_manager.latest_measurement.ublox_measurement.latlng.lng;
-        double alt = robot->sensor_manager.latest_measurement.ublox_measurement.alt;
+    std::optional<Measurement> measurement = robot->sensor_manager.get_latest();
+    if (measurement.has_value()) {
+        double lat = robot->sensor_manager.latest_measurement.value().ublox_measurement.latlng.lat;
+        double lng = robot->sensor_manager.latest_measurement.value().ublox_measurement.latlng.lng;
+        double alt = robot->sensor_manager.latest_measurement.value().ublox_measurement.alt;
 
         if (lat != 0.0 || lng != 0.0 || alt != 0.0) {
             // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
             robot->frames.update_based_on_measurement(lat, lng, alt);
         }
+        robot->sensor_manager.latest_measurement.reset();
     }
 
     std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path_controller.front_two();
