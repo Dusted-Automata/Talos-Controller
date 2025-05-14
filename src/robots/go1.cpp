@@ -50,7 +50,7 @@ Go1::read_state()
     ps.velocity.linear.y() = readFromStruct<float>(stateBytes, HighStateOffset::VelocityY);
     ps.velocity.angular.z() = readFromStruct<float>(stateBytes, HighStateOffset::YawSpeed);
 
-    std::cout << "x: " << ps.velocity.linear.x() << " | yaw: " << ps.velocity.angular.z() << std::endl;
+    // std::cout << "x: " << ps.velocity.linear.x() << " | yaw: " << ps.velocity.angular.z() << std::endl;
 
     return ps;
 }
@@ -63,11 +63,18 @@ main(void)
               << "Press Enter to continue..." << std::endl;
     std::cin.ignore();
 
+    // std::vector<Ecef_Coord> waypoints = {
+    //     {  4100175.625135626, 476368.7899695045, 4846344.356704135 },
+    //     { 4100209.6729529747, 476361.2681338759, 4846316.478097512 },
+    //     { 4100218.5394949187, 476445.5598077707, 4846300.796185957 },
+    //     {   4100241.72195791, 476441.0557096391, 4846281.753675706 }
+    // };
+
     std::vector<Ecef_Coord> waypoints = {
-        {  4100175.625135626, 476368.7899695045, 4846344.356704135 },
-        { 4100209.6729529747, 476361.2681338759, 4846316.478097512 },
-        { 4100218.5394949187, 476445.5598077707, 4846300.796185957 },
-        {   4100241.72195791, 476441.0557096391, 4846281.753675706 }
+        {  4100153.973802027, 476427.35791871214, 4846293.9593605595 },
+        {  4100157.141618473,   476425.586139372,  4846291.470216498 },
+        {  4100158.379828283, 476427.67535380396,  4846290.225643138 },
+        { 4100155.1674040714,  476429.8310166142,  4846292.714788971 }
     };
 
     std::vector<Ecef_Coord> waypoints_square = {
@@ -120,8 +127,8 @@ main(void)
     robot.path.path_looping = true;
     robot.path.add_waypoints(waypoints);
     robot.sensor_manager.init();
-    robot.frames.init(robot.path.get_next());
-    // robot.frames.init(robot.path.front_two());
+    // robot.frames.init(robot.path.get_next());
+    robot.frames.init(robot.path.queue.front_two());
 
     UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::control_loop, &robot));
     UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::UDPRecv, &robot));

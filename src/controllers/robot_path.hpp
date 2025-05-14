@@ -5,10 +5,10 @@ class Robot_Path
 {
 
   private:
-    Thread_Safe_Queue<Ecef_Coord> queue;
     std::vector<Ecef_Coord> path_points_all;
 
   public:
+    Thread_Safe_Queue<Ecef_Coord> queue;
     Robot_Path() = default;
 
     bool path_looping = false;

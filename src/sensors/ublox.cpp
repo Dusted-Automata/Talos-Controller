@@ -1,5 +1,6 @@
 
 #include "ublox.hpp"
+#include "EGM96.hpp"
 #include <arpa/inet.h>
 #include <array>
 #include <cstdint>
@@ -102,6 +103,8 @@ parse_gga(std::string &msg)
 
     gga.num_satalites = parse_uint8(arr[6]);
     gga.hddp = parse_float(arr[8]);
+    // double undulation_offset = egm96_compute_altitude_offset(gga.latlng.lat, gga.latlng.lng);
+    // gga.alt = parse_double(arr[9]) + undulation_offset;
     gga.alt = parse_double(arr[9]);
     gga.geoid_seperation = parse_float(arr[11]);
     gga.diff_age = parse_float(arr[13]);
@@ -130,18 +133,16 @@ extract_command(const std::string &cmd_str)
     return to_nmea_cmd(cmd);
 }
 
-bool
-Ublox::read()
+void
+Ublox::process()
 {
-    if (!socket.recv(buf)) {
-        return false;
-    }
-
     while (!buf.empty()) {
         std::string i = buf.front();
         NMEA_Cmd cmd = extract_command(i);
         switch (cmd) {
-        case NMEA_Cmd::UNKNOWN: std::cout << "Unknown command" << std::endl; break;
+        case NMEA_Cmd::UNKNOWN:
+            // std::cout << "Unknown command" << std::endl;
+            break;
         case NMEA_Cmd::GGA:
             GGA gga = parse_gga(i);
             gga.print();
@@ -150,5 +151,29 @@ Ublox::read()
         }
         buf.pop();
     }
-    return true;
+}
+
+void
+Ublox::loop()
+{
+    socket.recv(buf);
+}
+
+void
+Ublox::start()
+{
+
+    if (!socket.connect()) {
+        std::cerr << "Ublx couldn't connect" << std::endl;
+        return;
+    };
+
+    if (running) return;
+    running = true;
+
+    if (sensor_thread.joinable()) {
+        sensor_thread.join();
+    }
+
+    sensor_thread = std::thread(&Sensor::loop, this);
 }

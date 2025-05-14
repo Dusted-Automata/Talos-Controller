@@ -5,33 +5,41 @@
 #include "types.hpp"
 #include <cmath>
 
+bool
+above_epsilon(double lat, double lng, double alt)
+{
+    if (std::abs(lat) > 0.001 || std::abs(lng) > 0.001 || std::abs(alt) > 0.001) {
+        return true;
+    }
+    return false;
+}
+
 Velocity2d
 Linear_Controller::get_cmd()
 {
     double goal_tolerance = 0.3; // meters
-
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-    if (robot->sensor_manager.get_latest().has_value()) {
-        double lat = robot->sensor_manager.latest_measurement.value().ublox_measurement.latlng.lat;
-        double lng = robot->sensor_manager.latest_measurement.value().ublox_measurement.latlng.lng;
-        double alt = robot->sensor_manager.latest_measurement.value().ublox_measurement.alt;
 
-        if (lat != 0.0 || lng != 0.0 || alt != 0.0) {
+    if (robot->sensor_manager.get_latest(Sensor_Name::UBLOX).has_value()) {
+        double lat = robot->sensor_manager.get_latest(Sensor_Name::UBLOX).value().ublox_measurement.latlng.lat;
+        double lng = robot->sensor_manager.get_latest(Sensor_Name::UBLOX).value().ublox_measurement.latlng.lng;
+        double alt = robot->sensor_manager.get_latest(Sensor_Name::UBLOX).value().ublox_measurement.alt;
+
+        if (above_epsilon(lat, lng, alt)) {
             // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
+            // printf("LLH: %f, %f, %f\n", lat, lng, alt);
             robot->frames.update_based_on_measurement(lat, lng, alt);
         }
-        robot->sensor_manager.latest_measurement.reset();
+        robot->sensor_manager.consume_measurement();
     }
 
-    // std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path.front_two();
-    // std::optional<std::pair<Ecef_Coord, Ecef_Coord>> path = robot->path.path_queue.front();
-    std::optional<Ecef_Coord> path = robot->path.get_next();
-    if (!path.has_value()) {
+    std::optional<Ecef_Coord> target_waypoint = robot->path.get_next();
+    if (!target_waypoint.has_value()) {
         linear_pid.reset();
         angular_pid.reset();
         return cmd;
     }
-    Ecef_Coord goal = wgsecef2ned_d(path.value(), robot->frames.local_frame.origin);
+    Ecef_Coord goal = wgsecef2ned_d(target_waypoint.value(), robot->frames.local_frame.origin);
     Vector3d diff = goal - robot->frames.local_frame.pos;
     diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
     double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());

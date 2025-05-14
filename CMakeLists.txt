@@ -84,11 +84,13 @@ add_executable(controller
     src/controllers/linear_controller.cpp
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp
+    src/sensors/sensor.cpp
     src/utils/pid.cpp
     src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp
     src/utils/sim.cpp
+    src/utils/EGM96.cpp
 )
 add_executable(sim
     src/run_sim.cpp
@@ -98,11 +100,13 @@ add_executable(sim
     src/controllers/linear_controller.cpp
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp
+    src/sensors/sensor.cpp
     src/utils/pid.cpp
     src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp
     src/utils/sim.cpp
+    src/utils/EGM96.cpp
 )
 
 # Link raylib after it's built

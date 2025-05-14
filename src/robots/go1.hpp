@@ -58,7 +58,7 @@ class Go1 : public Robot
 
         PIDGains linear_gains = { 0.4, 0.0, 0.0 };
         PIDController linear_pid(linear_gains);
-        linear_pid.output_max = 10.0;
+        linear_pid.output_max = 0.5;
         linear_pid.output_min = 0.0;
         PIDGains angular_gains = { 0.2, 0.0, 0.0 };
         PIDController angular_pid(angular_gains);

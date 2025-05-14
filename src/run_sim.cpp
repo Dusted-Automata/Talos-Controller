@@ -61,9 +61,9 @@ class Sim_Quadruped : public Robot
     {
         pose_state.velocity = velocity;
         pose_state.dt = GetFrameTime();
-        velocity.linear *= pose_state.dt;
-        velocity.angular *= pose_state.dt;
-        frames.move_in_local_frame(velocity);
+        // velocity.linear *= pose_state.dt;
+        // velocity.angular *= pose_state.dt;
+        // frames.move_in_local_frame(velocity);
     };
     void
     start()
@@ -107,11 +107,18 @@ class Sim_Quadruped : public Robot
 int
 main()
 {
+    // std::vector<Ecef_Coord> waypoints = {
+    //     { 4100175.6251356260, 476368.7899695045, 4846344.356704135 },
+    //     { 4100209.6729529747, 476361.2681338759, 4846316.478097512 },
+    //     { 4100218.5394949187, 476445.5598077707, 4846300.796185957 },
+    //     { 4100241.7219579100, 476441.0557096391, 4846281.753675706 }
+    // };
+    //
     std::vector<Ecef_Coord> waypoints = {
-        { 4100175.6251356260, 476368.7899695045, 4846344.356704135 },
-        { 4100209.6729529747, 476361.2681338759, 4846316.478097512 },
-        { 4100218.5394949187, 476445.5598077707, 4846300.796185957 },
-        { 4100241.7219579100, 476441.0557096391, 4846281.753675706 }
+        {  4100153.973802027, 476427.35791871214, 4846293.9593605595 },
+        {  4100157.141618473,   476425.586139372,  4846291.470216498 },
+        {  4100158.379828283, 476427.67535380396,  4846290.225643138 },
+        { 4100155.1674040714,  476429.8310166142,  4846292.714788971 }
     };
 
     Sim_Quadruped robot;
@@ -119,8 +126,8 @@ main()
     robot.path.path_looping = true;
     robot.path.add_waypoints(waypoints);
     robot.sensor_manager.init();
-    // robot.frames.init(robot.path_controller.path_queue.front());
-    robot.frames.init(robot.path.get_next());
+    // robot.frames.init(robot.path.get_next());
+    robot.frames.init(robot.path.queue.front_two());
 
     robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
     robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));

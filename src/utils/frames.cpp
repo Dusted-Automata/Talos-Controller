@@ -28,10 +28,12 @@ void
 Frames::update_based_on_measurement(const double &lat, const double &lng, const double &height)
 {
     // std::cout << "LOCAL_FRAME: " << local_frame.pos.transpose() << std::endl;
-    Ecef_Coord measured_ecef = wgsllh2ecef(lat, lng, height);
-    std::cout << std::fixed;
-    std::cout << "ECEF: " << measured_ecef.transpose() << std::endl;
-    std::cout << "GLOB : " << global_frame.pos.transpose() << std::endl;
+    double lat_rad = lat * (M_PI / 180);
+    double lng_rad = lng * (M_PI / 180);
+    Ecef_Coord measured_ecef = wgsllh2ecef(lat_rad, lng_rad, height);
+    // std::cout << std::fixed;
+    // std::cout << "ECEF: " << measured_ecef.transpose() << std::endl;
+    // std::cout << "GLOB : " << global_frame.pos.transpose() << std::endl;
     Vector3d ned = wgsecef2ned_d(measured_ecef, local_frame.origin);
     local_frame.pos = ned;
 }

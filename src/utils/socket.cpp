@@ -121,8 +121,8 @@ TCP_Socket::connect()
     }
     std::cout << "Connected to " << server_ip << ":" << port << std::endl;
 
-    int flags = fcntl(socket_fd, F_GETFL, 0);
-    fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
+    // int flags = fcntl(socket_fd, F_GETFL, 0);
+    // fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
 
     return true;
 }
@@ -154,13 +154,9 @@ TCP_Socket::recv(std::queue<std::string> &msgs)
             return true; // if it returns false that would make it so that poll does not process the msgs.
         }
         if (bytes_received < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                break;
-            } else {
-                std::cerr << "recv failed" << std::endl;
-                disconnect();
-                return false;
-            }
+            std::cerr << "recv failed" << std::endl;
+            disconnect();
+            return false;
         }
         parser.push(msgs, std::span(recv_buf.data(), bytes_received));
     }
