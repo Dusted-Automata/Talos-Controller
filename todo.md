@@ -2,7 +2,7 @@
 Check Navviewer Integration
 
 # Controllers
-- Use PIDControllers
+- Change the setpoints -> use a trapezoidal velocity profile function
 
 # Robots
 - Create a wheelchair robot
@@ -22,3 +22,4 @@ Check Navviewer Integration
 
 # Sockets
 - use Thread instead of poll
+

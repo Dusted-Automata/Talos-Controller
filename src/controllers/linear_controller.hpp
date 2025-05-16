@@ -17,7 +17,7 @@ class Linear_Controller : public Trajectory_Controller
         : linear_pid(linear_pid), angular_pid(angular_pid) {};
     ~Linear_Controller() = default;
 
-    void path_loop(std::vector<Ecef_Coord> &waypoints);
+    void path_loop(std::vector<Ecef> &waypoints);
     // void trajectory_loop(Thread_Safe_Queue<Ecef_Coord> &path_queue);
     Velocity2d get_cmd() override;
 

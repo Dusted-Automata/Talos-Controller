@@ -4,11 +4,11 @@
 struct Frame {
     // Eigen::Quaterniond orientation;
     Affine3d orientation = Affine3d::Identity();
-    Vector3d pos = Vector3d::Zero();
+    Ecef pos{ 0, 0, 0 };
 };
 
 struct NED_Frame : public Frame {
-    Ecef_Coord origin;
+    LLH origin;
 };
 
 class Frames
@@ -21,12 +21,11 @@ class Frames
     NED_Frame local_frame;
     Frame global_frame;
 
-    void init(const std::optional<Ecef_Coord> &coordinate);
-    void init(const std::optional<std::pair<Ecef_Coord, Ecef_Coord>> &path);
+    void init(const std::optional<Ecef> &coordinate);
+    void init(const std::vector<Ecef> &waypoints);
     void move_in_local_frame(const Velocity2d &velocity);
-
     void move_in_global_frame(const Velocity2d &velocity);
 
-    void update_based_on_measurement(const double &lat, const double &lng, const double &height);
-    Vector3d get_error_vector_in_NED(const double &lat, const double &lng, const double &height);
+    void update_based_on_measurement(const LLH &llh);
+    Vector3d get_error_vector_in_NED(const LLH &llh);
 };

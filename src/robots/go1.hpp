@@ -56,14 +56,14 @@ class Go1 : public Robot
         //         },
         // };
 
-        PIDGains linear_gains = { 0.4, 0.0, 0.0 };
+        PIDGains linear_gains = { 0.8, 0.05, 0.15 };
         PIDController linear_pid(linear_gains);
         linear_pid.output_max = 0.5;
         linear_pid.output_min = 0.0;
-        PIDGains angular_gains = { 0.2, 0.0, 0.0 };
+        PIDGains angular_gains = { 1.0, 0.01, 0.25 };
         PIDController angular_pid(angular_gains);
-        angular_pid.output_max = 10.0;
-        angular_pid.output_min = 0.0;
+        angular_pid.output_max = 2.5;
+        angular_pid.output_min = -2.5;
         trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
         trajectory_controller->robot = this;
     }

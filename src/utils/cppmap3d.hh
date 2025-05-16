@@ -1,6 +1,7 @@
 #ifndef CPPMAP3D_HEADER_GUARD
 #define CPPMAP3D_HEADER_GUARD
 
+#include "types.hpp"
 #include <cmath>
 #include <stdexcept>
 
@@ -416,6 +417,21 @@ ecef2geodetic(double x,
 #endif
 }
 
+inline LLH
+ecef2geodetic(Ecef ecef, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+{
+#ifndef CPPMAP3D_ECEF2GEODETIC_OLSON
+    LLH llh;
+    internal::ecef2geodetic_you(ecef.x(), ecef.y(), ecef.z(), llh.lat(), llh.lon(), llh.alt(), ellipsoid);
+    return llh;
+#endif
+#ifdef CPPMAP3D_ECEF2GEODETIC_OLSON
+    LLH llh;
+    internal::ecef2geodetic_olson(ecef.x(), ecef.y(), ecef.z(), llh.lat(), llh.lon(), llh.alt(), ellipsoid);
+    return llh;
+#endif
+}
+
 /**
  * @brief Converts Azimuth, Elevation, and Range (AER) coordinates to East,
  * North, Up (ENU) coordinates.
@@ -539,6 +555,28 @@ geodetic2ecef(double lat,
     out_z = (n * (minor / major) * (minor / major) + alt) * std::sin(lat);
 }
 
+inline Ecef
+geodetic2ecef(LLH llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+{
+    Ecef out;
+
+    const double pi = 3.14159265358979311599796346854;
+    if (std::abs(llh.lat()) > pi / 2) {
+        throw std::domain_error("-pi/2 <= latitude <= pi/2");
+    }
+
+    double major = internal::getMajor(ellipsoid);
+    double minor = internal::getMinor(ellipsoid);
+    double se = internal::getSquaredEccentricity(ellipsoid);
+
+    double n = major / std::sqrt(((1.0 - se * std::sin(llh.lat()) * std::sin(llh.lat()))));
+
+    out.x() = (n + llh.alt()) * std::cos(llh.lat()) * std::cos(llh.lon());
+    out.y() = (n + llh.alt()) * std::cos(llh.lat()) * std::sin(llh.lon());
+    out.z() = (n * (minor / major) * (minor / major) + llh.alt()) * std::sin(llh.lat());
+    return out;
+}
+
 /**
  * @brief Converts Earth-Centered, Earth-Fixed (ECEF) coordinates to East,
  * North, Up (ENU) coordinates.
@@ -571,6 +609,16 @@ ecef2enu(double x,
     double x0, y0, z0;
     geodetic2ecef(lat, lon, alt, x0, y0, z0, ellipsoid);
     internal::uvw2enu(x - x0, y - y0, z - z0, lat, lon, out_east, out_north, out_up);
+}
+
+inline Vector3d
+ecef2enu(Ecef ecef, LLH llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+{
+    Vector3d out;
+    double x0, y0, z0;
+    geodetic2ecef(llh.lat(), llh.lon(), llh.alt(), x0, y0, z0, ellipsoid);
+    internal::uvw2enu(ecef.x() - x0, ecef.y() - y0, ecef.z() - z0, llh.lat(), llh.lon(), out.x(), out.y(), out.z());
+    return out;
 }
 
 /**
@@ -638,6 +686,14 @@ ecef2ned(double x,
 {
     ecef2enu(x, y, z, lat, lon, alt, out_east, out_north, out_down, ellipsoid);
     out_down = out_down * -1;
+}
+
+inline Vector3d
+ecef2ned(Ecef ecef, LLH llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+{
+    Vector3d out = ecef2enu(ecef, llh, ellipsoid);
+    out[2] = out[2] * -1;
+    return out;
 }
 
 /**
@@ -922,6 +978,15 @@ ned2ecef(double north,
     Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
     enu2ecef(east, north, -1 * down, lat, lon, alt, out_x, out_y, out_z, ellipsoid);
+}
+
+inline Ecef
+ned2ecef(Vector3d ned, LLH ref_llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+{
+    Ecef out;
+    enu2ecef(ned.y(), ned.x(), -1 * ned.z(), ref_llh.lat(), ref_llh.lon(), ref_llh.alt(), out.x(), out.y(), out.z(),
+        ellipsoid);
+    return out;
 }
 
 /**

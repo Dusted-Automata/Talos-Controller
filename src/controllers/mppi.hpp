@@ -81,7 +81,7 @@ class MPPI_Controller : public Trajectory_Controller
     int horizon_steps;
     size_t num_samples;
     double temperature;
-    Ecef_Coord target_position;
+    Ecef target_position;
     QuadrupedModel model;
 
     std::mt19937 gen;
@@ -117,7 +117,7 @@ class MPPI_Controller : public Trajectory_Controller
 
     void update(Pose_State &current_state);
     void
-    setTarget(const Ecef_Coord &target)
+    setTarget(const Ecef &target)
     {
         target_position = target;
     }

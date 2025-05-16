@@ -1,4 +1,5 @@
 #include "linear_controller.hpp"
+#include "cppmap3d.hh"
 #include "frames.hpp"
 #include "robot.hpp"
 #include "transformations.hpp"
@@ -21,26 +22,27 @@ Linear_Controller::get_cmd()
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
 
     if (robot->sensor_manager.get_latest(Sensor_Name::UBLOX).has_value()) {
-        double lat = robot->sensor_manager.get_latest(Sensor_Name::UBLOX).value().ublox_measurement.latlng.lat;
-        double lng = robot->sensor_manager.get_latest(Sensor_Name::UBLOX).value().ublox_measurement.latlng.lng;
-        double alt = robot->sensor_manager.get_latest(Sensor_Name::UBLOX).value().ublox_measurement.alt;
+        Measurement measurement = robot->sensor_manager.get_latest(Sensor_Name::UBLOX).value();
+        double lat = to_radian(measurement.ublox.latlng.lat);
+        double lng = to_radian(measurement.ublox.latlng.lng);
+        double alt = measurement.ublox.alt;
 
         if (above_epsilon(lat, lng, alt)) {
             // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
-            // printf("LLH: %f, %f, %f\n", lat, lng, alt);
-            robot->frames.update_based_on_measurement(lat, lng, alt);
+            printf("LLH: %f, %f, %f\n", lat, lng, alt);
+            robot->frames.update_based_on_measurement({ lat, lng, alt });
         }
         robot->sensor_manager.consume_measurement();
     }
 
-    std::optional<Ecef_Coord> target_waypoint = robot->path.get_next();
+    std::optional<Ecef> target_waypoint = robot->path.get_next();
     if (!target_waypoint.has_value()) {
         linear_pid.reset();
         angular_pid.reset();
         return cmd;
     }
-    Ecef_Coord goal = wgsecef2ned_d(target_waypoint.value(), robot->frames.local_frame.origin);
-    Vector3d diff = goal - robot->frames.local_frame.pos;
+    Ecef goal = cppmap3d::ecef2ned(target_waypoint.value(), robot->frames.local_frame.origin);
+    Vector3d diff = goal.raw() - robot->frames.local_frame.pos.raw();
     diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
     double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
 

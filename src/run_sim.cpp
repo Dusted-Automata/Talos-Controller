@@ -1,5 +1,9 @@
+#include "cppmap3d.hh"
+#include "linear_controller.hpp"
+#include "pid.hpp"
 #include "raylib.h"
 #include "sim.hpp"
+#include "transformations.hpp"
 
 class Sim_Quadruped : public Robot
 {
@@ -32,9 +36,9 @@ class Sim_Quadruped : public Robot
 
         PIDGains linear_gains = { 0.8, 0.05, 0.15 };
         PIDController linear_pid(linear_gains);
-        linear_pid.output_max = 10.0;
-        linear_pid.output_min = 0.0;
-        PIDGains angular_gains = { 1.0, 0.01, 0.25 };
+        linear_pid.output_max = 2.5;
+        linear_pid.output_min = 2.0;
+        PIDGains angular_gains = { 5.0, 1.15, 0.06 };
         PIDController angular_pid(angular_gains);
         angular_pid.output_max = 2.0;
         angular_pid.output_min = -2.0;
@@ -45,15 +49,13 @@ class Sim_Quadruped : public Robot
 
     ~Sim_Quadruped() { shutdown(); };
 
-    // Apply a disturbance to the robot (e.g., someone pushing it)
     void
     applyDisturbance(const Eigen::Vector3d &force, const Eigen::Vector3d &torque)
     {
         std::cout << "Applying disturbance: force=" << force.transpose() << ", torque=" << torque.transpose()
                   << std::endl;
 
-        // Simplified disturbance model - directly modify velocity
-        pose_state.velocity.linear += force * 0.1; // Scale for reasonable effect
+        pose_state.velocity.linear += force * 0.1;
         pose_state.velocity.angular += torque * 0.1;
     }
     void
@@ -61,9 +63,9 @@ class Sim_Quadruped : public Robot
     {
         pose_state.velocity = velocity;
         pose_state.dt = GetFrameTime();
-        // velocity.linear *= pose_state.dt;
-        // velocity.angular *= pose_state.dt;
-        // frames.move_in_local_frame(velocity);
+        velocity.linear *= pose_state.dt;
+        velocity.angular *= pose_state.dt;
+        frames.move_in_local_frame(velocity);
     };
     void
     start()
@@ -107,27 +109,36 @@ class Sim_Quadruped : public Robot
 int
 main()
 {
-    // std::vector<Ecef_Coord> waypoints = {
+    // std::vector<Ecef> waypoints = {
     //     { 4100175.6251356260, 476368.7899695045, 4846344.356704135 },
     //     { 4100209.6729529747, 476361.2681338759, 4846316.478097512 },
     //     { 4100218.5394949187, 476445.5598077707, 4846300.796185957 },
     //     { 4100241.7219579100, 476441.0557096391, 4846281.753675706 }
     // };
     //
-    std::vector<Ecef_Coord> waypoints = {
-        {  4100153.973802027, 476427.35791871214, 4846293.9593605595 },
-        {  4100157.141618473,   476425.586139372,  4846291.470216498 },
-        {  4100158.379828283, 476427.67535380396,  4846290.225643138 },
-        { 4100155.1674040714,  476429.8310166142,  4846292.714788971 }
+    std::vector<Ecef> waypoints = {
+        { 4100157.662065, 476378.631671, 4846296.665580 },
+        { 4100148.690049, 476372.016755, 4846301.445640 },
+        { 4100149.702068, 476374.624433, 4846305.056090 },
+        { 4100149.701858, 476374.962868, 4846304.499274 },
+        { 4100158.341835, 476373.682093, 4846300.376217 },
+        { 4100164.617288, 476372.803512, 4846292.699499 },
+        { 4100166.832613, 476369.785077, 4846290.870528 },
+        { 4100164.228392, 476367.548448, 4846291.181639 }
     };
+
+    // Ecef start = { 4100157.662065, 476378.631671, 4846296.665580 };
+    // for (auto point : waypoints) {
+    //     Vector3d ned = wgsecef2ned_d(start, point); // THESE ARE SWITCHED
+    //     std::cout << ned.transpose() << std::endl;
+    // }
 
     Sim_Quadruped robot;
 
     robot.path.path_looping = true;
     robot.path.add_waypoints(waypoints);
     robot.sensor_manager.init();
-    // robot.frames.init(robot.path.get_next());
-    robot.frames.init(robot.path.queue.front_two());
+    robot.frames.init(waypoints);
 
     robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
     robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));

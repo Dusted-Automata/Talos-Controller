@@ -1,4 +1,5 @@
 #include "frames.hpp"
+#include "cppmap3d.hh"
 #include "transformations.hpp"
 #include "types.hpp"
 #include <iostream>
@@ -10,10 +11,10 @@ Frames::move_in_local_frame(const Velocity2d &velocity)
     local_frame.pos += local_frame.orientation.rotation() * velocity.linear;
     // std::cout << local_frame.orientation.rotation() * velocity.linear << std::endl;
 
-    Vector3d linear_vector = wgsned2ecef(local_frame.orientation.rotation() * velocity.linear, local_frame.origin);
+    Ecef linear_vector = cppmap3d::ned2ecef(local_frame.orientation.rotation() * velocity.linear, local_frame.origin);
     // Angular_Velocity test = local_frame.orientation.rotation() * velocity.angular;
     global_frame.orientation.rotate(Eigen::AngleAxisd(velocity.angular.z(), Vector3d::UnitY()));
-    global_frame.pos += linear_vector;
+    global_frame.pos = linear_vector;
 }
 
 void
@@ -25,62 +26,76 @@ Frames::move_in_global_frame(const Velocity2d &velocity)
 }
 
 void
-Frames::update_based_on_measurement(const double &lat, const double &lng, const double &height)
+Frames::update_based_on_measurement(const LLH &llh)
 {
     // std::cout << "LOCAL_FRAME: " << local_frame.pos.transpose() << std::endl;
-    double lat_rad = lat * (M_PI / 180);
-    double lng_rad = lng * (M_PI / 180);
-    Ecef_Coord measured_ecef = wgsllh2ecef(lat_rad, lng_rad, height);
-    // std::cout << std::fixed;
-    // std::cout << "ECEF: " << measured_ecef.transpose() << std::endl;
+    Ecef measured_ecef = cppmap3d::geodetic2ecef(llh);
+    std::cout << std::fixed;
+    std::cout << "ECEF: " << measured_ecef.raw().transpose() << std::endl;
     // std::cout << "GLOB : " << global_frame.pos.transpose() << std::endl;
-    Vector3d ned = wgsecef2ned_d(measured_ecef, local_frame.origin);
+    Vector3d ned = cppmap3d::ecef2ned(measured_ecef, local_frame.origin);
     local_frame.pos = ned;
 }
 
-Vector3d
-Frames::get_error_vector_in_NED(const double &lat, const double &lng, const double &height)
-{
-    Ecef_Coord measured_ecef = wgsllh2ecef(lat, lng, height);
-    Ecef_Coord robot_ecef = wgsned2ecef_d(local_frame.pos, local_frame.origin);
-    Vector3d error_vec = robot_ecef - measured_ecef;
-    return wgsecef2ned(error_vec, local_frame.origin);
-}
+// Vector3d
+// Frames::get_error_vector_in_NED(const LLH &llh)
+// {
+//     Ecef measured_ecef = wgsllh2ecef(llh.lat(), llh.lon(), llh.alt());
+//     Vector3d robot_ecef = cppmap3d::ecef2ned(local_frame.pos, local_frame.origin);
+//     Ecef error_vec = robot_ecef - measured_ecef;
+//     return wgsecef2ned(error_vec, local_frame.origin);
+// }
+
+// void
+// Frames::init(const std::vector<Ecef> &waypoints)
+// {
+//     if (waypoints.size() < 1) {
+//         return;
+//     }
+//     local_frame.origin = waypoints.front();
+//     global_frame.pos = waypoints.front();
+//
+//     LLH llh = wgsecef2llh(local_frame.origin);
+//     Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
+//     global_frame.orientation = M;
+//
+//     // Maybe necessary for correct local orientation at the start
+//     // double theta = atan2(llh.y(), llh.x());
+//     // Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
+//     // local_frame.orientation = rot_yaw.toRotationMatrix();
+//
+//     if (waypoints.size() < 2) {
+//         return;
+//     }
+//
+//     Vector3d goal = wgsecef2ned_d(waypoints[1], local_frame.origin);
+//     double theta = atan2(goal.y(), goal.x());
+//     Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
+//     local_frame.orientation = rot_yaw.toRotationMatrix();
+// }
 
 void
-Frames::init(const std::optional<Ecef_Coord> &coordinate)
+Frames::init(const std::vector<Ecef> &waypoints)
 {
-    if (!coordinate.has_value()) {
-        std::cout << "Could not set Initial Coordinate Frame" << std::endl;
+    if (waypoints.size() < 1) {
+        return;
     }
-    local_frame.origin = coordinate.value();
-    global_frame.pos = coordinate.value();
+    local_frame.origin = cppmap3d::ecef2geodetic(waypoints.front());
+    global_frame.pos = waypoints.front();
 
-    LLH llh = wgsecef2llh(local_frame.origin);
-    double theta = atan2(llh.y(), llh.x());
+    // Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
+    // global_frame.orientation = M;
+
+    double theta = atan2(local_frame.origin.lon(), local_frame.origin.lat());
     Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
     local_frame.orientation = rot_yaw.toRotationMatrix();
 
-    Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
-    global_frame.orientation = M;
-}
-
-void
-Frames::init(const std::optional<std::pair<Ecef_Coord, Ecef_Coord>> &path)
-{
-
-    if (!path.has_value()) {
-        std::cout << "Could not set Initial Coordinate Frame" << std::endl;
+    if (waypoints.size() < 2) {
+        return;
     }
-    local_frame.origin = path->first;
-    global_frame.pos = path->first;
-    Vector3d goal = wgsecef2ned_d(path->second, local_frame.origin);
 
-    double theta = atan2(goal.y(), goal.x());
-    Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
-    local_frame.orientation = rot_yaw.toRotationMatrix();
-
-    LLH llh = wgsecef2llh(local_frame.origin);
-    Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
-    global_frame.orientation = M;
+    Vector3d goal = cppmap3d::ecef2ned(waypoints[1], local_frame.origin);
+    double goal_theta = atan2(goal.y(), goal.x());
+    Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
+    local_frame.orientation = local_frame.orientation * rot_yaw_goal;
 }

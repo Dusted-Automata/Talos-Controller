@@ -16,8 +16,6 @@
 using Eigen::Affine3d;
 using Eigen::Matrix4d;
 using Eigen::Vector3d;
-typedef Vector3d Ecef_Coord;
-typedef Vector3d LLH;
 typedef Vector3d Linear_Velocity;
 typedef Vector3d Angular_Velocity;
 
@@ -28,6 +26,222 @@ struct Robot_State {
     float yawSpeed;                // (unit: rad/s), rotateSpeed in body frame
                                    // std::array<MotorState, 20> motorState;
                                    // IMU imu;
+};
+
+struct LLH {
+  private:
+    Eigen::Vector3d v;
+
+  public:
+    LLH() {}
+    LLH(double lat, double lon, double h) : v(lat, lon, h) {}
+    LLH(const Eigen::Vector3d &vec) : v(vec) {}
+
+    double
+    lat() const
+    {
+        return v.x();
+    }
+
+    double
+    lon() const
+    {
+        return v.y();
+    }
+
+    double
+    alt() const
+    {
+        return v.z();
+    }
+
+    // Setter methods (non-const)
+    double &
+    lat()
+    {
+        return v.x();
+    }
+
+    double &
+    lon()
+    {
+        return v.y();
+    }
+
+    double &
+    alt()
+    {
+        return v.z();
+    }
+    LLH
+    operator+(const LLH &other) const
+    {
+        return LLH(v + other.v);
+    }
+
+    LLH
+    operator-(const LLH &other) const
+    {
+        return LLH(v - other.v);
+    }
+
+    LLH
+    operator*(double scalar) const
+    {
+        return LLH(v * scalar);
+    }
+
+    LLH &
+    operator+=(const LLH &other)
+    {
+        v += other.raw();
+        return *this;
+    }
+
+    LLH &
+    operator-=(const LLH &other)
+    {
+        v -= other.raw();
+        return *this;
+    }
+
+    LLH
+    operator+(const Vector3d &other) const
+    {
+        return LLH(v + other);
+    }
+
+    LLH
+    operator-(const Vector3d &other) const
+    {
+        return LLH(v - other);
+    }
+
+    LLH &
+    operator+=(const Vector3d &other)
+    {
+        v += other;
+        return *this;
+    }
+
+    LLH &
+    operator-=(const Vector3d &other)
+    {
+        v -= other;
+        return *this;
+    }
+
+    const Eigen::Vector3d &
+    raw() const
+    {
+        return v;
+    }
+};
+
+struct Ecef {
+  private:
+    Eigen::Vector3d v;
+
+  public:
+    Ecef() {}
+    Ecef(double x, double y, double z) : v(x, y, z) {}
+    Ecef(const Eigen::Vector3d &vec) : v(vec) {}
+
+    double
+    x() const
+    {
+        return v.x();
+    }
+    double
+    y() const
+    {
+        return v.y();
+    }
+    double
+    z() const
+    {
+        return v.z();
+    }
+
+    double &
+    x()
+    {
+        return v.x();
+    }
+    double &
+    y()
+    {
+        return v.y();
+    }
+    double &
+    z()
+    {
+        return v.z();
+    }
+
+    Ecef
+    operator+(const Ecef &other) const
+    {
+        return Ecef(v + other.v);
+    }
+
+    Ecef
+    operator-(const Ecef &other) const
+    {
+        return Ecef(v - other.v);
+    }
+
+    Ecef
+    operator*(double scalar) const
+    {
+        return Ecef(v * scalar);
+    }
+
+    Ecef &
+    operator+=(const Ecef &other)
+    {
+        v += other.raw();
+        return *this;
+    }
+
+    Ecef &
+    operator-=(const Ecef &other)
+    {
+        v -= other.raw();
+        return *this;
+    }
+
+    Ecef
+    operator+(const Vector3d &other) const
+    {
+        return Ecef(v + other);
+    }
+
+    Ecef
+    operator-(const Vector3d &other) const
+    {
+        return Ecef(v - other);
+    }
+
+    Ecef &
+    operator+=(const Vector3d &other)
+    {
+        v += other;
+        return *this;
+    }
+
+    Ecef &
+    operator-=(const Vector3d &other)
+    {
+        v -= other;
+        return *this;
+    }
+
+    const Eigen::Vector3d &
+    raw() const
+    {
+        return v;
+    }
 };
 
 // Similar to Trajectory_Point
@@ -45,8 +259,14 @@ struct Velocity2d {
     Angular_Velocity angular; // roll, pitch, yaw rates (rad/s)
 };
 
+static inline double
+to_radian(double degrees)
+{
+    return degrees * (M_PI / 180);
+}
+
 struct Pose_State {
-    Ecef_Coord position; // x, y, z
+    Ecef position; // x, y, z
     Affine3d orientation;
     // Eigen::Quaterniond orientation; // quaternion
     Velocity2d velocity; // vx, vy, vz \  wx, wy, wz
@@ -54,7 +274,7 @@ struct Pose_State {
 };
 
 struct Pose {
-    Ecef_Coord point;
+    Ecef point;
     Affine3d transformation_matrix; // Change this to Quaternion maybe
 };
 
@@ -71,9 +291,9 @@ struct Robot_Config {
 };
 
 struct Motion_Step {
-    Ecef_Coord &current;
-    Ecef_Coord &next;
-    Ecef_Coord &difference;
+    Ecef &current;
+    Ecef &next;
+    Ecef &difference;
     Affine3d &robot_frame;
     double &dt;
 };
