@@ -90,7 +90,6 @@ add_executable(controller
     src/utils/logger.cpp
     src/utils/socket.cpp
     src/utils/sim.cpp
-    src/utils/EGM96.cpp
 )
 add_executable(sim
     src/run_sim.cpp
@@ -106,7 +105,6 @@ add_executable(sim
     src/utils/logger.cpp
     src/utils/socket.cpp
     src/utils/sim.cpp
-    src/utils/EGM96.cpp
 )
 
 # Link raylib after it's built
