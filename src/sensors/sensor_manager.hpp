@@ -16,7 +16,7 @@ class Sensor_Manager
     void readSensors();
     void init();
     void shutdown();
-    void consume_and_produce();
+    void consume();
     void consume_measurement();
     std::optional<Measurement> get_latest(Sensor_Name sensor);
 };

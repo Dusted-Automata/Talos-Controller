@@ -7,7 +7,7 @@
 enum Sensor_Name { UBLOX };
 
 struct Measurement {
-    GGA ublox_measurement;
+    GGA ublox;
     Sensor_Name source;
 };
 

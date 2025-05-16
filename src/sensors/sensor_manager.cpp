@@ -4,52 +4,14 @@
 #include <poll.h>
 #include <unistd.h>
 
-// void
-// Sensor_Manager::loop()
-// {
-//     constexpr int POLL_TIMEOUT_MS = 500;
-//
-//     while (running) {
-//         pollfd pfd;
-//         pfd.fd = ublox.socket.socket_fd;
-//         pfd.events = POLLIN;
-//
-//         int ret = poll(&pfd, 1, POLL_TIMEOUT_MS);
-//
-//         if (ret > 0) {
-//             if (pfd.revents & POLLIN) {
-//                 if (ublox.read()) {
-//                     Measurement measurement;
-//                     while (!ublox.msgs.empty()) {
-//                         GGA gga = ublox.msgs.front();
-//                         measurement = { .ublox_measurement = gga };
-//                         ublox.msgs.pop();
-//                     }
-//                     std::unique_lock<std::mutex> lock(sensor_mutex);
-//                     latest_measurement = measurement;
-//                 }
-//             }
-//             if (pfd.revents & (POLLERR | POLLHUP)) {
-//                 std::cerr << "Socket error or hang-up" << std::endl;
-//                 break;
-//             }
-//         } else if (ret < 0) {
-//             if (errno == EINTR) continue;
-//             std::cerr << "poll error: " << strerror(errno) << std::endl;
-//             break;
-//         }
-//     }
-// }
-
 void
-Sensor_Manager::consume_and_produce()
+Sensor_Manager::consume()
 {
-    ublox.process();
-
     while (!ublox.msgs.empty()) {
-        GGA gga = ublox.msgs.front();
-        latest_measurement = { .ublox_measurement = gga, .source = Sensor_Name::UBLOX };
-        ublox.msgs.pop();
+        GGA gga = ublox.msgs.back();
+        latest_measurement = { .ublox = gga, .source = Sensor_Name::UBLOX };
+        ublox.msgs.clear(); // Currently we are only interested in the latest measurement. I might switch it to just an
+                            // optional or something
     }
 }
 
@@ -57,6 +19,8 @@ void
 Sensor_Manager::init()
 {
 
+    // std::thread ublox_startup_thread(&Ublox::start, ublox);
+    // ublox_startup_thread.join();
     ublox.start();
 }
 

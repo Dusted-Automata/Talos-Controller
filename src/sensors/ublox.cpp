@@ -146,7 +146,7 @@ Ublox::process()
         case NMEA_Cmd::GGA:
             GGA gga = parse_gga(i);
             gga.print();
-            msgs.push(std::move(gga));
+            msgs.push_back(gga);
             break;
         }
         buf.pop();
@@ -156,7 +156,10 @@ Ublox::process()
 void
 Ublox::loop()
 {
-    socket.recv(buf);
+
+    while (socket.recv(buf) && running) {
+        process();
+    }
 }
 
 void

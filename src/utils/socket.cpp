@@ -146,20 +146,18 @@ TCP_Socket::recv(std::queue<std::string> &msgs)
 
     ssize_t bytes_received;
 
-    while (true) {
-        bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0);
-        if (bytes_received == 0) {
-            std::cerr << "socket closed" << std::endl;
-            disconnect();
-            return true; // if it returns false that would make it so that poll does not process the msgs.
-        }
-        if (bytes_received < 0) {
-            std::cerr << "recv failed" << std::endl;
-            disconnect();
-            return false;
-        }
-        parser.push(msgs, std::span(recv_buf.data(), bytes_received));
+    bytes_received = ::recv(socket_fd, recv_buf.data(), recv_buf.size(), 0);
+    if (bytes_received == 0) {
+        std::cerr << "socket closed" << std::endl;
+        disconnect();
+        return false;
     }
+    if (bytes_received < 0) {
+        std::cerr << "recv failed" << std::endl;
+        disconnect();
+        return false;
+    }
+    parser.push(msgs, std::span(recv_buf.data(), bytes_received));
 
     return true;
 }
