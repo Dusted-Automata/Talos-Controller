@@ -25,7 +25,7 @@ class Sim_Display
         InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Absolute Coordinate System");
         SetTargetFPS(TARGET_FPS);
 
-        camera.target = { (float)robot.frames.local_frame.pos.x(), (float)robot.frames.local_frame.pos.y() };
+        camera.target = { (float)robot.frames.local_frame.pos.north(), (float)robot.frames.local_frame.pos.east() };
         camera.offset = { .x = SCREEN_WIDTH / 2.0f, .y = SCREEN_HEIGHT / 2.0f };
         camera.zoom = 10.0f;
     }

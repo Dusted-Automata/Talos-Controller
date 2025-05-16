@@ -72,7 +72,7 @@ MPPI_Controller::evaluateTrajectory(Pose_State &initial_state, Trajectory &traje
         if (azimuth_rad < -M_PI) azimuth_rad += 2 * M_PI;
 
         double orientation_cost = azimuth_rad * 0.3;
-        double position_cost = (state.position - target_position).raw().norm();
+        double position_cost = (state.position - target_position).norm();
         double velocity_cost = state.velocity.linear.norm() * 0.1;
         double angular_vel_cost = state.velocity.angular.norm() * 0.2;
         double control_cost = trajectory.controls.velocities[i].linear.norm() * 0.05

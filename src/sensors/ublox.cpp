@@ -1,6 +1,5 @@
 
 #include "ublox.hpp"
-#include "EGM96.hpp"
 #include <arpa/inet.h>
 #include <array>
 #include <cstdint>
@@ -103,8 +102,6 @@ parse_gga(std::string &msg)
 
     gga.num_satalites = parse_uint8(arr[6]);
     gga.hddp = parse_float(arr[8]);
-    // double undulation_offset = egm96_compute_altitude_offset(gga.latlng.lat, gga.latlng.lng);
-    // gga.alt = parse_double(arr[9]) + undulation_offset;
     gga.alt = parse_double(arr[9]);
     gga.geoid_seperation = parse_float(arr[11]);
     gga.diff_age = parse_float(arr[13]);

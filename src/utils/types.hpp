@@ -73,36 +73,11 @@ struct LLH {
     {
         return v.z();
     }
-    LLH
-    operator+(const LLH &other) const
-    {
-        return LLH(v + other.v);
-    }
 
-    LLH
+    Vector3d
     operator-(const LLH &other) const
     {
-        return LLH(v - other.v);
-    }
-
-    LLH
-    operator*(double scalar) const
-    {
-        return LLH(v * scalar);
-    }
-
-    LLH &
-    operator+=(const LLH &other)
-    {
-        v += other.raw();
-        return *this;
-    }
-
-    LLH &
-    operator-=(const LLH &other)
-    {
-        v -= other.raw();
-        return *this;
+        return Vector3d(v - other.v);
     }
 
     LLH
@@ -179,36 +154,10 @@ struct Ecef {
         return v.z();
     }
 
-    Ecef
-    operator+(const Ecef &other) const
-    {
-        return Ecef(v + other.v);
-    }
-
-    Ecef
+    Vector3d
     operator-(const Ecef &other) const
     {
-        return Ecef(v - other.v);
-    }
-
-    Ecef
-    operator*(double scalar) const
-    {
-        return Ecef(v * scalar);
-    }
-
-    Ecef &
-    operator+=(const Ecef &other)
-    {
-        v += other.raw();
-        return *this;
-    }
-
-    Ecef &
-    operator-=(const Ecef &other)
-    {
-        v -= other.raw();
-        return *this;
+        return Vector3d(v - other.v);
     }
 
     Ecef
@@ -231,6 +180,91 @@ struct Ecef {
     }
 
     Ecef &
+    operator-=(const Vector3d &other)
+    {
+        v -= other;
+        return *this;
+    }
+
+    const Eigen::Vector3d &
+    raw() const
+    {
+        return v;
+    }
+};
+
+struct NED {
+  private:
+    Eigen::Vector3d v;
+
+  public:
+    NED() {}
+    NED(double lat, double lon, double h) : v(lat, lon, h) {}
+    NED(const Eigen::Vector3d &vec) : v(vec) {}
+
+    double
+    north() const
+    {
+        return v.x();
+    }
+
+    double
+    east() const
+    {
+        return v.y();
+    }
+
+    double
+    down() const
+    {
+        return v.z();
+    }
+
+    // Setter methods (non-const)
+    double &
+    north()
+    {
+        return v.x();
+    }
+
+    double &
+    east()
+    {
+        return v.y();
+    }
+
+    double &
+    down()
+    {
+        return v.z();
+    }
+
+    Vector3d
+    operator-(const NED &other) const
+    {
+        return Vector3d(v - other.v);
+    }
+
+    NED
+    operator+(const Vector3d &other) const
+    {
+        return NED(v + other);
+    }
+
+    NED
+    operator-(const Vector3d &other) const
+    {
+        return NED(v - other);
+    }
+
+    NED &
+    operator+=(const Vector3d &other)
+    {
+        v += other;
+        return *this;
+    }
+
+    NED &
     operator-=(const Vector3d &other)
     {
         v -= other;

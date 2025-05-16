@@ -127,11 +127,13 @@ main()
         { 4100164.228392, 476367.548448, 4846291.181639 }
     };
 
-    // Ecef start = { 4100157.662065, 476378.631671, 4846296.665580 };
-    // for (auto point : waypoints) {
-    //     Vector3d ned = wgsecef2ned_d(start, point); // THESE ARE SWITCHED
-    //     std::cout << ned.transpose() << std::endl;
-    // }
+    Ecef start = { 4100157.662065, 476378.631671, 4846296.665580 };
+    LLH origin = cppmap3d::ecef2geodetic(start);
+    for (auto point : waypoints) {
+        // Vector3d ned = wgsecef2ned_d(start, point); // THESE ARE SWITCHED
+        NED ned = cppmap3d::ecef2ned(point, origin); // THESE ARE SWITCHED
+        std::cout << ned.raw().transpose() << std::endl;
+    }
 
     Sim_Quadruped robot;
 
@@ -140,10 +142,10 @@ main()
     robot.sensor_manager.init();
     robot.frames.init(waypoints);
 
-    robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
-    robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));
-    robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI, Vector3d::UnitY()));
-    robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 50, Vector3d::UnitY()));
+    // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
+    // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));
+    // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI, Vector3d::UnitY()));
+    // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 50, Vector3d::UnitY()));
     /*std::cout << robot.frames.global_frame.orientation.rotation() << std::endl;*/
     /*robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
      * Vector3d::UnitY()));*/

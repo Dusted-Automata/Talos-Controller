@@ -13,8 +13,8 @@ class Ublox : public Sensor
 
   public:
     Ublox() {};
-    // TCP_Socket socket = TCP_Socket("127.0.0.1", 50010, parser);
-    TCP_Socket socket = TCP_Socket("192.168.123.161", 50010, parser);
+    TCP_Socket socket = TCP_Socket("127.0.0.1", 50010, parser);
+    // TCP_Socket socket = TCP_Socket("192.168.123.161", 50010, parser);
     // TCP_Socket socket = TCP_Socket("192.168.12.1", 50010, parser);
     std::queue<std::string> buf;
     std::vector<GGA> msgs;

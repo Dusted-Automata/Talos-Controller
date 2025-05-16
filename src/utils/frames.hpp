@@ -4,11 +4,16 @@
 struct Frame {
     // Eigen::Quaterniond orientation;
     Affine3d orientation = Affine3d::Identity();
-    Ecef pos{ 0, 0, 0 };
+    Vector3d pos{ 0, 0, 0 };
 };
 
 struct NED_Frame : public Frame {
     LLH origin;
+    NED pos{ 0, 0, 0 };
+};
+
+struct Ecef_Frame : public Frame {
+    Ecef pos{ 0, 0, 0 };
 };
 
 class Frames
@@ -19,7 +24,7 @@ class Frames
     // local frame being NED
     // global frame being ecef.
     NED_Frame local_frame;
-    Frame global_frame;
+    Ecef_Frame global_frame;
 
     void init(const std::optional<Ecef> &coordinate);
     void init(const std::vector<Ecef> &waypoints);

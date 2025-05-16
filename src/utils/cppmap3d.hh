@@ -688,11 +688,11 @@ ecef2ned(double x,
     out_down = out_down * -1;
 }
 
-inline Vector3d
+inline NED
 ecef2ned(Ecef ecef, LLH llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
-    Vector3d out = ecef2enu(ecef, llh, ellipsoid);
-    out[2] = out[2] * -1;
+    NED out = ecef2enu(ecef, llh, ellipsoid);
+    out.down() = out.down() * -1;
     return out;
 }
 
@@ -981,11 +981,11 @@ ned2ecef(double north,
 }
 
 inline Ecef
-ned2ecef(Vector3d ned, LLH ref_llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+ned2ecef(NED ned, LLH ref_llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
     Ecef out;
-    enu2ecef(ned.y(), ned.x(), -1 * ned.z(), ref_llh.lat(), ref_llh.lon(), ref_llh.alt(), out.x(), out.y(), out.z(),
-        ellipsoid);
+    enu2ecef(ned.east(), ned.north(), -1 * ned.down(), ref_llh.lat(), ref_llh.lon(), ref_llh.alt(), out.x(), out.y(),
+        out.z(), ellipsoid);
     return out;
 }
 
