@@ -127,12 +127,25 @@ main()
         { 4100164.228392, 476367.548448, 4846291.181639 }
     };
 
+    std::vector<NED> ned_points = {
+        {      0.0,      0.0,       0.0 },
+        { -5.53526,   10.474,   2.60001 },
+        { -3.06181,  11.8087, -0.999988 },
+        { -2.72561,  11.4194, -0.599989 },
+        { -4.99496,  2.31725,      -2.9 },
+        { -6.59191, -7.32251, -0.999992 },
+        { -9.84585, -9.91782, -0.799985 },
+        {  -11.767, -7.54495,  0.800016 }
+    };
+
     Ecef start = { 4100157.662065, 476378.631671, 4846296.665580 };
     LLH origin = cppmap3d::ecef2geodetic(start);
-    for (auto point : waypoints) {
+    // for (auto point : waypoints) {
+    for (auto point : ned_points) {
         // Vector3d ned = wgsecef2ned_d(start, point); // THESE ARE SWITCHED
-        NED ned = cppmap3d::ecef2ned(point, origin); // THESE ARE SWITCHED
-        std::cout << ned.raw().transpose() << std::endl;
+        // NED ned = cppmap3d::ecef2ned(point, origin); // THESE ARE SWITCHED
+        Ecef ned = cppmap3d::ned2ecef(point, origin); // THESE ARE SWITCHED
+        std::cout << std::fixed << ned.raw().transpose() << std::endl;
     }
 
     Sim_Quadruped robot;
