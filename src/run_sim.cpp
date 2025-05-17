@@ -143,8 +143,8 @@ main()
     // for (auto point : waypoints) {
     for (auto point : ned_points) {
         // Vector3d ned = wgsecef2ned_d(start, point); // THESE ARE SWITCHED
-        // NED ned = cppmap3d::ecef2ned(point, origin); // THESE ARE SWITCHED
-        Ecef ned = cppmap3d::ned2ecef(point, origin); // THESE ARE SWITCHED
+        // NED ned = cppmap3d::ecef2ned(point, origin);
+        Ecef ned = cppmap3d::ned2ecef(point, origin);
         std::cout << std::fixed << ned.raw().transpose() << std::endl;
     }
 
