@@ -693,6 +693,9 @@ ecef2ned(Ecef ecef, LLH llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
     NED out = ecef2enu(ecef, llh, ellipsoid);
     out.down() = out.down() * -1;
+    double tmp = out.east();
+    out.east() = out.north();
+    out.north() = tmp;
     return out;
 }
 
