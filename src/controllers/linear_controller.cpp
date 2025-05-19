@@ -18,7 +18,6 @@ above_epsilon(double lat, double lng, double alt)
 Velocity2d
 Linear_Controller::get_cmd()
 {
-    double goal_tolerance = 0.3; // meters
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
 
     if (robot->sensor_manager.get_latest(Sensor_Name::UBLOX).has_value()) {
@@ -29,7 +28,6 @@ Linear_Controller::get_cmd()
 
         if (above_epsilon(lat, lng, alt)) {
             // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
-            printf("LLH: %f, %f, %f\n", lat, lng, alt);
             robot->frames.update_based_on_measurement({ lat, lng, alt });
         }
         robot->sensor_manager.consume_measurement();
@@ -55,10 +53,10 @@ Linear_Controller::get_cmd()
         return cmd;
     }
 
-    cmd.linear.x() = linear_pid.update(-diff.x(), 1.0 / robot->hz);
+    cmd.linear.x() = linear_pid.update(0, -diff.x(), 1.0 / robot->hz);
     cmd.linear.y() = 0.0;
     cmd.linear.z() = 0.0;
-    cmd.angular.z() = angular_pid.update(-yaw_error, 1.0 / robot->hz);
+    cmd.angular.z() = angular_pid.update(0, -yaw_error, 1.0 / robot->hz);
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
 
