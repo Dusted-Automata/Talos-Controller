@@ -23,25 +23,24 @@ class Sim_Quadruped : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        // Robot_Config config = {
-        //     .hz = 50,
-        //     .motion_constraints =
-        //         {
-        //             .max_velocity = 2.0,
-        //             .max_acceleration = 0.5,
-        //             .max_deceleration = 0.5,
-        //             .max_jerk = 0.0,
-        //         },
-        // };
+        Robot_Config config = {
+            .hz = 50,
+            .motion_constraints =
+            {
+                .v_max = 2.5,
+                .v_min = -2.0,
+                .omega_max = 2.0,
+                .omega_min = -2.0,
+                .a_max = 100.0,
+                .a_min = 100.0,
+                .j_max = 0.0,
+            },
+        };
 
         PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-        PIDController linear_pid(linear_gains);
-        linear_pid.output_max = 2.5;
-        linear_pid.output_min = 2.0;
-        PIDGains angular_gains = { 5.0, 1.15, 0.06 };
-        PIDController angular_pid(angular_gains);
-        angular_pid.output_max = 2.0;
-        angular_pid.output_min = -2.0;
+        LinearPID linear_pid(config, linear_gains);
+        PIDGains angular_gains = { 1.0, 1.15, 0.06 };
+        AngularPID angular_pid(config, angular_gains);
 
         trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
         trajectory_controller->robot = this;

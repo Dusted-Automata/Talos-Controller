@@ -3,7 +3,7 @@
 #include <iostream>
 
 double
-PIDController::update(double measured_value, double dt)
+PIDController::update(double setpoint, double measured_value, double dt)
 {
 
     double error = setpoint - measured_value;

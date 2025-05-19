@@ -45,25 +45,24 @@ class Go1 : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        // Robot_Config config = {
-        //     .hz = 50,
-        //     .motion_constraints =
-        //         {
-        //             .max_velocity = 0.6,
-        //             .max_acceleration = 100.0,
-        //             .max_deceleration = 100.0,
-        //             .max_jerk = 0.0,
-        //         },
-        // };
+        Robot_Config config = {
+            .hz = 50,
+            .motion_constraints =
+            {
+                .v_max = 0.5,
+                .v_min = 0.0,
+                .omega_max = 2.5,
+                .omega_min = -2.5,
+                .a_max = 100.0,
+                .a_min = 100.0,
+                .j_max = 0.0,
+            },
+        };
 
         PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-        PIDController linear_pid(linear_gains);
-        linear_pid.output_max = 0.5;
-        linear_pid.output_min = 0.0;
+        LinearPID linear_pid(config, linear_gains);
         PIDGains angular_gains = { 1.0, 0.01, 0.25 };
-        PIDController angular_pid(angular_gains);
-        angular_pid.output_max = 2.5;
-        angular_pid.output_min = -2.5;
+        AngularPID angular_pid(config, angular_gains);
         trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
         trajectory_controller->robot = this;
     }

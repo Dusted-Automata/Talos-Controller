@@ -312,16 +312,31 @@ struct Pose {
     Affine3d transformation_matrix; // Change this to Quaternion maybe
 };
 
+struct Kinematic_Constraints {
+    double v_max = 0;       // max linear velocity (m/s)
+    double v_min = 0;       // min linear velocity (m/s)
+    double omega_max = 0;   // max angular velocity (rad/s)
+    double omega_min = 0;   // min angular velocity (rad/s)
+    double a_max = 0;       // max linear acceleration (m/s^2)
+    double a_min = 0;       // max linear deceleration (m/s^2), possibly negative
+    double alpha_max = 0;   // max angular acceleration
+    double j_max = 0;       // max Linear jerk (m/s^3)
+    double j_omega_max = 0; // max Angular jerk (m/s^3)
+};
+
 struct Motion_Constraints {
-    double max_velocity;
-    double max_acceleration;
-    double max_deceleration;
-    double max_jerk;
+    double max_velocity = 0;
+    double min_velocity = 0;
+    double max_velocity_turn = 0;
+    double min_velocity_turn = 0;
+    double max_acceleration = 0;
+    double max_deceleration = 0;
+    double max_jerk = 0;
 };
 
 struct Robot_Config {
     int hz;
-    Motion_Constraints motion_constraints;
+    Kinematic_Constraints motion_constraints;
 };
 
 struct Motion_Step {
