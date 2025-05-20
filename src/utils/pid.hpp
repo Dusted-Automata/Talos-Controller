@@ -44,7 +44,7 @@ class AngularPID : public PIDController
   public:
     AngularPID(Robot_Config &config, PIDGains gains) : PIDController(gains)
     {
-        output_min = config.motion_constraints.omega_max;
-        output_max = config.motion_constraints.omega_min;
+        output_min = config.motion_constraints.omega_min;
+        output_max = config.motion_constraints.omega_max;
     }
 };

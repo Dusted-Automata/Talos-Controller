@@ -39,7 +39,7 @@ Linear_Controller::get_cmd()
         angular_pid.reset();
         return cmd;
     }
-    NED goal = cppmap3d::ecef2ned(target_waypoint.value(), robot->frames.local_frame.origin);
+    ENU goal = cppmap3d::ecef2enu(target_waypoint.value(), robot->frames.local_frame.origin);
     Vector3d diff = goal.raw() - robot->frames.local_frame.pos.raw();
     diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
     double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());

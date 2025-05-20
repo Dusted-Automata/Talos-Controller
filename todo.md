@@ -1,25 +1,36 @@
-
-Check Navviewer Integration
+# General
+Put units in variable name.
+500hz -> maybe lower?
 
 # Controllers
 - Change the setpoints -> use a trapezoidal velocity profile function
+-> use distance, current speed, and velocity profile.
+nicht bremsen
 
 # Robots
 - Create a wheelchair robot
+- Bring up G1 Human Robot
 
 # Waypoints
 - Easier way to create and manage the waypoints
-- Waypoints don't start from the beginning on rerun
+- Global Path planner
+- Local path planner
 
 # Sim
 - In sim show where the robot was and then teleported to after relocalisation from Ublox
 - Transistion to 3D environment so that i can see the rotations and the actual world better.
 - Show Trajectory that was made while driving.
 - Show future of trajectory maybe? 
+- switch between 3d and 2d with a hotkey.
+- Show PointCloud for like lidar and such.
+- Show Path
 
 # Sensors
-- Change to thread per Sensor
 
 # Sockets
-- use Thread instead of poll
 
+
+-- # V.2 # -- 
+ 
+decouple viewer from project and have the controllers and sensors send information to a 
+memory place where viewers and such could use it.

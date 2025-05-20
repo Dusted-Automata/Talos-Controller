@@ -211,6 +211,17 @@ enu2uvw(double et, double nt, double up, double lat, double lon, double &out_u, 
     out_w = std::sin(lat) * up + std::cos(lat) * nt;
 }
 
+inline Vector3d
+enu2uvw(ENU enu, LLH ll)
+{
+    Vector3d out;
+    double t = std::cos(ll.lat()) * enu.up() - std::sin(ll.lat()) * enu.north();
+    out.x() = std::cos(ll.lon()) * t - std::sin(ll.lon()) * enu.east();
+    out.y() = std::sin(ll.lon()) * t + std::cos(ll.lon()) * enu.east();
+    out.z() = std::sin(ll.lat()) * enu.up() + std::cos(ll.lat()) * enu.north();
+    return out;
+}
+
 /**
  * @brief Internal function used in conversions certain coordinate conversions
  */
@@ -693,7 +704,7 @@ ecef2ned(Ecef ecef, LLH llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
 {
     NED out = ecef2enu(ecef, llh, ellipsoid);
     out.down() = out.down() * -1;
-    double tmp = out.east();
+    double tmp = -out.east();
     out.east() = out.north();
     out.north() = tmp;
     return out;
@@ -734,6 +745,17 @@ enu2ecef(double east,
     out_x = out_x + x;
     out_y = out_y + y;
     out_z = out_z + z;
+}
+
+inline Ecef
+enu2ecef(ENU enu, LLH llh, Ellipsoid ellipsoid = Ellipsoid::WGS84)
+{
+    Ecef ecef = geodetic2ecef(llh, ellipsoid);
+    Vector3d uvw = internal::enu2uvw(enu, llh);
+    ecef.x() = uvw.x() + ecef.x();
+    ecef.y() = uvw.y() + ecef.y();
+    ecef.z() = uvw.z() + ecef.z();
+    return ecef;
 }
 
 /**

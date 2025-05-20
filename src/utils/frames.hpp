@@ -9,7 +9,7 @@ struct Frame {
 
 struct NED_Frame : public Frame {
     LLH origin;
-    NED pos{ 0, 0, 0 };
+    ENU pos{ 0, 0, 0 };
 };
 
 struct Ecef_Frame : public Frame {

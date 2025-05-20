@@ -193,6 +193,91 @@ struct Ecef {
     }
 };
 
+struct ENU {
+  private:
+    Eigen::Vector3d v;
+
+  public:
+    ENU() {}
+    ENU(double lat, double lon, double h) : v(lat, lon, h) {}
+    ENU(const Eigen::Vector3d &vec) : v(vec) {}
+
+    double
+    east() const
+    {
+        return v.x();
+    }
+
+    double
+    north() const
+    {
+        return v.y();
+    }
+
+    double
+    up() const
+    {
+        return v.z();
+    }
+
+    // Setter methods (non-const)
+    double &
+    north()
+    {
+        return v.x();
+    }
+
+    double &
+    east()
+    {
+        return v.y();
+    }
+
+    double &
+    down()
+    {
+        return v.z();
+    }
+
+    Vector3d
+    operator-(const ENU &other) const
+    {
+        return Vector3d(v - other.v);
+    }
+
+    ENU
+    operator+(const Vector3d &other) const
+    {
+        return ENU(v + other);
+    }
+
+    ENU
+    operator-(const Vector3d &other) const
+    {
+        return ENU(v - other);
+    }
+
+    ENU &
+    operator+=(const Vector3d &other)
+    {
+        v += other;
+        return *this;
+    }
+
+    ENU &
+    operator-=(const Vector3d &other)
+    {
+        v -= other;
+        return *this;
+    }
+
+    const Eigen::Vector3d &
+    raw() const
+    {
+        return v;
+    }
+};
+
 struct NED {
   private:
     Eigen::Vector3d v;

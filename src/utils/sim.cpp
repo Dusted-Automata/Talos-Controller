@@ -108,7 +108,7 @@ Sim_Display::display()
         draw_absolute_grid(camera, gridStep);
 
         for (size_t i = 0; i < waypoints.size(); i++) {
-            NED waypoint = cppmap3d::ecef2ned(waypoints[i], robot.frames.local_frame.origin);
+            ENU waypoint = cppmap3d::ecef2enu(waypoints[i], robot.frames.local_frame.origin);
             DrawCircle((int)waypoint.north(), (int)-waypoint.east(), 0.8f, BLUE);
         }
 
@@ -117,8 +117,8 @@ Sim_Display::display()
         if (IsKeyPressed(KEY_SPACE)) {
 
             Vector3d push = { 1.0, 2.0, 0.0 };
-            NED fake_measurement = robot.frames.local_frame.pos + push;
-            Ecef ecef = cppmap3d::ned2ecef(fake_measurement, robot.frames.local_frame.origin);
+            ENU fake_measurement = robot.frames.local_frame.pos + push;
+            Ecef ecef = cppmap3d::enu2ecef(fake_measurement, robot.frames.local_frame.origin);
             LLH llh = cppmap3d::ecef2geodetic(ecef);
             robot.frames.update_based_on_measurement(llh);
         }

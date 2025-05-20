@@ -12,7 +12,7 @@ Frames::move_in_local_frame(const Velocity2d &velocity)
     // std::cout << local_frame.pos.raw().transpose() << std::endl;
     // std::cout << local_frame.orientation.rotation() * velocity.linear << std::endl;
 
-    Ecef new_local_position = cppmap3d::ned2ecef(local_frame.pos, local_frame.origin);
+    Ecef new_local_position = cppmap3d::enu2ecef(local_frame.pos, local_frame.origin);
     // Angular_Velocity test = local_frame.orientation.rotation() * velocity.angular;
     global_frame.orientation.rotate(Eigen::AngleAxisd(velocity.angular.z(), Vector3d::UnitY()));
     // std::cout << new_local_position.raw().transpose() << std::endl;
@@ -35,8 +35,8 @@ Frames::update_based_on_measurement(const LLH &llh)
     std::cout << std::fixed;
     std::cout << "ECEF: " << measured_ecef.raw().transpose() << std::endl;
     // std::cout << "GLOB : " << global_frame.pos.transpose() << std::endl;
-    NED ned = cppmap3d::ecef2ned(measured_ecef, local_frame.origin);
-    local_frame.pos = ned;
+    ENU enu = cppmap3d::ecef2enu(measured_ecef, local_frame.origin);
+    local_frame.pos = enu;
 }
 
 // Vector3d
@@ -96,7 +96,7 @@ Frames::init(const std::vector<Ecef> &waypoints)
         return;
     }
 
-    NED goal = cppmap3d::ecef2ned(waypoints[1], local_frame.origin);
+    ENU goal = cppmap3d::ecef2enu(waypoints[1], local_frame.origin);
     double goal_theta = atan2(goal.east(), goal.north());
     Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
     local_frame.orientation = local_frame.orientation * rot_yaw_goal;

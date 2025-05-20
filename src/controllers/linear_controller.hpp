@@ -8,13 +8,13 @@ class Linear_Controller : public Trajectory_Controller
 {
 
   private:
-    PIDController linear_pid;
-    PIDController angular_pid;
+    LinearPID linear_pid;
+    AngularPID angular_pid;
     double trajectory_time = 0.0;
     double goal_tolerance = 0.75; // meters
 
   public:
-    Linear_Controller(PIDController linear_pid, PIDController angular_pid)
+    Linear_Controller(LinearPID linear_pid, AngularPID angular_pid)
         : linear_pid(linear_pid), angular_pid(angular_pid) {};
     ~Linear_Controller() = default;
 
