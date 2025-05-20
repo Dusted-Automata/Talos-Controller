@@ -47,7 +47,7 @@ Linear_Controller::get_cmd()
     double yaw_error = atan2(diff.y(), diff.x());
 
     if (dist < goal_tolerance) {
-        robot->path.goal_reached();
+        robot->path.pop();
         linear_pid.reset();
         angular_pid.reset();
         return cmd;

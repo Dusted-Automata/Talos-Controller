@@ -115,23 +115,25 @@ main()
     //     { 4100241.7219579100, 476441.0557096391, 4846281.753675706 }
     // };
 
-    std::vector<Ecef> waypoints = {
-        { 4100157.662065, 476378.631671, 4846296.665580 },
-        { 4100148.690049, 476372.016755, 4846301.445640 },
-        { 4100149.702068, 476374.624433, 4846305.056090 },
-        { 4100149.701858, 476374.962868, 4846304.499274 },
-        { 4100158.341835, 476373.682093, 4846300.376217 },
-        { 4100164.617288, 476372.803512, 4846292.699499 },
-        { 4100166.832613, 476369.785077, 4846290.870528 },
-        { 4100164.228392, 476367.548448, 4846291.181639 }
-    };
+    // std::vector<Ecef> waypoints = {
+    //     { 4100157.662065, 476378.631671, 4846296.665580 },
+    //     { 4100148.690049, 476372.016755, 4846301.445640 },
+    //     { 4100149.702068, 476374.624433, 4846305.056090 },
+    //     { 4100149.701858, 476374.962868, 4846304.499274 },
+    //     { 4100158.341835, 476373.682093, 4846300.376217 },
+    //     { 4100164.617288, 476372.803512, 4846292.699499 },
+    //     { 4100166.832613, 476369.785077, 4846290.870528 },
+    //     { 4100164.228392, 476367.548448, 4846291.181639 }
+    // };
 
     Sim_Quadruped robot;
 
     robot.path.path_looping = true;
-    robot.path.add_waypoints(waypoints);
+    // robot.path.add_waypoints(waypoints);
     robot.sensor_manager.init();
-    robot.frames.init(waypoints);
+    // robot.frames.init(waypoints);
+    robot.path.read_json_latlon("ecef_points.json");
+    robot.frames.init(robot.path.path_points_all);
 
     // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
     // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));
@@ -143,7 +145,7 @@ main()
     /*robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
      * Vector3d::UnitY()));*/
 
-    Sim_Display sim = Sim_Display(robot, waypoints);
+    Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
     robot.start();
 
     sim.display();
