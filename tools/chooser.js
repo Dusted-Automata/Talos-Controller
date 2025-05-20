@@ -41,7 +41,9 @@ function saveECEFPointsAsJSON() {
             x: point[0],
             y: point[1],
             z: point[2],
-            originalLatLng: points[index]
+            lat: points[index][0],
+            lon: points[index][1],
+            alt: points[index][2]
         }))
     };
     
