@@ -100,7 +100,7 @@ parse_gga(std::string &msg)
     parse_latlng(gga, arr[2], arr[3], arr[4], arr[5]);
     parse_fix(gga, arr[6]);
 
-    gga.num_satalites = parse_uint8(arr[6]);
+    gga.num_satalites = parse_uint8(arr[7]);
     gga.hddp = parse_float(arr[8]);
     gga.alt = parse_double(arr[9]);
     gga.geoid_seperation = parse_float(arr[11]);

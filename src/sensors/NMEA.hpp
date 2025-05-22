@@ -20,6 +20,7 @@ enum class NMEA_Cmd {
 };
 
 // https://cdn.sparkfun.com/assets/f/7/4/3/5/PM-15136.pdf#%5B%7B%22num%22%3A64%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C0%2C609.45%2Cnull%5D
+}
 
 struct GGA {
     enum class Fix {
@@ -33,6 +34,24 @@ struct GGA {
         MANUAL = 7,    ///< Manual input mode.
         SIMULATION = 8 ///< Simulation mode.
     };
+
+    static std::string
+    fixToString(Fix fix)
+    {
+        switch (fix) {
+        case Fix::NONE: return "NONE";
+        case Fix::GPS: return "GPS";
+        case Fix::DGPS: return "DGPS";
+        case Fix::PPS: return "PPS";
+        case Fix::RTK: return "RTK";
+        case Fix::RTK_FLOAT: return "RTK_FLOAT";
+        case Fix::ESTIMATED: return "ESTIMATED";
+        case Fix::MANUAL: return "MANUAL";
+        case Fix::SIMULATION: return "SIMULATION";
+        default: return "Unknown";
+        }
+    }
+
     // All of the char arrays, have space for null termination.
     UTC_Time time; // UTC time - hhmmss.ss
     LatLng latlng;
@@ -50,7 +69,7 @@ struct GGA {
         std::cout << "time: " << (int)time.hh << ":" << (int)time.mm << ":" << (int)time.ss << ":" << (int)time.ms
                   << std::endl;
         std::cout << "latlng: " << latlng.lat << " , " << latlng.lng << std::endl;
-        std::cout << "fix: " << static_cast<int>(fix) << std::endl;
+        std::cout << "fix: " << fixToString(fix) << std::endl;
         std::cout << "num_satellites: " << static_cast<int>(num_satalites) << std::endl;
         std::cout << "hdop: " << hddp << std::endl;
         std::cout << "altitude: " << alt << " meters" << std::endl;
