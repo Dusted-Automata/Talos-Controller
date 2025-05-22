@@ -409,19 +409,13 @@ struct Kinematic_Constraints {
     double j_omega_max = 0; // max Angular jerk (m/s^3)
 };
 
-struct Motion_Constraints {
-    double max_velocity = 0;
-    double min_velocity = 0;
-    double max_velocity_turn = 0;
-    double min_velocity_turn = 0;
-    double max_acceleration = 0;
-    double max_deceleration = 0;
-    double max_jerk = 0;
-};
-
 struct Robot_Config {
     int hz;
-    Kinematic_Constraints motion_constraints;
+    Kinematic_Constraints kinematic_constraints;
+};
+
+struct Navigation_State {
+    Velocity2d velocity;
 };
 
 struct Motion_Step {
