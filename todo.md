@@ -8,8 +8,9 @@ Put units in variable name.
 nicht bremsen
 
 # Robots
-- Create a wheelchair robot
+- Create a wheelchair robot (PRIORITY)
 - Bring up G1 Human Robot
+- use a Abstracted away Navigation_State reader (PRIORITY)
 
 # Waypoints
 - Easier way to create and manage the waypoints
@@ -26,6 +27,7 @@ nicht bremsen
 - Show Path
 
 # Sensors
+- use UBLOX IMU for read navigation state (PRIORITY)
 
 # Sockets
 
