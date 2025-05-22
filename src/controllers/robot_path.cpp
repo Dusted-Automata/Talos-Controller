@@ -1,4 +1,6 @@
 #include "robot_path.hpp"
+#include "EGM96.hpp"
+#include "cppmap3d.hh"
 #include "json.hpp"
 #include <fstream>
 #include <iostream>
@@ -44,17 +46,17 @@ Robot_Path::read_json_latlon(std::string file_path)
         return 1;
     }
     json data = json::parse(file);
-    double lat, lon;
+    LLH llh;
     std::vector<Ecef> waypoints;
     for (auto point : data["points"]) {
-        lat = point["lat"];
-        lon = point["lon"];
-        Ecef ecef;
-        ecef.x() = point["x"];
-        ecef.y() = point["y"];
-        ecef.z() = point["z"];
+        llh.lat() = to_radian(point["lat"]);
+        llh.lon() = to_radian(point["lon"]);
+        llh.alt() = point["alt"];
+        double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
+        llh.alt() += offset;
+        Ecef ecef = cppmap3d::geodetic2ecef(llh);
         waypoints.push_back(ecef);
-        std::cout << "lat: " << lat << " long: " << lon << std::endl;
+        std::cout << "lat: " << llh.lat() << " long: " << llh.lon() << " alt: " << llh.alt() << std::endl;
     }
     add_waypoints(waypoints);
     return 0;
