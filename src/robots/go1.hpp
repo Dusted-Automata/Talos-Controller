@@ -47,14 +47,14 @@ class Go1 : public Robot
 
         Robot_Config config = {
             .hz = 50,
-            .motion_constraints =
+            .kinematic_constraints =
             {
                 .v_max = 0.5,
                 .v_min = 0.0,
                 .omega_max = 2.5,
                 .omega_min = -2.5,
                 .a_max = 100.0,
-                .a_min = 100.0,
+                .a_min = -100.0,
                 .j_max = 0.0,
             },
         };

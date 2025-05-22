@@ -15,9 +15,7 @@ class Sim_Quadruped : public Robot
 
   public:
     Sim_Quadruped()
-    { // horizon_steps, num_samples, dt, temperature
-
-        // Initialize robot state
+    {
         pose_state.position = Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
         pose_state.orientation = Eigen::Affine3d::Identity();
         pose_state.velocity.linear = Vector3d::Zero();
@@ -25,14 +23,14 @@ class Sim_Quadruped : public Robot
 
         Robot_Config config = {
             .hz = 50,
-            .motion_constraints =
+            .kinematic_constraints =
             {
                 .v_max = 2.5,
                 .v_min = -2.0,
                 .omega_max = 2.0,
                 .omega_min = -2.0,
                 .a_max = 100.0,
-                .a_min = 100.0,
+                .a_min = -100.0,
                 .j_max = 0.0,
             },
         };
@@ -108,23 +106,6 @@ class Sim_Quadruped : public Robot
 int
 main()
 {
-    // std::vector<Ecef> waypoints = {
-    //     { 4100175.6251356260, 476368.7899695045, 4846344.356704135 },
-    //     { 4100209.6729529747, 476361.2681338759, 4846316.478097512 },
-    //     { 4100218.5394949187, 476445.5598077707, 4846300.796185957 },
-    //     { 4100241.7219579100, 476441.0557096391, 4846281.753675706 }
-    // };
-
-    // std::vector<Ecef> waypoints = {
-    //     { 4100157.662065, 476378.631671, 4846296.665580 },
-    //     { 4100148.690049, 476372.016755, 4846301.445640 },
-    //     { 4100149.702068, 476374.624433, 4846305.056090 },
-    //     { 4100149.701858, 476374.962868, 4846304.499274 },
-    //     { 4100158.341835, 476373.682093, 4846300.376217 },
-    //     { 4100164.617288, 476372.803512, 4846292.699499 },
-    //     { 4100166.832613, 476369.785077, 4846290.870528 },
-    //     { 4100164.228392, 476367.548448, 4846291.181639 }
-    // };
 
     Sim_Quadruped robot;
 
