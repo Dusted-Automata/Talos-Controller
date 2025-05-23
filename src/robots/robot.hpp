@@ -13,16 +13,18 @@ class Robot
     // MAIN CONTROL THREAD
     // PATH GENERATION THREAD
     // SENSOR PROCESSING THREAD
+    std::atomic<bool> running = false;
+    std::thread control_loop_thread;
+    std::chrono::steady_clock::time_point motion_time_start;
 
   public:
-    virtual ~Robot() = default;
+    virtual ~Robot() { shutdown(); };
 
     Pose_State pose_state;
     std::unique_ptr<Trajectory_Controller> trajectory_controller;
     Frames frames = {};
 
-    double hz = 500.0;
-    double motion_time = 0;
+    int hz = 500;
     Robot_Config config = {};
     Logger logger = {};
     Sensor_Manager sensor_manager = {};
@@ -32,4 +34,6 @@ class Robot
     virtual Pose_State read_state() = 0;
 
     void control_loop();
+    void start();
+    void shutdown();
 };

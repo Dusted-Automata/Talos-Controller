@@ -1,4 +1,3 @@
-#include "cppmap3d.hh"
 #include "linear_controller.hpp"
 #include "pid.hpp"
 #include "raylib.h"
@@ -8,11 +7,6 @@
 class Sim_Quadruped : public Robot
 {
 
-  private:
-    bool running = false;
-    std::thread control_loop_thread;
-    int HZ = 500;
-
   public:
     Sim_Quadruped()
     {
@@ -21,8 +15,8 @@ class Sim_Quadruped : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        Robot_Config config = {
-            .hz = 50,
+        config = {
+            .control_loop_hz = 500,
             .kinematic_constraints =
             {
                 .v_max = 2.5,
@@ -64,43 +58,12 @@ class Sim_Quadruped : public Robot
         velocity.angular *= pose_state.dt;
         frames.move_in_local_frame(velocity);
     };
-    void
-    start()
-    {
-        if (running) return;
-        running = true;
-
-        if (control_loop_thread.joinable()) {
-            control_loop_thread.join();
-        }
-
-        control_loop_thread = std::thread(&Sim_Quadruped::control_loop, this);
-    }
-
-    void
-    shutdown()
-    {
-        running = false;
-        if (control_loop_thread.joinable()) {
-            control_loop_thread.join();
-        }
-    }
 
     Pose_State
     read_state() override
     {
         return pose_state;
     };
-
-    void
-    control_loop()
-    {
-
-        while (running) {
-            Robot::control_loop();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000 / HZ));
-        }
-    }
 };
 
 int

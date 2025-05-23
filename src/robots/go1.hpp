@@ -46,7 +46,7 @@ class Go1 : public Robot
         pose_state.velocity.angular = Vector3d::Zero();
 
         Robot_Config config = {
-            .hz = 50,
+            .control_loop_hz = 500,
             .kinematic_constraints =
             {
                 .v_max = 0.5,
