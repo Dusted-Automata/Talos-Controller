@@ -69,6 +69,8 @@ const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const map = L.map('map', {
     center: [49.767663, 6.627878],
     zoom: 18,
+    zoomDelta: 0.25,
+    zoomSnap: 0,
     layers: [tiles],
     contextmenu: true,
     contextmenuWidth: 140,
