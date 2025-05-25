@@ -11,16 +11,38 @@ void
 Wheelchair::init()
 {
 
-    serial_port = open("/dev/ttyACM0", O_RDWR);
+#define BAUDRATE B115200
+#define TTY "/dev/tyACM0"
+#define _POSIX_SOURCE 1
+#define USR_VTIME 0
+#define USR_VMIN 5
+
+    // https://tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
+    serial_port = open(TTY, O_RDWR | O_NOCTTY);
 
     if (serial_port < 0) {
         std::cerr << "Error: " << errno << " from open " << strerror(errno) << std::endl;
     }
 
-    termios tty;
-    if (tcgetattr(serial_port, &tty) != 0) {
+    termios old_tty, new_tty;
+    if (tcgetattr(serial_port, &old_tty) != 0) {
         std::cerr << "Error: " << errno << " from tcgetattr " << strerror(errno) << std::endl;
     }
+    bzero(&new_tty, sizeof(new_tty));
+    new_tty.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
+    // new_tty.c_cflag &= ~CRTSCTS;
+    new_tty.c_iflag = IGNPAR;
+    new_tty.c_oflag = 0;
+    new_tty.c_lflag = 0;
+
+    new_tty.c_cc[VTIME] = USR_VTIME; // inter character timer
+    new_tty.c_cc[VMIN] = USR_VMIN;   // amount of characters read blocks
+
+    tcflush(serial_port, TCIFLUSH);
+    tcsetattr(serial_port, TCSANOW, &new_tty);
+
+    // READ and WRITE
+    tcsetattr(serial_port, TCSANOW, &old_tty);
 }
 
 Joystick
