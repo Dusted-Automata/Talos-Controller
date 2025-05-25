@@ -44,9 +44,12 @@ target_to_char(Command_Target target)
 struct Command {
     Command_Action action;
     Command_Target target;
-    std::optional<uint8_t> value;
+    std::optional<std::string> value;
 
-    Command(Command_Action action, Command_Target target, int val) : action(action), target(target), value(val) {}
+    Command(Command_Action action, Command_Target target, std::string val)
+        : action(action), target(target), value(std::move(val))
+    {
+    }
     Command(Command_Action action, Command_Target target) : action(action), target(target), value(std::nullopt) {}
 
     std::string
@@ -62,25 +65,31 @@ struct Command {
     }
 };
 
+struct Joystick {
+    uint8_t x;
+    uint8_t y;
+};
+
 class Wheelchair : public Robot
 {
   private:
-    std::string scale_joystick(Velocity2d vel);
     void init();
+    Joystick scale_to_joystick(const Velocity2d &vel);
+    std::string joystick_to_hex(Joystick stick_pos);
 
   public:
     Wheelchair()
     {
-        pose_state.position = Eigen::Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
+        pose_state.position = Eigen::Vector3d(0, 0, 0); // Starting position with z=0.5 (standing)
         pose_state.orientation = Eigen::Affine3d::Identity();
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        Robot_Config config = {
+        config = {
             .control_loop_hz = 500,
             .kinematic_constraints =
             {
-                .v_max = 0.5,
+                .v_max = 2.5,
                 .v_min = 0.0,
                 .omega_max = 2.5,
                 .omega_min = -2.5,
@@ -97,6 +106,8 @@ class Wheelchair : public Robot
         trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
         trajectory_controller->robot = this;
     }
+
+    ~Wheelchair() { shutdown(); };
 
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;

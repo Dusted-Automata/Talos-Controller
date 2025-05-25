@@ -1,38 +1,68 @@
 #include "wheelchair.hpp"
 #include "sim.hpp"
+#include "types.hpp"
 
-std::string
-Wheelchair::scale_joystick(Velocity2d vel)
+Joystick
+Wheelchair::scale_to_joystick(const Velocity2d &vel)
 {
     double scaled_x = vel.linear.x();
     double scaled_yaw = vel.angular.y();
 
     if (vel.linear.x() >= 0) {
-        scaled_x = vel.linear.x() / (config.kinematic_constraints.v_max / 100);
+        scaled_x = std::min(100.0, (vel.linear.x() / config.kinematic_constraints.v_max) * 100);
     } else {
-        scaled_x = vel.linear.x() / (config.kinematic_constraints.v_min / 100);
+        double scale = std::abs((vel.linear.x() / config.kinematic_constraints.v_min) * 100);
+        scaled_x = 0x9B + scale;
+        if (static_cast<uint8_t>(scaled_yaw) == 0x9B) {
+            scaled_x = 0;
+        }
     }
 
-    if (vel.angular.y() >= 0) {
-        scaled_yaw = vel.angular.y() / (config.kinematic_constraints.omega_max / 100);
+    // TODO: Check if the wheelchair even has a different yaw speed, or if it needs to just be scaled with the
+    // general velocity max range, and just capped.
+    if (vel.angular.z() >= 0) {
+        scaled_yaw = std::min(100.0, (vel.angular.z() / config.kinematic_constraints.omega_max) * 100);
     } else {
-        scaled_yaw = vel.angular.y() / (config.kinematic_constraints.omega_min / 100);
+        double scale = std::abs((vel.angular.z() / config.kinematic_constraints.omega_min) * 100);
+        scaled_yaw = 0x9B + scale;
+        if (static_cast<uint8_t>(scaled_yaw) == 0x9B) {
+            scaled_yaw = 0;
+        }
+
+        std::cout << scaled_yaw << std::endl;
     }
 
-    // std::string hex = std::format("{:02X},{:02X}", scaled_x, scaled_yaw);
-    std::string hex = std::format("{:02X},{:02X}", static_cast<int>(scaled_x), static_cast<int>(scaled_yaw));
+    Joystick stick = { .x = static_cast<uint8_t>(scaled_x), .y = static_cast<uint8_t>(scaled_yaw) };
 
+    return stick;
+}
+
+std::string
+Wheelchair::joystick_to_hex(Joystick stick_pos)
+{
+    std::string hex = std::format("{:02X},{:02X}", stick_pos.x, stick_pos.y);
     return hex;
+}
+
+void
+Wheelchair::send_velocity_command(Velocity2d &velocity)
+{
+    pose_state.velocity = velocity; // FOR DEADRECKONING
+    Joystick stick = scale_to_joystick(velocity);
+    std::string js_hex = joystick_to_hex(stick);
+    Command cmd(Command_Action::SET, Command_Target::JOYSTICK, js_hex);
+    std::cout << "vel: " << velocity.linear.x() << "|" << velocity.angular.z() << " " << cmd.to_string() << std::endl;
+}
+
+Pose_State
+Wheelchair::read_state()
+{
+    return pose_state;
 }
 
 int
 main(void)
 {
-    std::cout << "Robot level set to: HIGH" << std::endl
-              << "WARNING: Make sure the robot is standing on the ground." << std::endl
-              << "Press Enter to continue..." << std::endl;
-    std::cin.ignore();
-
     Wheelchair robot;
     robot.path.path_looping = true;
     robot.sensor_manager.init();
@@ -40,6 +70,8 @@ main(void)
     robot.frames.init(robot.path.path_points_all);
 
     Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
+
+    robot.start();
     sim.display();
 
     CloseWindow();
