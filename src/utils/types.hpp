@@ -385,10 +385,10 @@ to_radian(double degrees)
 }
 
 struct Pose_State {
-    Ecef position; // x, y, z
-    Affine3d orientation;
+    Ecef position = Eigen::Vector3d(0, 0, 0); // x, y, z
+    Affine3d orientation = Eigen::Affine3d::Identity();
     // Eigen::Quaterniond orientation; // quaternion
-    Velocity2d velocity; // vx, vy, vz \  wx, wy, wz
+    Velocity2d velocity = { .linear = Vector3d::Zero(), .angular = Vector3d::Zero() }; // vx, vy, vz \  wx, wy, wz
     double dt;
 };
 
