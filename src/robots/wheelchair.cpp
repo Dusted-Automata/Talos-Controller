@@ -2,6 +2,27 @@
 #include "sim.hpp"
 #include "types.hpp"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+
+void
+Wheelchair::init()
+{
+
+    serial_port = open("/dev/ttyACM0", O_RDWR);
+
+    if (serial_port < 0) {
+        std::cerr << "Error: " << errno << " from open " << strerror(errno) << std::endl;
+    }
+
+    termios tty;
+    if (tcgetattr(serial_port, &tty) != 0) {
+        std::cerr << "Error: " << errno << " from tcgetattr " << strerror(errno) << std::endl;
+    }
+}
+
 Joystick
 Wheelchair::scale_to_joystick(const Velocity2d &vel)
 {

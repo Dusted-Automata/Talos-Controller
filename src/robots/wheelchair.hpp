@@ -74,6 +74,7 @@ class Wheelchair : public Robot
 {
   private:
     void init();
+    int serial_port = -1;
     Joystick scale_to_joystick(const Velocity2d &vel);
     std::string joystick_to_hex(Joystick stick_pos);
 
