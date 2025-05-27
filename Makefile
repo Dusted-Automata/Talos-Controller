@@ -9,7 +9,7 @@ run:
 controller:
 	./build/controller
 
-traj_run:
-	./build/trajectory_run
+wheelchair:
+	./build/wheelchair
 
 .PHONY : run

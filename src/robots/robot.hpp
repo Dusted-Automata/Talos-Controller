@@ -24,7 +24,6 @@ class Robot
     std::unique_ptr<Trajectory_Controller> trajectory_controller;
     Frames frames = {};
 
-    int hz = 500;
     Robot_Config config = {};
     Logger logger = {};
     Sensor_Manager sensor_manager = {};

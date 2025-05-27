@@ -97,9 +97,12 @@ main(void)
     robot.sensor_manager.init();
     robot.frames.init(waypoints);
 
-    UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::control_loop, &robot));
-    UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::UDPRecv, &robot));
-    UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot.hz), 3, boost::bind(&Go1::UDPSend, &robot));
+    UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.config.control_loop_hz), 3,
+        boost::bind(&Go1::control_loop, &robot));
+    UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.config.control_loop_hz), 3,
+        boost::bind(&Go1::UDPRecv, &robot));
+    UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot.config.control_loop_hz), 3,
+        boost::bind(&Go1::UDPSend, &robot));
 
     loop_udpSend.start();
     loop_udpRecv.start();
