@@ -14,8 +14,6 @@ Wheelchair::init()
 #define BAUDRATE B115200
 #define TTY "/dev/ttyACM0"
 
-    // https://tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
-    // serial_port = open(TTY, O_RDWR | O_NOCTTY);
     tty_acm_fd = open(TTY, O_RDWR | O_NOCTTY | O_SYNC);
 
     if (tty_acm_fd < 0) {
@@ -52,18 +50,6 @@ Wheelchair::init()
 
     Command set_cmd(Command_Action::SET, Command_Target::INPUT, "1");
     ::write(tty_acm_fd, set_cmd.to_string().data(), set_cmd.to_string().size());
-
-    // std::this_thread::sleep_for(std::chrono::seconds(10));
-
-    // bytes = read(tty_acm_fd, tty_read_buf.data(), tty_read_buf.size());
-    // std::cout << bytes << std::endl;
-    // if (bytes > 0) {
-    //     tty_read_buf[bytes] = 0;
-    //     std::cout << tty_read_buf.data() << std::endl;
-    // }
-
-    // READ and WRITE
-    // tcsetattr(serial_port, TCSANOW, &old_tty);
 }
 
 Joystick
