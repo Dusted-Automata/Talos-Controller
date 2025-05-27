@@ -58,24 +58,24 @@ Joystick
 Wheelchair::scale_to_joystick(const Velocity2d &vel)
 {
     double scaled_x = vel.linear.x();
-    double scaled_yaw = vel.angular.y();
+    double scaled_yaw = -vel.angular.z();
 
-    if (vel.linear.x() >= 0) {
-        scaled_x = std::min(100.0, (vel.linear.x() / config.kinematic_constraints.v_max) * 100);
+    if (scaled_x >= 0) {
+        scaled_x = std::min(100.0, (scaled_x / config.kinematic_constraints.v_max) * 100);
     } else {
-        double scale = std::abs((vel.linear.x() / config.kinematic_constraints.v_min) * 100);
+        double scale = std::abs((scaled_x / config.kinematic_constraints.v_min) * 100);
         scaled_x = 0x9B + scale;
-        if (static_cast<uint8_t>(scaled_yaw) == 0x9B) {
+        if (static_cast<uint8_t>(scaled_x) == 0x9B) {
             scaled_x = 0;
         }
     }
 
     // TODO: Check if the wheelchair even has a different yaw speed, or if it needs to just be scaled with the
     // general velocity max range, and just capped.
-    if (vel.angular.z() >= 0) {
-        scaled_yaw = std::min(100.0, (vel.angular.z() / config.kinematic_constraints.omega_max) * 100);
+    if (scaled_yaw >= 0) {
+        scaled_yaw = std::min(100.0, (scaled_yaw / config.kinematic_constraints.omega_max) * 100);
     } else {
-        double scale = std::abs((vel.angular.z() / config.kinematic_constraints.omega_min) * 100);
+        double scale = std::abs((scaled_yaw / config.kinematic_constraints.omega_min) * 100);
         scaled_yaw = 0x9B + scale;
         if (static_cast<uint8_t>(scaled_yaw) == 0x9B) {
             scaled_yaw = 0;
