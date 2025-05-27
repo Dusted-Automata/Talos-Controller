@@ -91,7 +91,7 @@ class Wheelchair : public Robot
             .control_loop_hz = 15,
             .kinematic_constraints =
             {
-                .v_max = 2.5,
+                .v_max = 0.5,
                 .v_min = 0.0,
                 .omega_max = 2.5,
                 .omega_min = -2.5,
