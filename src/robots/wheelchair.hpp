@@ -58,9 +58,9 @@ struct Command {
         char action_char = action_to_char(action);
         char target_char = target_to_char(target);
         if (value.has_value()) {
-            return std::format("{}{},{}", action_char, target_char, value.value());
+            return std::format("{}{},{}\n", action_char, target_char, value.value());
         } else {
-            return std::format("{}{}", action_char, target_char);
+            return std::format("{}{},\n", action_char, target_char);
         }
     }
 };
@@ -74,9 +74,10 @@ class Wheelchair : public Robot
 {
   private:
     void init();
-    int serial_port = -1;
+    int tty_acm_fd = -1;
     Joystick scale_to_joystick(const Velocity2d &vel);
     std::string joystick_to_hex(Joystick stick_pos);
+    std::array<char, 128> tty_read_buf;
 
   public:
     Wheelchair()
@@ -87,7 +88,7 @@ class Wheelchair : public Robot
         pose_state.velocity.angular = Vector3d::Zero();
 
         config = {
-            .control_loop_hz = 500,
+            .control_loop_hz = 15,
             .kinematic_constraints =
             {
                 .v_max = 2.5,
@@ -106,6 +107,7 @@ class Wheelchair : public Robot
         AngularPID angular_pid(config, angular_gains);
         trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
         trajectory_controller->robot = this;
+        init();
     }
 
     ~Wheelchair() { shutdown(); };

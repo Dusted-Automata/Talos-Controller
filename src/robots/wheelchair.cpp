@@ -12,37 +12,58 @@ Wheelchair::init()
 {
 
 #define BAUDRATE B115200
-#define TTY "/dev/tyACM0"
-#define _POSIX_SOURCE 1
-#define USR_VTIME 0
-#define USR_VMIN 5
+#define TTY "/dev/ttyACM0"
 
     // https://tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
-    serial_port = open(TTY, O_RDWR | O_NOCTTY);
+    // serial_port = open(TTY, O_RDWR | O_NOCTTY);
+    tty_acm_fd = open(TTY, O_RDWR | O_NOCTTY | O_SYNC);
 
-    if (serial_port < 0) {
+    if (tty_acm_fd < 0) {
         std::cerr << "Error: " << errno << " from open " << strerror(errno) << std::endl;
     }
 
-    termios old_tty, new_tty;
-    if (tcgetattr(serial_port, &old_tty) != 0) {
-        std::cerr << "Error: " << errno << " from tcgetattr " << strerror(errno) << std::endl;
+    termios acm_termios;
+    bzero(&acm_termios, sizeof(acm_termios));
+    acm_termios.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+    acm_termios.c_oflag = ONLCR; // Translate newline to carriage return + newline
+
+    tcflush(tty_acm_fd, TCIFLUSH);
+    tcsetattr(tty_acm_fd, TCSANOW, &acm_termios);
+
+    std::array<char, 256> buf;
+    std::string incomingMessage = "";
+
+    std::cout << "Waiting for 'IN,Setup' message..." << std::endl;
+
+    bool setup = false;
+    while (!setup) {
+        int n = read(tty_acm_fd, buf.data(), sizeof(buf));
+        if (n > 0) {
+            std::string msg = std::format("got a message! Size: {} | msg: {}", n, buf.data());
+            std::cout << msg << std::endl;
+            for (int i = 0; i < n; i++) {
+                incomingMessage += buf[i];
+                if (incomingMessage.find("IN,Setup") != std::string::npos) {
+                    setup = true;
+                }
+            }
+        }
     }
-    bzero(&new_tty, sizeof(new_tty));
-    new_tty.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
-    // new_tty.c_cflag &= ~CRTSCTS;
-    new_tty.c_iflag = IGNPAR;
-    new_tty.c_oflag = 0;
-    new_tty.c_lflag = 0;
 
-    new_tty.c_cc[VTIME] = USR_VTIME; // inter character timer
-    new_tty.c_cc[VMIN] = USR_VMIN;   // amount of characters read blocks
+    Command set_cmd(Command_Action::SET, Command_Target::INPUT, "1");
+    ::write(tty_acm_fd, set_cmd.to_string().data(), set_cmd.to_string().size());
 
-    tcflush(serial_port, TCIFLUSH);
-    tcsetattr(serial_port, TCSANOW, &new_tty);
+    // std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    // bytes = read(tty_acm_fd, tty_read_buf.data(), tty_read_buf.size());
+    // std::cout << bytes << std::endl;
+    // if (bytes > 0) {
+    //     tty_read_buf[bytes] = 0;
+    //     std::cout << tty_read_buf.data() << std::endl;
+    // }
 
     // READ and WRITE
-    tcsetattr(serial_port, TCSANOW, &old_tty);
+    // tcsetattr(serial_port, TCSANOW, &old_tty);
 }
 
 Joystick
@@ -94,7 +115,14 @@ Wheelchair::send_velocity_command(Velocity2d &velocity)
     Joystick stick = scale_to_joystick(velocity);
     std::string js_hex = joystick_to_hex(stick);
     Command cmd(Command_Action::SET, Command_Target::JOYSTICK, js_hex);
+    int written = ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
+    std::cout << written << std::endl;
+
+    Command get_cmd(Command_Action::GET, Command_Target::JOYSTICK);
+    ::write(tty_acm_fd, get_cmd.to_string().data(), get_cmd.to_string().size());
     std::cout << "vel: " << velocity.linear.x() << "|" << velocity.angular.z() << " " << cmd.to_string() << std::endl;
+    ::read(tty_acm_fd, tty_read_buf.data(), tty_read_buf.size());
+    std::cout << tty_read_buf.data() << std::endl;
 }
 
 Pose_State
