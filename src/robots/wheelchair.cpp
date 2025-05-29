@@ -1,4 +1,5 @@
 #include "wheelchair.hpp"
+#include "cppmap3d.hh"
 #include "sim.hpp"
 #include "types.hpp"
 
@@ -33,7 +34,8 @@ Wheelchair::init()
 
     std::cout << "Waiting for 'IN,Setup' message..." << std::endl;
 
-    bool setup = true;
+    bool setup = false;
+
     while (!setup) {
         int n = read(tty_acm_fd, buf.data(), sizeof(buf));
         if (n > 0) {
@@ -57,34 +59,25 @@ Wheelchair::init()
 Joystick
 Wheelchair::scale_to_joystick(const Velocity2d &vel)
 {
-    double scaled_x = vel.linear.x();
-    double scaled_yaw = -vel.angular.z();
+    int8_t scaled_x;
+    int8_t scaled_yaw;
 
-    if (scaled_x >= 0) {
-        scaled_x = std::min(100.0, (scaled_x / config.kinematic_constraints.v_max) * 100);
+    if (vel.linear.x() >= 0) {
+        scaled_x = static_cast<int8_t>(std::min(100.0, (vel.linear.x() / config.kinematic_constraints.v_max) * 100));
     } else {
-        double scale = std::abs((scaled_x / config.kinematic_constraints.v_min) * 100);
-        scaled_x = 0x9B + scale;
-        if (static_cast<uint8_t>(scaled_x) == 0x9B) {
-            scaled_x = 0;
-        }
+        scaled_x = static_cast<int8_t>(std::abs((vel.linear.x() / config.kinematic_constraints.v_min) * 100));
     }
 
     // TODO: Check if the wheelchair even has a different yaw speed, or if it needs to just be scaled with the
     // general velocity max range, and just capped.
-    if (scaled_yaw >= 0) {
-        scaled_yaw = std::min(100.0, (scaled_yaw / config.kinematic_constraints.omega_max) * 100);
+    if (-vel.angular.z() >= 0) {
+        scaled_yaw = static_cast<int8_t>(
+            std::min(100.0, (-vel.angular.z() / config.kinematic_constraints.omega_max) * 100));
     } else {
-        double scale = std::abs((scaled_yaw / config.kinematic_constraints.omega_min) * 100);
-        scaled_yaw = 0x9B + scale;
-        if (static_cast<uint8_t>(scaled_yaw) == 0x9B) {
-            scaled_yaw = 0;
-        }
-
-        std::cout << scaled_yaw << std::endl;
+        scaled_yaw = -static_cast<int8_t>(std::abs((vel.angular.z() / config.kinematic_constraints.omega_min) * 100));
     }
 
-    Joystick stick = { .x = static_cast<uint8_t>(scaled_x), .y = static_cast<uint8_t>(scaled_yaw) };
+    Joystick stick = { .x = static_cast<uint8_t>(scaled_yaw), .y = static_cast<uint8_t>(scaled_x) };
 
     return stick;
 }
@@ -120,11 +113,47 @@ Wheelchair::read_state()
 int
 main(void)
 {
+
     Wheelchair robot;
     robot.path.path_looping = true;
     robot.sensor_manager.init();
-    robot.path.read_json_latlon("ecef_points.json");
-    robot.frames.init(robot.path.path_points_all);
+
+    // ============+ TMP ============
+    std::vector<ENU> waypoints = {
+        { 0, 0, 0 },
+        { 2, 2, 0 },
+        { 4, 4, 0 },
+        { 6, 6, 0 },
+        { 8, 6, 0 },
+        { 6, 4, 0 },
+        { 4, 4, 0 },
+        { 2, 4, 0 },
+    };
+
+    // std::vector<ENU> waypoints = {
+    //     {  0, 0, 0 },
+    //     {  4, 0, 0 },
+    //     {  8, 4, 0 },
+    //     { 12, 8, 0 },
+    //     { 16, 8, 0 },
+    //     { 12, 4, 0 },
+    //     {  8, 4, 0 },
+    //     {  4, 4, 0 },
+    // };
+
+    LLH origin = cppmap3d::ecef2geodetic({ 4100154.6326008383, 476355.6958809831, 4846292.543723706 });
+    std::vector<Ecef> transformed;
+    for (auto i : waypoints) {
+        transformed.push_back(cppmap3d::enu2ecef(i, origin));
+    }
+
+    robot.path.add_waypoints(transformed);
+    robot.frames.init(transformed);
+
+    // ============+ TMP ============
+
+    // robot.path.read_json_latlon("ecef_points.json");
+    // robot.frames.init(robot.path.path_points_all);
 
     Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
 

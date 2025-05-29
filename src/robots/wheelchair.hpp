@@ -93,8 +93,8 @@ class Wheelchair : public Robot
             {
                 .v_max = 0.5,
                 .v_min = 0.0,
-                .omega_max = 2.5,
-                .omega_min = -2.5,
+                .omega_max = 0.6,
+                .omega_min = -0.6,
                 .a_max = 100.0,
                 .a_min = -100.0,
                 .j_max = 0.0,
