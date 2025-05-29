@@ -51,14 +51,14 @@ target_link_directories(common_settings INTERFACE
 
 set(COMMON_SOURCES
     src/robots/robot.cpp
+    src/control/pid.cpp
     src/control/mppi.cpp
-    src/control/robot_path.cpp
     src/control/linear_controller.cpp
+    src/planning/robot_path.cpp
     src/planning/motion_profile.cpp
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp
     src/sensors/sensor.cpp
-    src/utils/pid.cpp
     src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp
@@ -76,7 +76,6 @@ endfunction()
 
 add_controller_executable(sim src/robots/sim_bot.cpp)
 add_controller_executable(go1 src/robots/go1.cpp)
-add_controller_executable(wheelchair src/robots/wheelchair.cpp)
 target_link_libraries(go1 PRIVATE pthread unitree_legged_sdk)
 
 message(STATUS "=== Configuration Summary ===")
