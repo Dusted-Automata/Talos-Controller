@@ -39,7 +39,8 @@ target_include_directories(common_settings INTERFACE
     src/utils
     src/robots
     src/sensors
-    src/controllers
+    src/planning
+    src/control
     ${Boost_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
     ${raylib_INCLUDE_DIRS}
@@ -53,6 +54,7 @@ set(COMMON_SOURCES
     src/control/mppi.cpp
     src/control/robot_path.cpp
     src/control/linear_controller.cpp
+    src/planning/motion_profile.cpp
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp
     src/sensors/sensor.cpp
@@ -72,7 +74,7 @@ function(add_controller_executable target_name source_file)
     target_link_libraries(${target_name} PRIVATE controller_core raylib)
 endfunction()
 
-add_controller_executable(sim src/run_sim.cpp)
+add_controller_executable(sim src/robots/sim_bot.cpp)
 add_controller_executable(go1 src/robots/go1.cpp)
 add_controller_executable(wheelchair src/robots/wheelchair.cpp)
 target_link_libraries(go1 PRIVATE pthread unitree_legged_sdk)
