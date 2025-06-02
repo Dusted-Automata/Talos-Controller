@@ -1,69 +1,29 @@
 #pragma once
-class MotionProfile
+
+#include "types.hpp"
+
+class Motion_Profile
 {
   public:
-    /**
-     * Constructor
-     *
-     * @param int aVelocityMax maximum velocity
-     * @param int aAccelerationMax maximum acceleration
-     * @param short aMethod method of profile generation
-     */
-    MotionProfile(float aVelocityMax, float aAccelerationMax, short aMethod);
+    Motion_Profile(Kinematic_Constraints constraints) : constraints(constraints) {};
 
-    /**
-     * Constructor
-     *
-     * @param int aVelocityMax maximum velocity
-     * @param int aAccelerationMax maximum acceleration
-     * @param short aMethod method of profile generation
-     */
-    MotionProfile(float aVelocityMax, float aAccelerationMax, short aMethod, int aSampleTime);
-
-    void init();
-
-    /**
-     * Updates the state, generating new setpoints
-     *
-     * @param aSetpoint The current setpoint.
-     */
-    float update(float aSetpoint);
-
-    bool getFinished();
     void setCompFactor(int aFactor);
-    void setMaxVelocity(float aMaxVelocity);
-    void setMaxAcceleration(float aMaxVelocity);
-    void pause();
     void reset();
+    float update(float aSetpoint, double dt);
+
+    virtual double calculate_position(const double setpoint) = 0;
+
+    bool isFinished = false;
 
   private:
-    /**
-     * Increments the state number.
-     *
-     * @see
-      currentState
-     */
-    bool timeCalculation();
-    void stateCalculation();
-    void calculateConstantVelocityProfile(float);
-    void calculateTrapezoidalProfile(float);
+    using clock = std::chrono::steady_clock;
+    Kinematic_Constraints constraints;
 
-    static const short nrMethods = 2;
+    double position;
+    double velocity;
+    double acceleration;
 
-    float maxVelocity;
-    float maxAcceleration;
-    short method;
+    unsigned long lastTime = 0;
 
-    float position;
-    float oldPosition;
-    float velocity;
-    float oldVelocity;
-    float acceleration;
-
-    unsigned long lastTime;
-    float delta;
-    int sampleTime;
-
-    int compFactor;
-    bool isFinished;
+    int compFactor = 6;
 };
