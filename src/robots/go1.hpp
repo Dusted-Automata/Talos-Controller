@@ -63,7 +63,7 @@ class Go1 : public Robot
         LinearPID linear_pid(config, linear_gains);
         PIDGains angular_gains = { 1.0, 0.01, 0.25 };
         AngularPID angular_pid(config, angular_gains);
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
+        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
         trajectory_controller->robot = this;
     }
     ~Go1() = default;

@@ -5,25 +5,42 @@
 class Motion_Profile
 {
   public:
-    Motion_Profile(Kinematic_Constraints constraints) : constraints(constraints) {};
+    Motion_Profile(double v_max, double v_min, double a_max, double a_min)
+        : v_max(v_max), a_max(a_max), v_min(v_min), a_min(a_min) {};
+
+    Motion_Profile(double v_max, double v_min, double a_max)
+        : v_max(v_max), a_max(a_max), v_min(v_min), a_min(-a_max) {};
+
+    Motion_Profile(double v_max, double a_max) : v_max(v_max), a_max(a_max), v_min(-v_max), a_min(-a_max) {};
 
     void setCompFactor(int aFactor);
     void reset();
-    float update(float aSetpoint, double dt);
+    void update(const double position, const double dt);
+    void set_setpoint(double setpoint);
 
-    virtual double calculate_position(const double setpoint) = 0;
+    virtual double calculate_velocity(const double position, const double dt) = 0;
 
     bool isFinished = false;
-
-  private:
-    using clock = std::chrono::steady_clock;
-    Kinematic_Constraints constraints;
-
-    double position;
     double velocity;
     double acceleration;
 
-    unsigned long lastTime = 0;
+  protected:
+    double v_max, a_max;
+    double v_min, a_min;
+
+    double setpoint;
 
     int compFactor = 6;
+};
+
+class Trapezoidal_Profile : public Motion_Profile
+{
+  public:
+    Trapezoidal_Profile(double v_max, double v_min, double a_max, double a_min)
+        : Motion_Profile(v_max, a_max, v_min, a_min) {};
+
+    Trapezoidal_Profile(double v_max, double v_min, double a_max) : Motion_Profile(v_max, a_max, v_min) {};
+
+    Trapezoidal_Profile(double v_max, double a_max) : Motion_Profile(v_max, a_max) {};
+    double calculate_velocity(const double position, const double dt) override;
 };

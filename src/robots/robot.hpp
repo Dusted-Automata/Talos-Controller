@@ -13,11 +13,12 @@ class Robot
     // MAIN CONTROL THREAD
     // PATH GENERATION THREAD
     // SENSOR PROCESSING THREAD
-    std::atomic<bool> running = false;
     std::thread control_loop_thread;
     std::chrono::steady_clock::time_point motion_time_start;
+    std::atomic<bool> running = false;
 
   public:
+    std::atomic<bool> pause = false;
     virtual ~Robot() { shutdown(); };
 
     Pose_State pose_state;

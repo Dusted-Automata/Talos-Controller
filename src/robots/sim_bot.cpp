@@ -23,18 +23,20 @@ class Sim_Quadruped : public Robot
                 .v_min = -2.0,
                 .omega_max = 2.0,
                 .omega_min = -2.0,
-                .a_max = 100.0,
-                .a_min = -100.0,
+                .a_max = 1.0,
+                .a_min = -1.0,
                 .j_max = 0.0,
             },
         };
 
-        PIDGains linear_gains = { 0.8, 0.05, 0.15 };
+        // PIDGains linear_gains = { 0.8, 0.05, 0.15 };
+        PIDGains linear_gains = { 1.0, 0.0, 0.0 };
         LinearPID linear_pid(config, linear_gains);
-        PIDGains angular_gains = { 1.0, 1.15, 0.06 };
+        // PIDGains angular_gains = { 1.0, 1.15, 0.06 };
+        PIDGains angular_gains = { 1.0, 0.0, 0.0 };
         AngularPID angular_pid(config, angular_gains);
 
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
+        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
         trajectory_controller->robot = this;
     }
 

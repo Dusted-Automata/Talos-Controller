@@ -52,7 +52,7 @@ target_link_directories(common_settings INTERFACE
 set(COMMON_SOURCES
     src/robots/robot.cpp
     src/control/pid.cpp
-    src/control/mppi.cpp
+    # src/control/mppi.cpp
     src/control/linear_controller.cpp
     src/planning/robot_path.cpp
     src/planning/motion_profile.cpp
