@@ -7,14 +7,13 @@ void
 Motion_Profile::update(double position, double dt)
 
 {
-    isFinished = static_cast<long>(position * (10 ^ compFactor)) == static_cast<long>(setpoint * (10 ^ compFactor));
-
-    if (!isFinished) {
-        double old_velocity = velocity;
-        velocity = calculate_velocity(position, dt);
-        std::cout << velocity << " " << old_velocity << std::endl;
-        acceleration = (velocity - old_velocity) / dt;
-    }
+    // isFinished = static_cast<long>(position * (10 ^ compFactor)) == static_cast<long>(setpoint * (10 ^ compFactor));
+    //
+    // if (!isFinished) {
+    double old_velocity = velocity;
+    velocity = calculate_velocity(position, dt);
+    acceleration = (velocity - old_velocity) / dt;
+    // }
 }
 
 void
@@ -43,22 +42,27 @@ Trapezoidal_Profile::calculate_velocity(const double position, const double dt)
 {
     // Check if we need to de-accelerate
     double vel = 0;
-    double pos_threshold_for_deccel = (v_max * v_max) / (2 * std::abs(a_min));
-    if (setpoint - pos_threshold_for_deccel <= position) {
+    double stopping_distance = (velocity * velocity) / (std::abs(a_min));
+    double remaining_distance = setpoint - position;
+    std::string msg = std::format("stopping distance: {} | remaining distance: {}", stopping_distance,
+        remaining_distance);
+    std::cout << msg << std::endl;
+    // std::cout << position << std::endl;
+    if (std::abs(remaining_distance) <= stopping_distance) {
+        test--;
+        std::cout << test << std::endl;
         // if (velocity < 0) {
         //     vel = velocity + (a_min * dt);
         // } else if (velocity > 0) {
         std::cout << "a_min: " << a_min << std::endl;
-        // vel = velocity + (a_min * dt);
-        vel = velocity + (pos_threshold_for_deccel * dt);
-        if (vel < v_min) {
-            vel = v_min;
+        vel = velocity + (a_min * dt);
+        if (velocity < 0.0) {
+            vel = 0.0;
         }
         // }
     } else {
-        std::cout << "IN ELSE" << std::endl;
         // We're not too close yet, so no need to de-accelerate. Check if we need to accelerate or maintain velocity.
-        if (vel < v_max) {
+        if (velocity < v_max) {
             vel = velocity + a_max * dt;
             if (vel > v_max) {
                 vel = v_max;

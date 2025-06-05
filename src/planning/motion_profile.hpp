@@ -30,7 +30,8 @@ class Motion_Profile
 
     double setpoint;
 
-    int compFactor = 6;
+    int compFactor = 9;
+    int test = 1250;
 };
 
 class Trapezoidal_Profile : public Motion_Profile

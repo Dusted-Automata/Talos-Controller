@@ -12,7 +12,7 @@ class Linear_Controller : public Trajectory_Controller
     LinearPID linear_pid;
     AngularPID angular_pid;
     double trajectory_time = 0.0;
-    double goal_tolerance = 0.75; // meters
+    double goal_tolerance = 0.001; // meters
     double setpoint = 0;
 
   public:

@@ -70,7 +70,7 @@ Linear_Controller::get_cmd()
             Vector3d diff = goal.raw() - robot->frames.local_frame.pos.raw();
             diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
             double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
-            std::cout << dist << std::endl;
+            // std::cout << dist << std::endl;
             double yaw_error = atan2(diff.y(), diff.x());
             setpoint = dist;
             linear_profile.set_setpoint(dist);
