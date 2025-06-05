@@ -28,10 +28,10 @@ Robot::control_loop()
             next += period;
             std::this_thread::sleep_until(next);
 
-            // if (clock::now() > next + period) {
-            //     std::cerr << "control-loop overrun" << std::endl;
-            //     next = clock::now();
-            // }
+            if (clock::now() > next + period) {
+                std::cerr << "control-loop overrun" << std::endl;
+                next = clock::now();
+            }
         }
     }
 }

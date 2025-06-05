@@ -54,7 +54,6 @@ Linear_Controller::get_cmd()
     double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
 
     double yaw_error = atan2(diff.y(), diff.x());
-    // std::cout << yaw_error << std::endl;
 
     if (dist < goal_tolerance) {
         robot->path.pop();
@@ -70,9 +69,6 @@ Linear_Controller::get_cmd()
             Vector3d diff = goal.raw() - robot->frames.local_frame.pos.raw();
             diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
             double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
-            // std::cout << dist << std::endl;
-            double yaw_error = atan2(diff.y(), diff.x());
-            setpoint = dist;
             linear_profile.set_setpoint(dist);
             angular_profile.set_setpoint(0);
         }
@@ -80,7 +76,7 @@ Linear_Controller::get_cmd()
     }
 
     std::cout << dist << std::endl;
-    linear_profile.update(setpoint - dist, dt);
+    linear_profile.update(dist, dt);
     // angular_profile.update(yaw_error, dt);
 
     cmd.linear.x() = linear_pid.update(linear_profile.velocity, robot->pose_state.velocity.linear.x(), dt);

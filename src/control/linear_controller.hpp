@@ -12,8 +12,7 @@ class Linear_Controller : public Trajectory_Controller
     LinearPID linear_pid;
     AngularPID angular_pid;
     double trajectory_time = 0.0;
-    double goal_tolerance = 0.001; // meters
-    double setpoint = 0;
+    double goal_tolerance = 0.75; // meters
 
   public:
     Linear_Controller(LinearPID linear_pid, AngularPID angular_pid, Robot_Config config)
@@ -27,7 +26,6 @@ class Linear_Controller : public Trajectory_Controller
     ~Linear_Controller() = default;
 
     void path_loop(std::vector<Ecef> &waypoints);
-    // void trajectory_loop(Thread_Safe_Queue<Ecef_Coord> &path_queue);
     Velocity2d get_cmd() override;
     double get_accel() override;
 

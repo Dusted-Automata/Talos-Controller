@@ -20,7 +20,6 @@ class Motion_Profile
 
     virtual double calculate_velocity(const double position, const double dt) = 0;
 
-    bool isFinished = false;
     double velocity;
     double acceleration;
 
@@ -29,9 +28,6 @@ class Motion_Profile
     double v_min, a_min;
 
     double setpoint;
-
-    int compFactor = 9;
-    int test = 1250;
 };
 
 class Trapezoidal_Profile : public Motion_Profile
