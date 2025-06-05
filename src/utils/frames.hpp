@@ -7,7 +7,7 @@ struct Frame {
     Vector3d pos{ 0, 0, 0 };
 };
 
-struct NED_Frame : public Frame {
+struct ENU_Frame : public Frame {
     LLH origin;
     ENU pos{ 0, 0, 0 };
 };
@@ -23,7 +23,7 @@ class Frames
     // Body frame being the Identity, since it is always on top of the robot
     // local frame being NED
     // global frame being ecef.
-    NED_Frame local_frame;
+    ENU_Frame local_frame;
     Ecef_Frame global_frame;
 
     void init(const std::optional<Ecef> &coordinate);

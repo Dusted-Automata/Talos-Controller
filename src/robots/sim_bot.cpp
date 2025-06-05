@@ -6,6 +6,7 @@
 
 class Sim_Quadruped : public Robot
 {
+    Pose_State sim_pose = {};
 
   public:
     Sim_Quadruped()
@@ -23,18 +24,20 @@ class Sim_Quadruped : public Robot
                 .v_min = -2.0,
                 .omega_max = 2.0,
                 .omega_min = -2.0,
-                .a_max = 100.0,
-                .a_min = -100.0,
+                .a_max = 1.0,
+                .a_min = -1.0,
                 .j_max = 0.0,
             },
         };
 
-        PIDGains linear_gains = { 0.8, 0.05, 0.15 };
+        // PIDGains linear_gains = { 0.8, 0.05, 0.15 };
+        PIDGains linear_gains = { 1.0, 0.0, 0.0 };
         LinearPID linear_pid(config, linear_gains);
-        PIDGains angular_gains = { 1.0, 1.15, 0.06 };
+        // PIDGains angular_gains = { 1.0, 1.15, 0.06 };
+        PIDGains angular_gains = { 1.0, 0.0, 0.0 };
         AngularPID angular_pid(config, angular_gains);
 
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
+        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
         trajectory_controller->robot = this;
     }
 
@@ -52,17 +55,17 @@ class Sim_Quadruped : public Robot
     void
     send_velocity_command(Velocity2d &velocity) override
     {
-        pose_state.velocity = velocity;
-        pose_state.dt = GetFrameTime();
-        velocity.linear *= pose_state.dt;
-        velocity.angular *= pose_state.dt;
-        frames.move_in_local_frame(velocity);
+
+        sim_pose.velocity = velocity;
+        sim_pose.dt = GetFrameTime();
+        velocity.linear *= sim_pose.dt;
+        velocity.angular *= sim_pose.dt;
     };
 
     Pose_State
     read_state() override
     {
-        return pose_state;
+        return sim_pose;
     };
 };
 
@@ -78,6 +81,7 @@ main()
     // robot.frames.init(waypoints);
     robot.path.read_json_latlon("ecef_points.json");
     robot.frames.init(robot.path.path_points_all);
+    robot.path.pop();
 
     // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
     // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));

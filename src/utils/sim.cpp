@@ -116,11 +116,12 @@ Sim_Display::display()
 
         if (IsKeyPressed(KEY_SPACE)) {
 
-            Vector3d push = { 1.0, 2.0, 0.0 };
-            ENU fake_measurement = robot.frames.local_frame.pos + push;
-            Ecef ecef = cppmap3d::enu2ecef(fake_measurement, robot.frames.local_frame.origin);
-            LLH llh = cppmap3d::ecef2geodetic(ecef);
-            robot.frames.update_based_on_measurement(llh);
+            // Vector3d push = { 1.0, 2.0, 0.0 };
+            // ENU fake_measurement = robot.frames.local_frame.pos + push;
+            // Ecef ecef = cppmap3d::enu2ecef(fake_measurement, robot.frames.local_frame.origin);
+            // LLH llh = cppmap3d::ecef2geodetic(ecef);
+            // robot.frames.update_based_on_measurement(llh);
+            robot.pause = !robot.pause;
         }
 
         EndMode2D();
@@ -160,9 +161,10 @@ Sim_Display::hud()
         draw_log_line(3, "Global Position: %.2f, %.2f, %.2f", robot.frames.global_frame.pos.x(),
             robot.frames.global_frame.pos.y(), robot.frames.global_frame.pos.z());
 
-        draw_log_line(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f]", robot.pose_state.velocity.linear.x(),
-            robot.pose_state.velocity.linear.y(), robot.pose_state.velocity.linear.z(),
-            robot.pose_state.velocity.angular.x(), robot.pose_state.velocity.angular.y(),
-            robot.pose_state.velocity.angular.z());
+        draw_log_line(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f] Acc:[%.2f)",
+            robot.pose_state.velocity.linear.x(), robot.pose_state.velocity.linear.y(),
+            robot.pose_state.velocity.linear.z(), robot.pose_state.velocity.angular.x(),
+            robot.pose_state.velocity.angular.y(), robot.pose_state.velocity.angular.z(),
+            robot.trajectory_controller->get_accel());
     }
 }

@@ -39,7 +39,8 @@ target_include_directories(common_settings INTERFACE
     src/utils
     src/robots
     src/sensors
-    src/controllers
+    src/planning
+    src/control
     ${Boost_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
     ${raylib_INCLUDE_DIRS}
@@ -50,13 +51,14 @@ target_link_directories(common_settings INTERFACE
 
 set(COMMON_SOURCES
     src/robots/robot.cpp
-    src/controllers/mppi.cpp
-    src/controllers/robot_path.cpp
-    src/controllers/linear_controller.cpp
+    src/control/pid.cpp
+    # src/control/mppi.cpp
+    src/control/linear_controller.cpp
+    src/planning/robot_path.cpp
+    src/planning/motion_profile.cpp
     src/sensors/sensor_manager.cpp
     src/sensors/ublox.cpp
     src/sensors/sensor.cpp
-    src/utils/pid.cpp
     src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp

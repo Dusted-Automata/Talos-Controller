@@ -13,23 +13,25 @@ Robot::control_loop()
     std::chrono::milliseconds period(1000 / config.control_loop_hz);
 
     while (running) {
-        pose_state = read_state();
-        pose_state.velocity.linear *= 1.0 / config.control_loop_hz;
-        pose_state.velocity.angular *= 1.0 / config.control_loop_hz;
-        sensor_manager.consume();
-        frames.move_in_local_frame(pose_state.velocity);
-        logger.savePosesToFile(frames);
-        logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
+        while (!pause && running) {
+            pose_state = read_state();
+            pose_state.velocity.linear *= 1.0 / config.control_loop_hz;
+            pose_state.velocity.angular *= 1.0 / config.control_loop_hz;
+            sensor_manager.consume();
+            frames.move_in_local_frame(pose_state.velocity);
+            logger.savePosesToFile(frames);
+            logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
-        Velocity2d cmd = trajectory_controller->get_cmd();
-        send_velocity_command(cmd);
+            Velocity2d cmd = trajectory_controller->get_cmd();
+            send_velocity_command(cmd);
 
-        next += period;
-        std::this_thread::sleep_until(next);
+            next += period;
+            std::this_thread::sleep_until(next);
 
-        if (clock::now() > next + period) {
-            std::cerr << "control-loop overrun" << std::endl;
-            next = clock::now();
+            if (clock::now() > next + period) {
+                std::cerr << "control-loop overrun" << std::endl;
+                next = clock::now();
+            }
         }
     }
 }
