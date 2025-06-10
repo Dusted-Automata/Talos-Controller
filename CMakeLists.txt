@@ -74,7 +74,7 @@ function(add_controller_executable target_name source_file)
     target_link_libraries(${target_name} PRIVATE controller_core raylib)
 endfunction()
 
-add_controller_executable(sim src/run_sim.cpp)
+add_controller_executable(sim src/robots/sim_bot.cpp)
 add_controller_executable(go1 src/robots/go1.cpp)
 add_controller_executable(wheelchair src/robots/wheelchair.cpp)
 target_link_libraries(go1 PRIVATE pthread unitree_legged_sdk)
