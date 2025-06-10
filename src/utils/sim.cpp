@@ -108,7 +108,7 @@ Sim_Display::display()
         draw_absolute_grid(camera, gridStep);
 
         for (size_t i = 0; i < waypoints.size(); i++) {
-            ENU waypoint = cppmap3d::ecef2enu(waypoints[i], robot.frames.local_frame.origin);
+            ENU waypoint = cppmap3d::ecef2enu(waypoints[i].point, robot.frames.local_frame.origin);
             DrawCircleV({ (float)waypoint.north(), (float)-waypoint.east() }, 0.1f, BLUE);
         }
 

@@ -80,22 +80,22 @@ main(void)
               << "Press Enter to continue..." << std::endl;
     std::cin.ignore();
 
-    std::vector<Ecef> waypoints = {
-        { 4100157.662065, 476378.631671, 4846296.665580 },
-        { 4100148.734711, 476371.224146, 4846299.782664 },
-        { 4100145.848885, 476373.137198, 4846301.104139 },
-        { 4100149.701858, 476374.962868, 4846304.499274 },
-        { 4100151.938404, 476372.478777, 4846293.038250 },
-        { 4100164.617288, 476372.803512, 4846292.699499 },
-        { 4100166.832613, 476369.785077, 4846290.870528 },
-        { 4100164.228392, 476367.548448, 4846291.181639 }
-    };
+    // std::vector<pose> waypoints = {
+    //     { 4100157.662065, 476378.631671, 4846296.665580 },
+    //     { 4100148.734711, 476371.224146, 4846299.782664 },
+    //     { 4100145.848885, 476373.137198, 4846301.104139 },
+    //     { 4100149.701858, 476374.962868, 4846304.499274 },
+    //     { 4100151.938404, 476372.478777, 4846293.038250 },
+    //     { 4100164.617288, 476372.803512, 4846292.699499 },
+    //     { 4100166.832613, 476369.785077, 4846290.870528 },
+    //     { 4100164.228392, 476367.548448, 4846291.181639 }
+    // };
 
     Go1 robot;
     robot.path.path_looping = true;
-    robot.path.add_waypoints(waypoints);
+    // robot.path.add_waypoints(waypoints);
     robot.sensor_manager.init();
-    robot.frames.init(waypoints);
+    // robot.frames.init(waypoints);
 
     UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.config.control_loop_hz), 3,
         boost::bind(&Go1::control_loop, &robot));
@@ -108,9 +108,9 @@ main(void)
     loop_udpRecv.start();
     loop_control.start();
 
-    Sim_Display sim = Sim_Display(robot, waypoints);
+    // Sim_Display sim = Sim_Display(robot, waypoints);
 
-    sim.display();
+    // sim.display();
 
     CloseWindow();
 

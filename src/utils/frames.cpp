@@ -77,13 +77,13 @@ Frames::update_based_on_measurement(const LLH &llh)
 // }
 
 void
-Frames::init(const std::vector<Ecef> &waypoints)
+Frames::init(const std::vector<Pose> &waypoints)
 {
     if (waypoints.size() < 1) {
         return;
     }
-    local_frame.origin = cppmap3d::ecef2geodetic(waypoints.front());
-    global_frame.pos = waypoints.front();
+    local_frame.origin = cppmap3d::ecef2geodetic(waypoints.front().point);
+    global_frame.pos = waypoints.front().point;
 
     // Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     // global_frame.orientation = M;
@@ -96,7 +96,7 @@ Frames::init(const std::vector<Ecef> &waypoints)
         return;
     }
 
-    ENU goal = cppmap3d::ecef2enu(waypoints[1], local_frame.origin);
+    ENU goal = cppmap3d::ecef2enu(waypoints[1].point, local_frame.origin);
     double goal_theta = atan2(goal.east(), goal.north());
     Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
     local_frame.orientation = local_frame.orientation * rot_yaw_goal;

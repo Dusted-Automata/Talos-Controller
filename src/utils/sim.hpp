@@ -8,7 +8,7 @@ class Sim_Display
   private:
     Camera2D camera = {};
     Robot &robot;
-    std::vector<Ecef> &waypoints;
+    std::vector<Pose> &waypoints;
 
     static constexpr int SCREEN_WIDTH = 1000;
     static constexpr int SCREEN_HEIGHT = 1000;
@@ -19,7 +19,7 @@ class Sim_Display
     void draw_absolute_grid(Camera2D camera, float gridStep);
 
   public:
-    Sim_Display(Robot &robot, std::vector<Ecef> &waypoints) : robot(robot), waypoints(waypoints)
+    Sim_Display(Robot &robot, std::vector<Pose> &waypoints) : robot(robot), waypoints(waypoints)
     {
         SetTraceLogLevel(LOG_WARNING);
         InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Absolute Coordinate System");

@@ -26,8 +26,8 @@ class Frames
     ENU_Frame local_frame;
     Ecef_Frame global_frame;
 
-    void init(const std::optional<Ecef> &coordinate);
-    void init(const std::vector<Ecef> &waypoints);
+    void init(const std::optional<Pose> &coordinate);
+    void init(const std::vector<Pose> &waypoints);
     void move_in_local_frame(const Velocity2d &velocity);
     void move_in_global_frame(const Velocity2d &velocity);
 
