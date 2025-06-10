@@ -91,12 +91,20 @@ class Wheelchair : public Robot
             .control_loop_hz = 15,
             .kinematic_constraints =
             {
-                .v_max = 0.5,
+                // .v_max = 0.5,
+                // .v_min = 0.0,
+                // .omega_max = 0.6,
+                // .omega_min = -0.6,
+                // .a_max = 0.3,
+                // .a_min = -0.2,
+                // .j_max = 0.0,
+
+                .v_max = 1.0,
                 .v_min = 0.0,
-                .omega_max = 0.6,
-                .omega_min = -0.6,
-                .a_max = 100.0,
-                .a_min = -100.0,
+                .omega_max = 1.0,
+                .omega_min = -1.0,
+                .a_max = 0.7,
+                .a_min = -0.6,
                 .j_max = 0.0,
             },
         };
@@ -105,7 +113,7 @@ class Wheelchair : public Robot
         LinearPID linear_pid(config, linear_gains);
         PIDGains angular_gains = { 1.0, 0.01, 0.25 };
         AngularPID angular_pid(config, angular_gains);
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid);
+        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
         trajectory_controller->robot = this;
         init();
     }

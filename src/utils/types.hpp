@@ -371,9 +371,9 @@ struct NED {
 // struct Linear_Velocity {
 //   double forward, lateral, vertical;
 // };
+
 struct Velocity2d {
     // high-level representation
-    // can have 12 joint angles/torques (3 per leg)
     Linear_Velocity linear;   // x, y, z velocity (m/s)
     Angular_Velocity angular; // roll, pitch, yaw rates (rad/s)
 };

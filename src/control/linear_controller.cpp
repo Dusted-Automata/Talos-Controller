@@ -76,7 +76,7 @@ Linear_Controller::get_cmd()
     }
 
     std::cout << dist << std::endl;
-    linear_profile.update(dist, dt);
+    linear_profile.update(dist - goal_tolerance, dt);
     // angular_profile.update(yaw_error, dt);
 
     cmd.linear.x() = linear_pid.update(linear_profile.velocity, robot->pose_state.velocity.linear.x(), dt);

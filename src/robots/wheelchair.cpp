@@ -13,7 +13,7 @@ Wheelchair::init()
 {
 
 #define BAUDRATE B115200
-#define TTY "/dev/ttyACM0"
+#define TTY "/dev/ttyACM1"
 
     tty_acm_fd = open(TTY, O_RDWR | O_NOCTTY | O_SYNC);
 
@@ -99,9 +99,10 @@ Wheelchair::send_velocity_command(Velocity2d &velocity)
     int written = ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
     std::cout << written << std::endl;
 
-    std::cout << "vel: " << velocity.linear.x() << "|" << velocity.angular.z() << " " << cmd.to_string() << std::endl;
+    // std::cout << "vel: " << velocity.linear.x() << "|" << velocity.angular.z() << " " << cmd.to_string() <<
+    // std::endl;
     ::read(tty_acm_fd, tty_read_buf.data(), tty_read_buf.size());
-    std::cout << tty_read_buf.data() << std::endl;
+    // std::cout << tty_read_buf.data() << std::endl;
 }
 
 Pose_State
@@ -119,16 +120,16 @@ main(void)
     robot.sensor_manager.init();
 
     // ============+ TMP ============
-    std::vector<ENU> waypoints = {
-        { 0, 0, 0 },
-        { 2, 2, 0 },
-        { 4, 4, 0 },
-        { 6, 6, 0 },
-        { 8, 6, 0 },
-        { 6, 4, 0 },
-        { 4, 4, 0 },
-        { 2, 4, 0 },
-    };
+    // std::vector<ENU> waypoints = {
+    //     { 0, 0, 0 },
+    //     { 2, 2, 0 },
+    //     { 4, 4, 0 },
+    //     { 6, 6, 0 },
+    //     { 8, 6, 0 },
+    //     { 6, 4, 0 },
+    //     { 4, 4, 0 },
+    //     { 2, 4, 0 },
+    // };
 
     // std::vector<ENU> waypoints = {
     //     {  0, 0, 0 },
@@ -141,19 +142,19 @@ main(void)
     //     {  4, 4, 0 },
     // };
 
-    LLH origin = cppmap3d::ecef2geodetic({ 4100154.6326008383, 476355.6958809831, 4846292.543723706 });
-    std::vector<Ecef> transformed;
-    for (auto i : waypoints) {
-        transformed.push_back(cppmap3d::enu2ecef(i, origin));
-    }
+    // LLH origin = cppmap3d::ecef2geodetic({ 4100154.6326008383, 476355.6958809831, 4846292.543723706 });
+    // std::vector<Ecef> transformed;
+    // for (auto i : waypoints) {
+    //     transformed.push_back(cppmap3d::enu2ecef(i, origin));
+    // }
 
-    robot.path.add_waypoints(transformed);
-    robot.frames.init(transformed);
+    // robot.path.add_waypoints(transformed);
+    // robot.frames.init(transformed);
 
     // ============+ TMP ============
 
-    // robot.path.read_json_latlon("ecef_points.json");
-    // robot.frames.init(robot.path.path_points_all);
+    robot.path.read_json_latlon("ecef_points.json");
+    robot.frames.init(robot.path.path_points_all);
 
     Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
 
