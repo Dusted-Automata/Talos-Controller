@@ -56,8 +56,8 @@ Sim_Display::draw_robot()
     Eigen::Matrix3d R = robot.frames.local_frame.orientation.rotation();
     double yaw = atan2(R(1, 0), R(0, 0));
     Rectangle bot = { static_cast<float>(robot.frames.local_frame.pos.north()),
-        static_cast<float>(-robot.frames.local_frame.pos.east()), 2.0, 1.0 };
-    Vector2 origin = { 2.0 / 2.0, 1.0 / 2.0 };
+        static_cast<float>(-robot.frames.local_frame.pos.east()), 0.5, 0.25 };
+    Vector2 origin = { .5, 0.25 };
     DrawRectanglePro(bot, origin, (float)(-(yaw * 180.0) / M_PI), RED);
 
     // showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
@@ -109,7 +109,7 @@ Sim_Display::display()
 
         for (size_t i = 0; i < waypoints.size(); i++) {
             ENU waypoint = cppmap3d::ecef2enu(waypoints[i], robot.frames.local_frame.origin);
-            DrawCircle((int)waypoint.north(), (int)-waypoint.east(), 0.8f, BLUE);
+            DrawCircleV({ (float)waypoint.north(), (float)-waypoint.east() }, 0.1f, BLUE);
         }
 
         draw_robot();
