@@ -75,7 +75,7 @@ Linear_Controller::get_cmd()
         return cmd;
     }
 
-    std::cout << dist << std::endl;
+    // std::cout << dist << std::endl;
     linear_profile.update(dist - goal_tolerance, dt);
     // angular_profile.update(yaw_error, dt);
 

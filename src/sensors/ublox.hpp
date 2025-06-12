@@ -25,6 +25,19 @@ class Ublox_GGA : public Sensor<GGA>
     void start() override;
 };
 
+struct NAV_ATT {
+    // std::string identity": "NAV-ATT",
+    double accHeading;
+    double accPitch;
+    double accRoll;
+    double heading;
+    double pitch;
+    double roll;
+    int32_t iTOW;
+    int32_t length;
+    int8_t msgmode;
+};
+
 class Ublox_JSON : public Sensor<json>
 {
     JSON_Parser parser = {};

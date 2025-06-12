@@ -142,7 +142,7 @@ Ublox_GGA::process()
             break;
         case NMEA_Cmd::GGA:
             GGA gga = parse_gga(i);
-            gga.print();
+            // gga.print();
             msgs.push_back(gga);
             break;
         }
@@ -187,7 +187,16 @@ Ublox_JSON::process()
 {
     while (!buf.empty()) {
         json msg = json::parse(buf.front());
-        msgs.push_back(std::move(msg));
+        // std::string identity": "NAV-ATT",
+        // std::cout << msg.dump(4) << std::endl;
+        if (msg["identity"] == "ESF-INS") {
+            std::cout << msg.dump(4) << std::endl;
+            // msgs.push_back(std::move(msg));
+        }
+        if (msg["identity"] == "NAV-ATT") {
+            // std::cout << msg.dump(4) << std::endl;
+            msgs.push_back(std::move(msg));
+        }
         buf.pop();
     }
 }

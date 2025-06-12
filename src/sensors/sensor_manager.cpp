@@ -16,6 +16,7 @@ Sensor_Manager::consume()
 
     while (!ublox_json.msgs.empty()) {
         json j = ublox_json.msgs.back();
+        std::cout << j.dump(4) << std::endl;
         latest_measurement.ublox_json = { .val = j, .source = Sensor_Name::UBLOX_JSON };
         ublox_json.msgs.clear();
     }
