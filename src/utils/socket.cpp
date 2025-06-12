@@ -98,6 +98,27 @@ NMEA_Parser::push(std::queue<std::string> &msgs, std::span<const char> data)
     }
 }
 
+void
+Ublox_JSON_Parser::push(std::queue<std::string> &msgs, std::span<const char> data)
+{
+    ring.write(data);
+
+    std::vector<size_t> newline_indices;
+    size_t buf_start = buf.size();
+    for (size_t i = 0; i < data.size(); i++) {
+        ring.push(data[i]);
+        if (data[i] == '\n') {
+            newline_indices.push_back(buf_start + i);
+        }
+    }
+
+    for (size_t i : newline_indices) {
+        std::string msg(i + 1, '\0'); // i + 1 to include the newline
+        ring.read(std::span(msg.data(), msg.size()));
+        msgs.push(std::move(msg));
+    }
+}
+
 bool
 TCP_Socket::connect()
 {

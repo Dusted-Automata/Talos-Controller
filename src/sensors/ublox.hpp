@@ -2,7 +2,6 @@
 #include "NMEA.hpp"
 #include "sensor.hpp"
 #include "socket.hpp"
-#include <iostream>
 #include <queue>
 #include <vector>
 
