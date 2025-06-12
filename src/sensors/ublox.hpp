@@ -27,6 +27,19 @@ class Ublox_GGA : public Sensor<GGA>
 
 struct NAV_ATT {
     // std::string identity": "NAV-ATT",
+    NAV_ATT(json j)
+    {
+        accHeading = j["accHeading"];
+        accPitch = j["accPitch"];
+        accRoll = j["accRoll"];
+        heading = j["heading"];
+        pitch = j["pitch"];
+        roll = j["roll"];
+        iTOW = j["iTOW"];
+        length = j["length"];
+        msgmode = j["msgmode"];
+    }
+
     double accHeading;
     double accPitch;
     double accRoll;
@@ -38,13 +51,37 @@ struct NAV_ATT {
     int8_t msgmode;
 };
 
-class Ublox_JSON : public Sensor<json>
+struct ESF_INS {
+    int32_t iTOW;
+    int32_t length;
+    int8_t msgmode;
+    int8_t version;
+    double xAccel;
+    double xAccelValid;
+    double xAngRate;
+    double xAngRateValid;
+    double yAccel;
+    double yAccelValid;
+    double yAngRate;
+    double yAngRateValid;
+    double zAccel;
+    double zAccelValid;
+    double zAngRate;
+    double zAngRateValid;
+};
+
+struct Simple_Ublox {
+    NAV_ATT nav_att;
+    ESF_INS esf_ins;
+};
+
+class Ublox_simple : public Sensor<json>
 {
     JSON_Parser parser = {};
-    Sensor_Name name = Sensor_Name::UBLOX_JSON;
+    Sensor_Name name = Sensor_Name::UBLOX_SIMPLE;
 
   public:
-    Ublox_JSON() {};
+    Ublox_simple() {};
     TCP_Socket socket = TCP_Socket("127.0.0.1", 50020, parser);
     // TCP_Socket socket = TCP_Socket("192.168.123.161", 50010, parser);
     // TCP_Socket socket = TCP_Socket("192.168.12.1", 50010, parser);

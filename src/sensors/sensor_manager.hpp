@@ -6,7 +6,7 @@
 
 struct Latest_Measurement {
     std::optional<Measurement<GGA>> ublox_GGA;
-    std::optional<Measurement<json>> ublox_json;
+    std::optional<Measurement<Simple_Ublox>> ublox_simple;
 };
 
 class Sensor_Manager
@@ -14,7 +14,7 @@ class Sensor_Manager
     std::thread sensors_thread;
     Latest_Measurement latest_measurement = {};
     Ublox_GGA ublox_gga;
-    Ublox_JSON ublox_json;
+    Ublox_simple ublox_json;
 
   public:
     Sensor_Manager() {}

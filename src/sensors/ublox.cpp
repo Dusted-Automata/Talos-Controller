@@ -183,7 +183,7 @@ Ublox_GGA::start()
 }
 
 void
-Ublox_JSON::process()
+Ublox_simple::process()
 {
     while (!buf.empty()) {
         json msg = json::parse(buf.front());
@@ -202,7 +202,7 @@ Ublox_JSON::process()
 }
 
 void
-Ublox_JSON::loop()
+Ublox_simple::loop()
 {
 
     while (socket.recv(buf) && running) {
@@ -211,7 +211,7 @@ Ublox_JSON::loop()
 }
 
 void
-Ublox_JSON::start()
+Ublox_simple::start()
 {
 
     if (!socket.connect()) {

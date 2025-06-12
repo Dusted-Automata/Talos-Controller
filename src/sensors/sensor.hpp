@@ -3,7 +3,7 @@
 #include <optional>
 #include <thread>
 
-enum Sensor_Name { UBLOX_GGA, UBLOX_JSON };
+enum Sensor_Name { UBLOX_GGA, UBLOX_SIMPLE };
 
 template<typename T> struct Measurement {
     T val;

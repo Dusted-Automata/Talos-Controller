@@ -16,8 +16,11 @@ Sensor_Manager::consume()
 
     while (!ublox_json.msgs.empty()) {
         json j = ublox_json.msgs.back();
-        std::cout << j.dump(4) << std::endl;
-        latest_measurement.ublox_json = { .val = j, .source = Sensor_Name::UBLOX_JSON };
+        NAV_ATT nav(j);
+        latest_measurement.ublox_simple = {
+            .val = { .nav_att = j, .esf_ins = {} },
+            .source = Sensor_Name::UBLOX_SIMPLE
+        };
         ublox_json.msgs.clear();
     }
 }
@@ -42,7 +45,7 @@ Sensor_Manager::consume_measurement(Sensor_Name sensor)
 {
     switch (sensor) {
     case Sensor_Name::UBLOX_GGA: latest_measurement.ublox_GGA.reset(); return;
-    case Sensor_Name::UBLOX_JSON: latest_measurement.ublox_json.reset(); return;
+    case Sensor_Name::UBLOX_SIMPLE: latest_measurement.ublox_simple.reset(); return;
     }
 }
 
@@ -58,12 +61,12 @@ Sensor_Manager::get_latest(Sensor_Name sensor)
 }
 
 template<>
-std::optional<Measurement<json>>
+std::optional<Measurement<Simple_Ublox>>
 Sensor_Manager::get_latest(Sensor_Name sensor)
 {
     // std::unique_lock<std::mutex> lock(sensor_mutex);
-    if (sensor == UBLOX_JSON) {
-        return latest_measurement.ublox_json;
+    if (sensor == UBLOX_SIMPLE) {
+        return latest_measurement.ublox_simple;
     }
     return std::nullopt;
 }
