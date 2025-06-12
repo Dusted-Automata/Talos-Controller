@@ -40,6 +40,13 @@ Linear_Controller::get_cmd()
         robot->sensor_manager.consume_measurement(Sensor_Name::UBLOX_GGA);
     }
 
+    auto ublox_simple = robot->sensor_manager.get_latest<Simple_Ublox>(Sensor_Name::UBLOX_SIMPLE);
+    if (ublox_simple.has_value()) {
+        NAV_ATT nav_att = ublox_simple.value().val.nav_att;
+        double heading = to_radian(nav_att.heading);
+        std::cout << heading << std::endl;
+    }
+
     std::optional<Pose> target_waypoint = robot->path.get_next();
     if (!target_waypoint.has_value()) {
         linear_pid.reset();
