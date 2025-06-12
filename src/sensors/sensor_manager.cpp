@@ -7,11 +7,17 @@
 void
 Sensor_Manager::consume()
 {
-    while (!ublox.msgs.empty()) {
-        GGA gga = ublox.msgs.back();
-        latest_measurement = { .ublox = gga, .source = Sensor_Name::UBLOX };
-        ublox.msgs.clear(); // Currently we are only interested in the latest measurement. I might switch it to just an
-                            // optional or something
+    while (!ublox_gga.msgs.empty()) {
+        GGA gga = ublox_gga.msgs.back();
+        latest_measurement.ublox_GGA = { .val = gga, .source = Sensor_Name::UBLOX_GGA };
+        ublox_gga.msgs.clear(); // Currently we are only interested in the latest measurement. I might switch it to
+                                // just an optional or something
+    }
+
+    while (!ublox_json.msgs.empty()) {
+        json j = ublox_json.msgs.back();
+        latest_measurement.ublox_json = { .val = j, .source = Sensor_Name::UBLOX_JSON };
+        ublox_json.msgs.clear();
     }
 }
 
@@ -19,29 +25,44 @@ void
 Sensor_Manager::init()
 {
 
-    // std::thread ublox_startup_thread(&Ublox::start, ublox);
-    // ublox_startup_thread.join();
-    ublox.start();
+    ublox_gga.start();
+    ublox_json.start();
 }
 
 void
 Sensor_Manager::shutdown()
 {
-    ublox.stop();
+    ublox_gga.stop();
+    ublox_json.stop();
 }
 
 void
-Sensor_Manager::consume_measurement()
+Sensor_Manager::consume_measurement(Sensor_Name sensor)
 {
-    latest_measurement.reset();
+    switch (sensor) {
+    case Sensor_Name::UBLOX_GGA: latest_measurement.ublox_GGA.reset(); return;
+    case Sensor_Name::UBLOX_JSON: latest_measurement.ublox_json.reset(); return;
+    }
 }
 
-std::optional<Measurement>
+template<>
+std::optional<Measurement<GGA>>
 Sensor_Manager::get_latest(Sensor_Name sensor)
 {
     // std::unique_lock<std::mutex> lock(sensor_mutex);
-    switch (sensor) {
-    case Sensor_Name::UBLOX: return latest_measurement;
+    if (sensor == UBLOX_GGA) {
+        return latest_measurement.ublox_GGA;
+    }
+    return std::nullopt;
+}
+
+template<>
+std::optional<Measurement<json>>
+Sensor_Manager::get_latest(Sensor_Name sensor)
+{
+    // std::unique_lock<std::mutex> lock(sensor_mutex);
+    if (sensor == UBLOX_JSON) {
+        return latest_measurement.ublox_json;
     }
     return std::nullopt;
 }

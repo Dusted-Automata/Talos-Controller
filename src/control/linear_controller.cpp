@@ -26,18 +26,18 @@ Linear_Controller::get_cmd()
 {
     double dt = 1.0 / robot->config.control_loop_hz; // TODO change with real dt
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-
-    if (robot->sensor_manager.get_latest(Sensor_Name::UBLOX).has_value()) {
-        Measurement measurement = robot->sensor_manager.get_latest(Sensor_Name::UBLOX).value();
-        double lat = to_radian(measurement.ublox.latlng.lat);
-        double lng = to_radian(measurement.ublox.latlng.lng);
-        double alt = measurement.ublox.alt;
+    auto ublox_gga = robot->sensor_manager.get_latest<GGA>(Sensor_Name::UBLOX_GGA);
+    if (ublox_gga.has_value()) {
+        GGA val = ublox_gga.value().val;
+        double lat = to_radian(val.latlng.lat);
+        double lng = to_radian(val.latlng.lng);
+        double alt = val.alt;
 
         if (above_epsilon(lat, lng, alt)) {
             // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
             robot->frames.update_based_on_measurement({ lat, lng, alt });
         }
-        robot->sensor_manager.consume_measurement();
+        robot->sensor_manager.consume_measurement(Sensor_Name::UBLOX_GGA);
     }
 
     std::optional<Pose> target_waypoint = robot->path.get_next();

@@ -27,5 +27,5 @@ class TCP_Socket
     bool recv(std::queue<std::string> &msgs);
     std::vector<std::string> recv_all();
     std::string ublox_Message();
-    int socket_fd = -1;
+    int fd = -1;
 };

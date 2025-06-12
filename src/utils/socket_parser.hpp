@@ -24,7 +24,7 @@ class NMEA_Parser : public Socket_Parser
     void push(std::queue<std::string> &msgs, std::span<const char> data) override;
 };
 
-class Ublox_JSON_Parser : public Socket_Parser
+class JSON_Parser : public Socket_Parser
 {
 
   private:

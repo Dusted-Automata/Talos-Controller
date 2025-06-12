@@ -131,7 +131,7 @@ extract_command(const std::string &cmd_str)
 }
 
 void
-Ublox::process()
+Ublox_GGA::process()
 {
     while (!buf.empty()) {
         std::string i = buf.front();
@@ -151,7 +151,7 @@ Ublox::process()
 }
 
 void
-Ublox::loop()
+Ublox_GGA::loop()
 {
 
     while (socket.recv(buf) && running) {
@@ -160,13 +160,59 @@ Ublox::loop()
 }
 
 void
-Ublox::start()
+Ublox_GGA::start()
 {
 
     if (!socket.connect()) {
-        std::cerr << "Ublx couldn't connect" << std::endl;
+        std::cerr << "Ublx couldn't connect to nmea_socket" << std::endl;
         return;
     };
+
+    if (socket.fd < 0) {
+        return;
+    }
+
+    if (running) return;
+    running = true;
+
+    if (sensor_thread.joinable()) {
+        sensor_thread.join();
+    }
+
+    sensor_thread = std::thread(&Sensor::loop, this);
+}
+
+void
+Ublox_JSON::process()
+{
+    while (!buf.empty()) {
+        json msg = json::parse(buf.front());
+        msgs.push_back(std::move(msg));
+        buf.pop();
+    }
+}
+
+void
+Ublox_JSON::loop()
+{
+
+    while (socket.recv(buf) && running) {
+        process();
+    }
+}
+
+void
+Ublox_JSON::start()
+{
+
+    if (!socket.connect()) {
+        std::cerr << "Ublx couldn't connect to json_socket" << std::endl;
+        return;
+    };
+
+    if (socket.fd < 0) {
+        return;
+    }
 
     if (running) return;
     running = true;

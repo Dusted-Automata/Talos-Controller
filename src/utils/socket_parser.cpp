@@ -96,7 +96,7 @@ NMEA_Parser::push(std::queue<std::string> &msgs, std::span<const char> data)
 }
 
 void
-Ublox_JSON_Parser::push(std::queue<std::string> &msgs, std::span<const char> data)
+JSON_Parser::push(std::queue<std::string> &msgs, std::span<const char> data)
 {
     ring.write(data);
 
