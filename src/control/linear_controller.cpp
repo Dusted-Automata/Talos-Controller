@@ -26,25 +26,29 @@ Linear_Controller::get_cmd()
 {
     double dt = 1.0 / robot->config.control_loop_hz; // TODO change with real dt
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-    auto ublox_gga = robot->sensor_manager.get_latest<GGA>(Sensor_Name::UBLOX_GGA);
-    if (ublox_gga.has_value()) {
-        GGA val = ublox_gga.value().val;
-        double lat = to_radian(val.latlng.lat);
-        double lng = to_radian(val.latlng.lng);
-        double alt = val.alt;
+    // auto ublox_gga = robot->sensor_manager.get_latest<GGA>(Msg_Type::NAV_ATT);
+    // if (ublox_gga.has_value()) {
+    //     GGA val = ublox_gga.value().val;
+    //     double lat = to_radian(val.latlng.lat);
+    //     double lng = to_radian(val.latlng.lng);
+    //     double alt = val.alt;
+    //
+    //     if (above_epsilon(lat, lng, alt)) {
+    //         // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
+    //         robot->frames.update_based_on_measurement({ lat, lng, alt });
+    //     }
+    //     robot->sensor_manager.consume_measurement(Msg_Type::NAV_ATT);
+    // }
 
-        if (above_epsilon(lat, lng, alt)) {
-            // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
-            robot->frames.update_based_on_measurement({ lat, lng, alt });
-        }
-        robot->sensor_manager.consume_measurement(Sensor_Name::UBLOX_GGA);
-    }
-
-    auto ublox_simple = robot->sensor_manager.get_latest<Simple_Ublox>(Sensor_Name::UBLOX_SIMPLE);
+    auto ublox_simple = robot->sensor_manager.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
     if (ublox_simple.has_value()) {
-        NAV_ATT nav_att = ublox_simple.value().val.nav_att;
+        Nav_Att nav_att = ublox_simple.value();
         double heading = to_radian(nav_att.heading);
-        std::cout << heading << std::endl;
+        std::cout << nav_att.heading << std::endl;
+        // std::cout << heading << std::endl;
+        Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
+        Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
+        robot->frames.local_frame.orientation.linear() + rotationMatrix;
     }
 
     std::optional<Pose> target_waypoint = robot->path.get_next();

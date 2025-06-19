@@ -62,7 +62,6 @@ set(COMMON_SOURCES
     src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp
-    src/utils/socket_parser.cpp
     src/utils/sim.cpp
     src/utils/EGM96.cpp
 )

@@ -1,7 +1,7 @@
 #include "socket.hpp"
-#include <cstring>
 #include <fcntl.h>
 #include <iostream>
+#include <optional>
 #include <unistd.h>
 
 bool
@@ -27,10 +27,13 @@ TCP_Socket::connect()
     }
     std::cout << "Connected to " << server_ip << ":" << port << std::endl;
 
-    // int flags = fcntl(socket_fd, F_GETFL, 0);
-    // fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
-
     return true;
+}
+
+int
+TCP_Socket::get_fd()
+{
+    return fd;
 }
 
 void
@@ -42,8 +45,8 @@ TCP_Socket::disconnect()
     }
 }
 
-bool
-TCP_Socket::recv(std::queue<std::string> &msgs)
+std::optional<json>
+TCP_Socket::recv()
 {
     if (fd == -1) {
         std::cerr << "Socket is closed" << std::endl;
@@ -52,7 +55,8 @@ TCP_Socket::recv(std::queue<std::string> &msgs)
 
     ssize_t bytes_received;
 
-    bytes_received = ::recv(fd, recv_buf.data(), recv_buf.size(), 0);
+    bytes_received = ::recv(fd, recv_buf.data() + buf_index, recv_buf.size(), 0);
+
     if (bytes_received == 0) {
         std::cerr << "socket closed" << std::endl;
         disconnect();
@@ -63,7 +67,15 @@ TCP_Socket::recv(std::queue<std::string> &msgs)
         disconnect();
         return false;
     }
-    parser.push(msgs, std::span(recv_buf.data(), bytes_received));
 
-    return true;
+    for (int i = buf_index; i < buf_index + bytes_received; i++) {
+        if (recv_buf[i] == '\n') {
+            std::string msg(recv_buf.data(), i + 1); // i + 1 to include the newline
+            json j = json::parse(msg);
+            buf_index = 0;
+            return std::optional<json>(j);
+        }
+    }
+
+    return std::nullopt;
 }

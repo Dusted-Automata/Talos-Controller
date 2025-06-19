@@ -17,7 +17,7 @@ Robot::control_loop()
             pose_state = read_state();
             pose_state.velocity.linear *= 1.0 / config.control_loop_hz;
             pose_state.velocity.angular *= 1.0 / config.control_loop_hz;
-            sensor_manager.consume();
+            sensor_manager.recv_latest();
             frames.move_in_local_frame(pose_state.velocity);
             logger.savePosesToFile(frames);
             logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());

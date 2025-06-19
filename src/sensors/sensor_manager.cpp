@@ -5,23 +5,13 @@
 #include <unistd.h>
 
 void
-Sensor_Manager::consume()
+Sensor_Manager::recv_latest()
 {
-    while (!ublox_gga.msgs.empty()) {
-        GGA gga = ublox_gga.msgs.back();
-        latest_measurement.ublox_GGA = { .val = gga, .source = Sensor_Name::UBLOX_GGA };
-        ublox_gga.msgs.clear(); // Currently we are only interested in the latest measurement. I might switch it to
-                                // just an optional or something
+    if (ublox.nav_att.has_value()) {
+        latest_measurement.nav_att.swap(ublox.nav_att);
     }
-
-    while (!ublox_json.msgs.empty()) {
-        json j = ublox_json.msgs.back();
-        NAV_ATT nav(j);
-        latest_measurement.ublox_simple = {
-            .val = { .nav_att = j, .esf_ins = {} },
-            .source = Sensor_Name::UBLOX_SIMPLE
-        };
-        ublox_json.msgs.clear();
+    if (ublox.esf_ins.has_value()) {
+        latest_measurement.esf_ins.swap(ublox.esf_ins);
     }
 }
 
@@ -29,44 +19,42 @@ void
 Sensor_Manager::init()
 {
 
-    ublox_gga.start();
-    ublox_json.start();
+    ublox.start();
 }
 
 void
 Sensor_Manager::shutdown()
 {
-    ublox_gga.stop();
-    ublox_json.stop();
+    ublox.stop();
 }
 
 void
-Sensor_Manager::consume_measurement(Sensor_Name sensor)
+Sensor_Manager::consume(Msg_Type msg)
 {
-    switch (sensor) {
-    case Sensor_Name::UBLOX_GGA: latest_measurement.ublox_GGA.reset(); return;
-    case Sensor_Name::UBLOX_SIMPLE: latest_measurement.ublox_simple.reset(); return;
+    switch (msg) {
+    case Msg_Type::NAV_ATT: latest_measurement.nav_att.reset(); return;
+    case Msg_Type::ESF_INS: latest_measurement.esf_ins.reset(); return;
     }
 }
 
 template<>
-std::optional<Measurement<GGA>>
-Sensor_Manager::get_latest(Sensor_Name sensor)
+std::optional<Nav_Att>
+Sensor_Manager::get_latest(Msg_Type msg)
 {
     // std::unique_lock<std::mutex> lock(sensor_mutex);
-    if (sensor == UBLOX_GGA) {
-        return latest_measurement.ublox_GGA;
+    if (msg == NAV_ATT) {
+        return latest_measurement.nav_att;
     }
     return std::nullopt;
 }
 
 template<>
-std::optional<Measurement<Simple_Ublox>>
-Sensor_Manager::get_latest(Sensor_Name sensor)
+std::optional<Esf_Ins>
+Sensor_Manager::get_latest(Msg_Type msg)
 {
     // std::unique_lock<std::mutex> lock(sensor_mutex);
-    if (sensor == UBLOX_SIMPLE) {
-        return latest_measurement.ublox_simple;
+    if (msg == ESF_INS) {
+        return latest_measurement.esf_ins;
     }
     return std::nullopt;
 }

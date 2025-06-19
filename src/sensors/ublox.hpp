@@ -1,33 +1,12 @@
 #pragma once
-#include "NMEA.hpp"
 #include "sensor.hpp"
 #include "socket.hpp"
 #include <json.hpp>
-#include <queue>
-#include <vector>
 
 using nlohmann::json;
-class Ublox_GGA : public Sensor<GGA>
-{
-    NMEA_Parser parser = {};
-    Sensor_Name name = Sensor_Name::UBLOX_GGA;
 
-  public:
-    Ublox_GGA() {};
-    TCP_Socket socket = TCP_Socket("127.0.0.1", 50010, parser);
-    // TCP_Socket socket = TCP_Socket("192.168.123.161", 50010, parser);
-    // TCP_Socket socket = TCP_Socket("192.168.12.1", 50010, parser);
-    std::queue<std::string> buf;
-    std::vector<GGA> msgs;
-
-    void process() override;
-    void loop() override;
-    void start() override;
-};
-
-struct NAV_ATT {
-    // std::string identity": "NAV-ATT",
-    NAV_ATT(json j)
+struct Nav_Att {
+    Nav_Att(json j)
     {
         accHeading = j["accHeading"];
         accPitch = j["accPitch"];
@@ -51,7 +30,7 @@ struct NAV_ATT {
     int8_t msgmode;
 };
 
-struct ESF_INS {
+struct Esf_Ins {
     int32_t iTOW;
     int32_t length;
     int8_t msgmode;
@@ -70,25 +49,23 @@ struct ESF_INS {
     double zAngRateValid;
 };
 
-struct Simple_Ublox {
-    NAV_ATT nav_att;
-    ESF_INS esf_ins;
+struct Ublox_Msgs {
+    Nav_Att nav_att;
+    Esf_Ins esf_ins;
+    // Whatever gives GGA
 };
 
-class Ublox_simple : public Sensor<json>
+class Ublox : public Sensor<Ublox_Msgs>
 {
-    JSON_Parser parser = {};
-    Sensor_Name name = Sensor_Name::UBLOX_SIMPLE;
+    // Ublox_Msgs msg = {};
 
   public:
-    Ublox_simple() {};
-    TCP_Socket socket = TCP_Socket("127.0.0.1", 50020, parser);
-    // TCP_Socket socket = TCP_Socket("192.168.123.161", 50010, parser);
-    // TCP_Socket socket = TCP_Socket("192.168.12.1", 50010, parser);
-    std::queue<std::string> buf;
-    std::vector<json> msgs;
+    Ublox() {};
+    TCP_Socket socket = TCP_Socket("127.0.0.1", 50020);
 
-    void process() override;
     void loop() override;
     void start() override;
+
+    std::optional<Nav_Att> nav_att;
+    std::optional<Esf_Ins> esf_ins;
 };

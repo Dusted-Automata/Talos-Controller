@@ -381,7 +381,11 @@ struct Velocity2d {
 static inline double
 to_radian(double degrees)
 {
-    return degrees * (M_PI / 180);
+    double rad = degrees * (M_PI / 180);
+    const double TWO_PI = 2.0 * M_PI;
+    rad = fmod(rad + M_PI, TWO_PI);
+    if (rad < 0) rad += TWO_PI;
+    return rad - M_PI;
 }
 
 struct Pose_State {

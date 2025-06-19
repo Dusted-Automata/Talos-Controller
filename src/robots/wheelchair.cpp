@@ -13,7 +13,7 @@ Wheelchair::init()
 {
 
 #define BAUDRATE B115200
-#define TTY "/dev/ttyACM1"
+#define TTY "/dev/ttyACM0"
 
     tty_acm_fd = open(TTY, O_RDWR | O_NOCTTY | O_SYNC);
 

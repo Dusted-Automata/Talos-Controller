@@ -3,12 +3,7 @@
 #include <optional>
 #include <thread>
 
-enum Sensor_Name { UBLOX_GGA, UBLOX_SIMPLE };
-
-template<typename T> struct Measurement {
-    T val;
-    Sensor_Name source;
-};
+enum Msg_Type { NAV_ATT, ESF_INS };
 
 template<typename T> class Sensor
 {
@@ -35,13 +30,11 @@ template<typename T> class Sensor
             sensor_thread.join();
         }
     }
-    virtual void process() = 0;
     virtual void loop() = 0;
     // virtual std::optional<Measurement<>> poll() = 0;
   protected:
     std::atomic_bool running = false;
     std::thread sensor_thread;
     std::mutex measurement_mutex;
-    std::optional<Measurement<T>> latest_measurement = {};
-    Sensor_Name name;
+    std::optional<T> latest_measurement = {};
 };

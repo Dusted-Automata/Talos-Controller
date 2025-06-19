@@ -5,16 +5,15 @@
 #include <thread>
 
 struct Latest_Measurement {
-    std::optional<Measurement<GGA>> ublox_GGA;
-    std::optional<Measurement<Simple_Ublox>> ublox_simple;
+    std::optional<Nav_Att> nav_att;
+    std::optional<Esf_Ins> esf_ins;
 };
 
 class Sensor_Manager
 {
     std::thread sensors_thread;
     Latest_Measurement latest_measurement = {};
-    Ublox_GGA ublox_gga;
-    Ublox_simple ublox_json;
+    Ublox ublox;
 
   public:
     Sensor_Manager() {}
@@ -22,7 +21,7 @@ class Sensor_Manager
     void readSensors();
     void init();
     void shutdown();
-    void consume();
-    void consume_measurement(Sensor_Name sensor);
-    template<typename T> std::optional<Measurement<T>> get_latest(Sensor_Name sensor);
+    void recv_latest();
+    void consume(Msg_Type sensor);
+    template<typename T> std::optional<T> get_latest(Msg_Type sensor);
 };
