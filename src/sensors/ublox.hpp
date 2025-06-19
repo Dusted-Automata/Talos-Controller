@@ -59,13 +59,16 @@ class Ublox : public Sensor<Ublox_Msgs>
 {
     // Ublox_Msgs msg = {};
 
+    std::optional<Nav_Att> nav_att;
+    std::optional<Esf_Ins> esf_ins;
+
   public:
     Ublox() {};
     TCP_Socket socket = TCP_Socket("127.0.0.1", 50020);
 
     void loop() override;
-    void start() override;
+    bool start() override;
 
-    std::optional<Nav_Att> nav_att;
-    std::optional<Esf_Ins> esf_ins;
+    void consume(Msg_Type sensor);
+    template<typename T> std::optional<T> get_latest(Msg_Type sensor);
 };

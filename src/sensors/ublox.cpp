@@ -19,25 +19,56 @@ Ublox::loop()
     }
 }
 
-void
+bool
 Ublox::start()
 {
 
+    if (running) return true;
     if (!socket.connect()) {
-        std::cerr << "Ublx couldn't connect to json_socket" << std::endl;
-        return;
+        std::cerr << "Ublx couldn't connect to socket" << std::endl;
+        return false;
     };
 
     if (socket.get_fd() < 0) {
-        return;
+        return false;
     }
-
-    if (running) return;
-    running = true;
 
     if (sensor_thread.joinable()) {
         sensor_thread.join();
     }
 
     sensor_thread = std::thread(&Sensor::loop, this);
+    running = true;
+    return true;
+}
+
+void
+Ublox::consume(Msg_Type msg)
+{
+    switch (msg) {
+    case Msg_Type::NAV_ATT: nav_att.reset(); return;
+    case Msg_Type::ESF_INS: esf_ins.reset(); return;
+    }
+}
+
+template<>
+std::optional<Nav_Att>
+Ublox::get_latest(Msg_Type msg)
+{
+    // std::unique_lock<std::mutex> lock(sensor_mutex);
+    if (msg == NAV_ATT) {
+        return nav_att;
+    }
+    return std::nullopt;
+}
+
+template<>
+std::optional<Esf_Ins>
+Ublox::get_latest(Msg_Type msg)
+{
+    // std::unique_lock<std::mutex> lock(sensor_mutex);
+    if (msg == ESF_INS) {
+        return esf_ins;
+    }
+    return std::nullopt;
 }

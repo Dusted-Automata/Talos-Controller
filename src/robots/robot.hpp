@@ -2,8 +2,8 @@
 #include "frames.hpp"
 #include "logger.hpp"
 #include "robot_path.hpp"
-#include "sensor_manager.hpp"
 #include "types.hpp"
+#include "ublox.hpp"
 
 class Trajectory_Controller;
 
@@ -27,7 +27,7 @@ class Robot
 
     Robot_Config config = {};
     Logger logger = {};
-    Sensor_Manager sensor_manager = {};
+    Ublox ublox = {};
     Robot_Path path = {};
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
@@ -36,4 +36,5 @@ class Robot
     void control_loop();
     void start();
     void shutdown();
+    bool init();
 };

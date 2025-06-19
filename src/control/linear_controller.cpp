@@ -26,7 +26,7 @@ Linear_Controller::get_cmd()
 {
     double dt = 1.0 / robot->config.control_loop_hz; // TODO change with real dt
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-    // auto ublox_gga = robot->sensor_manager.get_latest<GGA>(Msg_Type::NAV_ATT);
+    // auto ublox_gga = robot->ublox.get_latest<GGA>(Msg_Type::NAV_ATT);
     // if (ublox_gga.has_value()) {
     //     GGA val = ublox_gga.value().val;
     //     double lat = to_radian(val.latlng.lat);
@@ -37,10 +37,10 @@ Linear_Controller::get_cmd()
     //         // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
     //         robot->frames.update_based_on_measurement({ lat, lng, alt });
     //     }
-    //     robot->sensor_manager.consume_measurement(Msg_Type::NAV_ATT);
+    //     robot->ublox.consume_measurement(Msg_Type::NAV_ATT);
     // }
 
-    auto ublox_simple = robot->sensor_manager.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
+    auto ublox_simple = robot->ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
     if (ublox_simple.has_value()) {
         Nav_Att nav_att = ublox_simple.value();
         double heading = to_radian(nav_att.heading);

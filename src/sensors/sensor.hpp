@@ -9,17 +9,18 @@ template<typename T> class Sensor
 {
   public:
     virtual ~Sensor() { stop(); };
-    virtual void
+    virtual bool
     start()
     {
-        if (running) return;
-        running = true;
+        if (running) return true;
 
         if (sensor_thread.joinable()) {
             sensor_thread.join();
         }
 
         sensor_thread = std::thread(&Sensor::loop, this);
+        running = true;
+        return true;
     };
     virtual void
     stop()
