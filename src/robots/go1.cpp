@@ -1,11 +1,9 @@
 #include "go1.hpp"
 #include "raylib.h"
 #include "utils/sim.hpp"
-#include <chrono>
 #include <iostream>
 #include <math.h>
 #include <stdint.h>
-#include <vector>
 
 void
 Go1::UDPRecv()
@@ -25,8 +23,8 @@ Go1::moveCmd(const Velocity2d &velocity)
     uint8_t *cmdBytes = reinterpret_cast<uint8_t *>(&cmd);
     float vel_x = static_cast<float>(velocity.linear.x());
     float vel_yaw = static_cast<float>(velocity.angular.z());
-    writeToStruct<uint8_t>(cmdBytes, HighCmdOffset::Mode, 2);
-    writeToStruct<uint8_t>(cmdBytes, HighCmdOffset::GaitType, 1);
+    writeToStruct<Go1_mode>(cmdBytes, HighCmdOffset::Mode, Go1_mode::Target_velocity_walking);
+    writeToStruct<GaitType>(cmdBytes, HighCmdOffset::GaitType, GaitType::Trot);
     writeToStruct<float>(cmdBytes, HighCmdOffset::VelocityX, vel_x);
     writeToStruct<float>(cmdBytes, HighCmdOffset::YawSpeed, vel_yaw);
     return cmd;
@@ -79,17 +77,6 @@ main(void)
               << "WARNING: Make sure the robot is standing on the ground." << std::endl
               << "Press Enter to continue..." << std::endl;
     std::cin.ignore();
-
-    // std::vector<pose> waypoints = {
-    //     { 4100157.662065, 476378.631671, 4846296.665580 },
-    //     { 4100148.734711, 476371.224146, 4846299.782664 },
-    //     { 4100145.848885, 476373.137198, 4846301.104139 },
-    //     { 4100149.701858, 476374.962868, 4846304.499274 },
-    //     { 4100151.938404, 476372.478777, 4846293.038250 },
-    //     { 4100164.617288, 476372.803512, 4846292.699499 },
-    //     { 4100166.832613, 476369.785077, 4846290.870528 },
-    //     { 4100164.228392, 476367.548448, 4846291.181639 }
-    // };
 
     Go1 robot;
     robot.path.path_looping = true;

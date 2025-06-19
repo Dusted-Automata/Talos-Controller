@@ -25,11 +25,8 @@ class Linear_Controller : public Trajectory_Controller
               config.kinematic_constraints.omega_min) {};
     ~Linear_Controller() = default;
 
-    void path_loop(std::vector<Ecef> &waypoints);
     Velocity2d get_cmd() override;
     double get_accel() override;
-
-    Thread_Safe_Queue<Trajectory_Point> trajectories;
 
     Trapezoidal_Profile linear_profile;
     Trapezoidal_Profile angular_profile;

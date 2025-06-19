@@ -1,6 +1,5 @@
 #include "pid.hpp"
 #include <algorithm>
-#include <iostream>
 
 double
 PIDController::update(double setpoint, double measured_value, double dt)

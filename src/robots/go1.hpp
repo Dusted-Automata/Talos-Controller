@@ -77,24 +77,11 @@ class Go1 : public Robot
 
     Go1_mode mode = Go1_mode::Force_stand;
     GaitType gait_type = GaitType::Trot;
-    uint8_t speed_level = 0;
-    float foot_raise_height;
-    float body_height;
 
     void UDPRecv();
     void UDPSend();
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;
-
-    double dt = 0.002; // 0.001~0.01
-
-    // Eigen::Matrix4d go1_config_matrix[4];
-    const double trunk_length = 0.3762 / 2;
-    const double trunk_width = 0.0935 / 2;
-    const double l1 = 0.;
-    const double l2 = 0.080; // hip
-    const double l3 = 0.213; // thigh
-    const double l4 = 0.213; // calf
 };
 
 namespace HighCmdOffset
