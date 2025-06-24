@@ -28,8 +28,8 @@ class Frames
 
     void init(const std::optional<Pose> &coordinate);
     void init(const std::vector<Pose> &waypoints);
-    void move_in_local_frame(const Velocity2d &velocity);
-    void move_in_global_frame(const Velocity2d &velocity);
+    void move_in_local_frame(Velocity2d velocity, const double dt);
+    void move_in_global_frame(Velocity2d velocity, const double dt);
 
     void update_based_on_measurement(const LLH &llh);
     Vector3d get_error_vector_in_NED(const LLH &llh);
