@@ -132,14 +132,13 @@ main(void)
 
     Wheelchair robot;
 
+    double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
     PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-    LinearPID linear_pid(robot.config, linear_gains);
     PIDGains angular_gains = { 1.0, 0.01, 0.25 };
-    AngularPID angular_pid(robot.config, angular_gains);
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
         robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
         robot.config.kinematic_constraints.a_min);
-    double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
+    Linear_Controller traj_controller(linear_gains, angular_gains, linear_profile, robot.config);
 
     robot.path.path_looping = true;
     robot.path.read_json_latlon("ecef_points.json");
@@ -155,9 +154,7 @@ main(void)
             robot.logger.savePosesToFile(robot.frames);
             // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
-            Velocity2d cmd = Linear_Controller::get_cmd(0.75, robot, linear_profile, dt);
-            cmd.linear.x() = linear_pid.update(cmd.linear.x(), robot.pose_state.velocity.linear.x(), dt);
-            cmd.angular.z() = angular_pid.update(0, -cmd.angular.z(), dt);
+            Velocity2d cmd = traj_controller.get_cmd(robot, dt);
             robot.send_velocity_command(cmd);
         }
     }

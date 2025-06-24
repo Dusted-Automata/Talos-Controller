@@ -16,7 +16,7 @@ above_epsilon(double lat, double lng, double alt)
 }
 
 Velocity2d
-Linear_Controller::get_cmd(Robot &robot, Trapezoidal_Profile linear_profile, double dt)
+Linear_Controller::calculate_cmd(Robot &robot, Motion_Profile &motion_profile, double dt)
 {
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
     // auto ublox_gga = robot->ublox.get_latest<GGA>(Msg_Type::NAV_ATT);
@@ -46,7 +46,7 @@ Linear_Controller::get_cmd(Robot &robot, Trapezoidal_Profile linear_profile, dou
 
     std::optional<Pose> target_waypoint = robot.path.get_next();
     if (!target_waypoint.has_value()) {
-        linear_profile.reset();
+        motion_profile.reset();
         return cmd;
     }
     ENU goal = cppmap3d::ecef2enu(target_waypoint.value().point, robot.frames.local_frame.origin);
@@ -58,7 +58,7 @@ Linear_Controller::get_cmd(Robot &robot, Trapezoidal_Profile linear_profile, dou
 
     if (dist < robot.config.goal_tolerance_in_meters) {
         robot.path.pop();
-        linear_profile.reset();
+        motion_profile.reset();
 
         std::optional<Pose> target_waypoint = robot.path.get_next();
         if (target_waypoint.has_value()) {
@@ -66,19 +66,28 @@ Linear_Controller::get_cmd(Robot &robot, Trapezoidal_Profile linear_profile, dou
             Vector3d diff = goal.raw() - robot.frames.local_frame.pos.raw();
             diff = robot.frames.local_frame.orientation.rotation().transpose() * diff;
             double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
-            linear_profile.set_setpoint(dist);
+            motion_profile.set_setpoint(dist);
         }
         return cmd;
     }
 
     // std::cout << dist << std::endl;
-    linear_profile.update(dist - robot.config.goal_tolerance_in_meters, dt);
+    motion_profile.update(dist - robot.config.goal_tolerance_in_meters, dt);
 
-    cmd.linear.x() = linear_profile.velocity, robot.pose_state.velocity.linear.x();
+    cmd.linear.x() = motion_profile.velocity, robot.pose_state.velocity.linear.x();
     cmd.linear.y() = 0.0;
     cmd.linear.z() = 0.0;
     cmd.angular.z() = yaw_error;
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
+    return cmd;
+}
+
+Velocity2d
+Linear_Controller::get_cmd(Robot &robot, double dt)
+{
+    Velocity2d cmd = calculate_cmd(robot, motion_profile, dt);
+    cmd.linear.x() = linear_pid.update(cmd.linear.x(), robot.pose_state.velocity.linear.x(), dt);
+    cmd.angular.z() = angular_pid.update(0, -cmd.angular.z(), dt);
     return cmd;
 }
