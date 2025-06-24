@@ -1,6 +1,5 @@
 #include "motion_profile.hpp"
 #include <cstdlib>
-#include <iostream>
 
 void
 Motion_Profile::update(double position, double dt)

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "types.hpp"
-
 class Motion_Profile
 {
   public:

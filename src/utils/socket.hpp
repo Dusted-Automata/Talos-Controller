@@ -20,10 +20,8 @@ class TCP_Socket
     std::array<char, TCP_BUFFER_LENGTH> recv_buf;
     int fd = -1;
     int buf_index = 0;
-    // Socket_Parser &parser;
 
   public:
-    // TCP_Socket(std::string ip, uint16_t port, Socket_Parser &parser) : server_ip(ip), port(port), parser(parser) {};
     TCP_Socket(std::string ip, uint16_t port) : server_ip(ip), port(port) {};
     ~TCP_Socket() { disconnect(); };
     bool connect();
