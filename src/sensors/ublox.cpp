@@ -47,7 +47,7 @@ Ublox::consume(Msg_Type msg)
 {
     switch (msg) {
     case Msg_Type::NAV_ATT: nav_att.reset(); return;
-    case Msg_Type::ESF_INS: esf_ins.reset(); return;
+    case Msg_Type::GP_GGA: gga.reset(); return;
     }
 }
 
@@ -63,12 +63,12 @@ Ublox::get_latest(Msg_Type msg)
 }
 
 template<>
-std::optional<Esf_Ins>
+std::optional<GGA>
 Ublox::get_latest(Msg_Type msg)
 {
     // std::unique_lock<std::mutex> lock(sensor_mutex);
-    if (msg == ESF_INS) {
-        return esf_ins;
+    if (msg == GP_GGA) {
+        return gga;
     }
     return std::nullopt;
 }
