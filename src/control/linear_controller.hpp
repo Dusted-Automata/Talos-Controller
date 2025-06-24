@@ -17,8 +17,7 @@ class Linear_Controller : public Trajectory_Controller
         : linear_pid(linear_pid), angular_pid(angular_pid), linear_profile(config.kinematic_constraints.v_max,
                                                                 config.kinematic_constraints.a_max,
                                                                 config.kinematic_constraints.v_min,
-                                                                config.kinematic_constraints.a_min),
-    {};
+                                                                config.kinematic_constraints.a_min) {};
     ~Linear_Controller() = default;
 
     Velocity2d get_cmd() override;
