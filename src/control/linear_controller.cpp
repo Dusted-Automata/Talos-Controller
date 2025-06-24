@@ -56,7 +56,6 @@ Linear_Controller::get_cmd()
         linear_pid.reset();
         angular_pid.reset();
         linear_profile.reset();
-        angular_profile.reset();
         return cmd;
     }
     ENU goal = cppmap3d::ecef2enu(target_waypoint.value().point, robot->frames.local_frame.origin);
@@ -66,13 +65,12 @@ Linear_Controller::get_cmd()
 
     double yaw_error = atan2(diff.y(), diff.x());
 
-    if (dist < goal_tolerance) {
+    if (dist < robot->config.goal_tolerance_in_meters) {
         robot->path.pop();
         linear_pid.reset();
         angular_pid.reset();
 
         linear_profile.reset();
-        angular_profile.reset();
 
         std::optional<Pose> target_waypoint = robot->path.get_next();
         if (target_waypoint.has_value()) {
@@ -81,13 +79,12 @@ Linear_Controller::get_cmd()
             diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
             double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
             linear_profile.set_setpoint(dist);
-            angular_profile.set_setpoint(0);
         }
         return cmd;
     }
 
     // std::cout << dist << std::endl;
-    linear_profile.update(dist - goal_tolerance, dt);
+    linear_profile.update(dist - robot->config.goal_tolerance_in_meters, dt);
     // angular_profile.update(yaw_error, dt);
 
     cmd.linear.x() = linear_pid.update(linear_profile.velocity, robot->pose_state.velocity.linear.x(), dt);

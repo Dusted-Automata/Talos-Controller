@@ -11,8 +11,6 @@ class Linear_Controller : public Trajectory_Controller
   private:
     LinearPID linear_pid;
     AngularPID angular_pid;
-    double trajectory_time = 0.0;
-    double goal_tolerance = 0.75; // meters
 
   public:
     Linear_Controller(LinearPID linear_pid, AngularPID angular_pid, Robot_Config config)
@@ -20,14 +18,11 @@ class Linear_Controller : public Trajectory_Controller
                                                                 config.kinematic_constraints.a_max,
                                                                 config.kinematic_constraints.v_min,
                                                                 config.kinematic_constraints.a_min),
-          angular_profile(config.kinematic_constraints.omega_max,
-              config.kinematic_constraints.alpha_max,
-              config.kinematic_constraints.omega_min) {};
+    {};
     ~Linear_Controller() = default;
 
     Velocity2d get_cmd() override;
     double get_accel() override;
 
     Trapezoidal_Profile linear_profile;
-    Trapezoidal_Profile angular_profile;
 };
