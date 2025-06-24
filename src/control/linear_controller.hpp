@@ -10,5 +10,5 @@ class Linear_Controller
 
   private:
   public:
-    static Velocity2d get_cmd(double goal_tolerance, Robot &robot, Trapezoidal_Profile linear_profile, double dt);
+    static Velocity2d get_cmd(Robot &robot, Trapezoidal_Profile linear_profile, double dt);
 };

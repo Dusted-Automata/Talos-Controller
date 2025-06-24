@@ -16,7 +16,7 @@ above_epsilon(double lat, double lng, double alt)
 }
 
 Velocity2d
-Linear_Controller::get_cmd(double goal_tolerance, Robot &robot, Trapezoidal_Profile linear_profile, double dt)
+Linear_Controller::get_cmd(Robot &robot, Trapezoidal_Profile linear_profile, double dt)
 {
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
     // auto ublox_gga = robot->ublox.get_latest<GGA>(Msg_Type::NAV_ATT);
@@ -56,7 +56,7 @@ Linear_Controller::get_cmd(double goal_tolerance, Robot &robot, Trapezoidal_Prof
 
     double yaw_error = atan2(diff.y(), diff.x());
 
-    if (dist < goal_tolerance) {
+    if (dist < robot.config.goal_tolerance_in_meters) {
         robot.path.pop();
         linear_profile.reset();
 
@@ -72,7 +72,7 @@ Linear_Controller::get_cmd(double goal_tolerance, Robot &robot, Trapezoidal_Prof
     }
 
     // std::cout << dist << std::endl;
-    linear_profile.update(dist - goal_tolerance, dt);
+    linear_profile.update(dist - robot.config.goal_tolerance_in_meters, dt);
 
     cmd.linear.x() = linear_profile.velocity, robot.pose_state.velocity.linear.x();
     cmd.linear.y() = 0.0;

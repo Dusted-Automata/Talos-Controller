@@ -87,6 +87,7 @@ class Wheelchair : public Robot
 
         config = {
             .control_loop_hz = 15,
+            .goal_tolerance_in_meters = 0.75,
             .kinematic_constraints =
             {
                 // .v_max = 0.5,

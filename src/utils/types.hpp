@@ -415,6 +415,7 @@ struct Kinematic_Constraints {
 
 struct Robot_Config {
     int control_loop_hz;
+    double goal_tolerance_in_meters;
     Kinematic_Constraints kinematic_constraints;
 };
 
