@@ -1,6 +1,4 @@
 #pragma once
-#include "linear_controller.hpp"
-#include "pid.hpp"
 #include "robot.hpp"
 
 enum class Command_Action {
@@ -109,17 +107,14 @@ class Wheelchair : public Robot
             },
         };
 
-        PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-        LinearPID linear_pid(config, linear_gains);
-        PIDGains angular_gains = { 1.0, 0.01, 0.25 };
-        AngularPID angular_pid(config, angular_gains);
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
-        trajectory_controller->robot = this;
         init();
+        Robot::init();
     }
 
-    ~Wheelchair() { shutdown(); };
+    std::atomic<bool> running = false;
+    std::atomic<bool> pause = false;
 
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;
+    void control_loop();
 };

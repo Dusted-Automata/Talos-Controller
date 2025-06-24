@@ -1,11 +1,14 @@
 #include "wheelchair.hpp"
-#include "cppmap3d.hh"
+#include "linear_controller.hpp"
+#include "motion_profile.hpp"
+#include "pid.hpp"
 #include "sim.hpp"
 #include "types.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <thread>
 #include <unistd.h>
 
 void
@@ -111,55 +114,53 @@ Wheelchair::read_state()
     return pose_state;
 }
 
+// inline void
+// c_loop(Robot &robot, Trajectory_Controller &trajectory_controller, double dt)
+// {
+//     robot.pose_state = robot.read_state();
+//     robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
+//     robot.logger.savePosesToFile(robot.frames);
+//     // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
+//
+//     Velocity2d cmd = trajectory_controller.get_cmd();
+//     robot.send_velocity_command(cmd);
+// }
+
 int
 main(void)
 {
 
     Wheelchair robot;
+
+    PIDGains linear_gains = { 0.8, 0.05, 0.15 };
+    LinearPID linear_pid(robot.config, linear_gains);
+    PIDGains angular_gains = { 1.0, 0.01, 0.25 };
+    AngularPID angular_pid(robot.config, angular_gains);
+    Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
+        robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
+        robot.config.kinematic_constraints.a_min);
+    double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
+
     robot.path.path_looping = true;
-    robot.sensor_manager.init();
-
-    // ============+ TMP ============
-    // std::vector<ENU> waypoints = {
-    //     { 0, 0, 0 },
-    //     { 2, 2, 0 },
-    //     { 4, 4, 0 },
-    //     { 6, 6, 0 },
-    //     { 8, 6, 0 },
-    //     { 6, 4, 0 },
-    //     { 4, 4, 0 },
-    //     { 2, 4, 0 },
-    // };
-
-    // std::vector<ENU> waypoints = {
-    //     {  0, 0, 0 },
-    //     {  4, 0, 0 },
-    //     {  8, 4, 0 },
-    //     { 12, 8, 0 },
-    //     { 16, 8, 0 },
-    //     { 12, 4, 0 },
-    //     {  8, 4, 0 },
-    //     {  4, 4, 0 },
-    // };
-
-    // LLH origin = cppmap3d::ecef2geodetic({ 4100154.6326008383, 476355.6958809831, 4846292.543723706 });
-    // std::vector<Ecef> transformed;
-    // for (auto i : waypoints) {
-    //     transformed.push_back(cppmap3d::enu2ecef(i, origin));
-    // }
-
-    // robot.path.add_waypoints(transformed);
-    // robot.frames.init(transformed);
-
-    // ============+ TMP ============
-
     robot.path.read_json_latlon("ecef_points.json");
     robot.frames.init(robot.path.path_points_all);
 
     Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
+    std::jthread sim_thread(&Sim_Display::display, sim);
 
-    robot.start();
-    sim.display();
+    while (robot.running) { // Control loop
+        while (!robot.pause && robot.running) {
+            robot.pose_state = robot.read_state();
+            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
+            robot.logger.savePosesToFile(robot.frames);
+            // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
+
+            Velocity2d cmd = Linear_Controller::get_cmd(0.75, robot, linear_profile, dt);
+            cmd.linear.x() = linear_pid.update(cmd.linear.x(), robot.pose_state.velocity.linear.x(), dt);
+            cmd.angular.z() = angular_pid.update(0, -cmd.angular.z(), dt);
+            robot.send_velocity_command(cmd);
+        }
+    }
 
     CloseWindow();
 
