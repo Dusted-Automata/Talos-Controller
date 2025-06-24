@@ -1,5 +1,6 @@
 
 #include "ublox.hpp"
+#include "sensor.hpp"
 #include <arpa/inet.h>
 #include <iostream>
 #include <netinet/in.h>
@@ -11,6 +12,10 @@ Ublox::loop()
     while (!(socket.get_fd() < 0) && running) {
         std::optional<json> j = socket.recv();
         if (j.has_value()) {
+            if (j.value()["identity"] == "GPGGA") {
+                std::cout << j.value().dump(4) << std::endl;
+                gga = GGA(j.value());
+            }
             if (j.value()["identity"] == "NAV-ATT") {
                 std::cout << j.value().dump(4) << std::endl;
                 nav_att = Nav_Att(j.value());
@@ -23,6 +28,7 @@ bool
 Ublox::start()
 {
 
+    std::cerr << "Starting Ublox" << std::endl;
     if (running) return true;
     if (!socket.connect()) {
         std::cerr << "Ublx couldn't connect to socket" << std::endl;

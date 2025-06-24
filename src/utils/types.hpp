@@ -440,11 +440,11 @@ struct Trajectory_Point {
 template<typename T, std::size_t Capacity> class Ring_Buffer
 {
   private:
-    std::array<T, Capacity> buffer = {};
     size_t head = 0;
     size_t tail = 0;
     size_t num_items = 0;
     bool full = false;
+    std::array<T, Capacity> buffer = {};
 
   public:
     T &
@@ -490,6 +490,18 @@ template<typename T, std::size_t Capacity> class Ring_Buffer
     capacity() const
     {
         return buffer.size();
+    }
+
+    size_t
+    contigues_space_from_head()
+    {
+        return std::min((buffer.size() - num_items), buffer.size() - head);
+    }
+
+    char *
+    data()
+    {
+        return buffer.data();
     }
 
     bool
