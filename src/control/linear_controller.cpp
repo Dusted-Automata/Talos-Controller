@@ -15,16 +15,9 @@ above_epsilon(double lat, double lng, double alt)
     return false;
 }
 
-double
-Linear_Controller::get_accel()
-{
-    return linear_profile.acceleration;
-}
-
 Velocity2d
-Linear_Controller::get_cmd()
+Linear_Controller::get_cmd(double goal_tolerance, Robot &robot, Trapezoidal_Profile linear_profile, double dt)
 {
-    double dt = 1.0 / robot->config.control_loop_hz; // TODO change with real dt
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
     // auto ublox_gga = robot->ublox.get_latest<GGA>(Msg_Type::NAV_ATT);
     // if (ublox_gga.has_value()) {
@@ -40,7 +33,7 @@ Linear_Controller::get_cmd()
     //     robot->ublox.consume_measurement(Msg_Type::NAV_ATT);
     // }
 
-    auto ublox_simple = robot->ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
+    auto ublox_simple = robot.ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
     if (ublox_simple.has_value()) {
         Nav_Att nav_att = ublox_simple.value();
         double heading = to_radian(nav_att.heading);
@@ -48,53 +41,43 @@ Linear_Controller::get_cmd()
         // std::cout << heading << std::endl;
         Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
         Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
-        robot->frames.local_frame.orientation.linear() + rotationMatrix;
+        robot.frames.local_frame.orientation.linear() + rotationMatrix;
     }
 
-    std::optional<Pose> target_waypoint = robot->path.get_next();
+    std::optional<Pose> target_waypoint = robot.path.get_next();
     if (!target_waypoint.has_value()) {
-        linear_pid.reset();
-        angular_pid.reset();
         linear_profile.reset();
-        angular_profile.reset();
         return cmd;
     }
-    ENU goal = cppmap3d::ecef2enu(target_waypoint.value().point, robot->frames.local_frame.origin);
-    Vector3d diff = goal.raw() - robot->frames.local_frame.pos.raw();
-    diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
+    ENU goal = cppmap3d::ecef2enu(target_waypoint.value().point, robot.frames.local_frame.origin);
+    Vector3d diff = goal.raw() - robot.frames.local_frame.pos.raw();
+    diff = robot.frames.local_frame.orientation.rotation().transpose() * diff;
     double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
 
     double yaw_error = atan2(diff.y(), diff.x());
 
     if (dist < goal_tolerance) {
-        robot->path.pop();
-        linear_pid.reset();
-        angular_pid.reset();
-
+        robot.path.pop();
         linear_profile.reset();
-        angular_profile.reset();
 
-        std::optional<Pose> target_waypoint = robot->path.get_next();
+        std::optional<Pose> target_waypoint = robot.path.get_next();
         if (target_waypoint.has_value()) {
-            ENU goal = cppmap3d::ecef2enu(target_waypoint.value().point, robot->frames.local_frame.origin);
-            Vector3d diff = goal.raw() - robot->frames.local_frame.pos.raw();
-            diff = robot->frames.local_frame.orientation.rotation().transpose() * diff;
+            ENU goal = cppmap3d::ecef2enu(target_waypoint.value().point, robot.frames.local_frame.origin);
+            Vector3d diff = goal.raw() - robot.frames.local_frame.pos.raw();
+            diff = robot.frames.local_frame.orientation.rotation().transpose() * diff;
             double dist = sqrt(diff.x() * diff.x() + diff.y() * diff.y());
             linear_profile.set_setpoint(dist);
-            angular_profile.set_setpoint(0);
         }
         return cmd;
     }
 
     // std::cout << dist << std::endl;
     linear_profile.update(dist - goal_tolerance, dt);
-    // angular_profile.update(yaw_error, dt);
 
-    cmd.linear.x() = linear_pid.update(linear_profile.velocity, robot->pose_state.velocity.linear.x(), dt);
+    cmd.linear.x() = linear_profile.velocity, robot.pose_state.velocity.linear.x();
     cmd.linear.y() = 0.0;
     cmd.linear.z() = 0.0;
-    // cmd.angular.z() = angular_pid.update(angular_profile.velocity, robot->pose_state.velocity.angular.z(), dt);
-    cmd.angular.z() = angular_pid.update(0, -yaw_error, dt);
+    cmd.angular.z() = yaw_error;
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
     return cmd;
