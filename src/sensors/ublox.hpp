@@ -67,6 +67,7 @@ class Ublox : public Sensor<Ublox_Msgs>
   public:
     Ublox() {};
     TCP_Socket socket = TCP_Socket("127.0.0.1", 50020);
+    Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> buf;
 
     void loop() override;
     bool start() override;

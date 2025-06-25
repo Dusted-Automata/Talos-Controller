@@ -19,7 +19,6 @@ class TCP_Socket
     std::string server_ip;
     uint16_t port;
     std::array<char, TCP_BUFFER_LENGTH> recv_buf;
-    Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> ring;
     int fd = -1;
     ssize_t buf_index = 0;
     // Socket_Parser &parser;
@@ -32,4 +31,6 @@ class TCP_Socket
     void disconnect();
     int get_fd();
     std::optional<json> recv();
+
+    bool recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring);
 };

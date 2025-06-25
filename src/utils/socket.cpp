@@ -45,21 +45,9 @@ TCP_Socket::disconnect()
     }
 }
 
-std::optional<json>
-TCP_Socket::recv()
+bool
+TCP_Socket::recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring)
 {
-
-    for (size_t i = 0; i < ring.count(); i++) {
-        if (ring[i] == '\n') {
-            int len = i + 1; // i + 1 to include the newline
-            std::string msg(len, '\0');
-            ring.read(std::span(msg.data(), len));
-            json j = json::parse(msg);
-            if (j["identity"] == "GPGGA" || j["identity"] == "NAV-ATT") {
-                return std::optional(j);
-            }
-        }
-    }
 
     if (fd == -1) {
         std::cerr << "Socket is closed" << std::endl;
@@ -68,9 +56,10 @@ TCP_Socket::recv()
 
     ssize_t bytes_received;
 
-    // bytes_received = ::recv(fd, recv_buf.data(), recv_buf.size(), 0);
-    bytes_received = ::recv(fd, ring.data(), ring.contigues_space_from_head(), 0);
-    // ring.write(std::span(recv_buf.data(), bytes_received));
+    bytes_received = ::recv(fd, recv_buf.data(), recv_buf.size(), 0);
+    ring.write(std::span(recv_buf.data(), bytes_received));
+    // bytes_received = ::recv(fd, ring.data() + ring.count(), ring.contigues_space_from_head(), 0);
+    // ring.set_head(bytes_received);
 
     if (bytes_received == 0) {
         std::cerr << "socket closed" << std::endl;
@@ -83,5 +72,5 @@ TCP_Socket::recv()
         return false;
     }
 
-    return std::nullopt;
+    return true;
 }
