@@ -114,6 +114,12 @@ class Wheelchair : public Robot
 
     std::atomic<bool> running = false;
     std::atomic<bool> pause = false;
+    ~Wheelchair()
+    {
+        Command set_cmd(Command_Action::SET, Command_Target::INPUT, "0");
+        ::write(tty_acm_fd, set_cmd.to_string().data(), set_cmd.to_string().size());
+        shutdown();
+    };
 
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;

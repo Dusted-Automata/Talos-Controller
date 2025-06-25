@@ -10,17 +10,54 @@ Ublox::loop()
 {
 
     while (!(socket.get_fd() < 0) && running) {
-        std::optional<json> j = socket.recv();
-        if (j.has_value()) {
-            if (j.value()["identity"] == "GPGGA") {
-                std::cout << j.value().dump(4) << std::endl;
-                gga = GGA(j.value());
-            }
-            if (j.value()["identity"] == "NAV-ATT") {
-                std::cout << j.value().dump(4) << std::endl;
-                nav_att = Nav_Att(j.value());
+        if (!socket.recv(buf)) {
+            running = false;
+            socket.disconnect();
+        }
+        std::cout << buf.count() << std::endl;
+        for (size_t i = 0; i < buf.count(); i++) {
+            if (buf[i] == '\n') {
+                int len = i + 1; // i + 1 to include the newline
+                std::string msg(len, '\0');
+                buf.read(std::span(msg.data(), len));
+                i = 0;
+                json j;
+                try {
+                    j = json::parse(msg);
+                } catch (nlohmann::json::parse_error &e) {
+                    std::cerr << "Parse error at byte " << e.byte << ": " << e.what() << std::endl;
+                    std::cout << msg.size() << " | " << msg.substr((e.byte - 10), 20) << std::endl;
+                    std::cout << msg << std::endl;
+                    break;
+                } catch (nlohmann::json::exception &e) {
+                    std::cerr << "Other JSON error: " << e.what() << std::endl;
+                    break;
+                }
+
+                if (j["identity"] == "GPGGA" || j["identity"] == "NAV-ATT") {
+                    if (j["identity"] == "GPGGA") {
+                        std::cout << j.dump(4) << std::endl;
+                        gga = GGA(j);
+                    }
+                    if (j["identity"] == "NAV-ATT") {
+                        std::cout << j.dump(4) << std::endl;
+                        nav_att = Nav_Att(j);
+                    }
+                }
             }
         }
+
+        // std::optional<json> j = socket.recv();
+        // if (j.has_value()) {
+        //     if (j.value()["identity"] == "GPGGA") {
+        //         std::cout << j.value().dump(4) << std::endl;
+        //         gga = GGA(j.value());
+        //     }
+        //     if (j.value()["identity"] == "NAV-ATT") {
+        //         std::cout << j.value().dump(4) << std::endl;
+        //         nav_att = Nav_Att(j.value());
+        //     }
+        // }
     }
 }
 
