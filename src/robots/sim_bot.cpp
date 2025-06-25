@@ -31,19 +31,8 @@ class Sim_Quadruped : public Robot
             },
         };
 
-        // PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-        PIDGains linear_gains = { 1.0, 0.0, 0.0 };
-        LinearPID linear_pid(config, linear_gains);
-        // PIDGains angular_gains = { 1.0, 1.15, 0.06 };
-        PIDGains angular_gains = { 1.0, 0.0, 0.0 };
-        AngularPID angular_pid(config, angular_gains);
-
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
-        trajectory_controller->robot = this;
         Robot::init();
     }
-
-    ~Sim_Quadruped() { shutdown(); };
 
     void
     applyDisturbance(const Eigen::Vector3d &force, const Eigen::Vector3d &torque)
@@ -77,27 +66,40 @@ main()
 
     Sim_Quadruped robot;
 
-    robot.path.path_looping = true;
-    // robot.path.add_waypoints(waypoints);
-    // robot.frames.init(waypoints);
-    robot.path.read_json_latlon("ecef_points.json");
-    robot.frames.init(robot.path.path_points_all);
-    robot.path.pop();
+    { // Find out how to extract this.
 
-    // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 19, -Vector3d::UnitY()));
-    // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 2, -Vector3d::UnitZ()));
-    // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI, Vector3d::UnitY()));
-    // robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(M_PI / 50, Vector3d::UnitY()));
-    /*std::cout << robot.frames.global_frame.orientation.rotation() << std::endl;*/
-    /*robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
-     * Vector3d::UnitY()));*/
-    /*robot.frames.global_frame.orientation.rotate(Eigen::AngleAxisd(-1,
-     * Vector3d::UnitY()));*/
+        double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
+        // PIDGains linear_gains = { 0.8, 0.05, 0.15 };
+        PIDGains linear_gains = { 1.0, 0.0, 0.0 };
+        LinearPID linear_pid(robot.config, linear_gains);
+        // PIDGains angular_gains = { 1.0, 1.15, 0.06 };
+        PIDGains angular_gains = { 1.0, 0.0, 0.0 };
+        AngularPID angular_pid(robot.config, angular_gains);
+        Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
+            robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
+            robot.config.kinematic_constraints.a_min);
+        Linear_Controller traj_controller(linear_gains, angular_gains, linear_profile, robot.config);
 
-    Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
-    robot.start();
+        robot.path.path_looping = true;
+        robot.path.read_json_latlon("ecef_points.json");
+        robot.frames.init(robot.path.path_points_all);
 
-    sim.display();
+        Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
+        std::jthread sim_thread(&Sim_Display::display, sim);
+
+        while (robot.running) { // Control loop
+            while (!robot.pause && robot.running) {
+                robot.pose_state = robot.read_state();
+                robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
+                robot.logger.savePosesToFile(robot.frames);
+                // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
+                // motion_time_start).count());
+
+                Velocity2d cmd = traj_controller.get_cmd(robot, dt);
+                robot.send_velocity_command(cmd);
+            }
+        }
+    }
 
     CloseWindow();
     return 0;

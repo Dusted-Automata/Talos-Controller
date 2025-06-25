@@ -46,7 +46,7 @@ target_include_directories(common_settings INTERFACE
     ${raylib_INCLUDE_DIRS}
 )
 target_link_directories(common_settings INTERFACE
-    unitree_legged_sdk/lib/cpp/${ARCH}
+    lib/cpp/${ARCH}
 )
 
 set(COMMON_SOURCES

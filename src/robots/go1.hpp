@@ -45,7 +45,7 @@ class Go1 : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        Robot_Config config = {
+        config = {
             .control_loop_hz = 500,
             .goal_tolerance_in_meters = 0.75,
             .kinematic_constraints =
@@ -59,13 +59,6 @@ class Go1 : public Robot
                 .j_max = 0.0,
             },
         };
-
-        PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-        LinearPID linear_pid(config, linear_gains);
-        PIDGains angular_gains = { 1.0, 0.01, 0.25 };
-        AngularPID angular_pid(config, angular_gains);
-        trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
-        trajectory_controller->robot = this;
 
         Robot::init();
     }

@@ -11,7 +11,7 @@ Robot::init()
     bool ublox_start = ublox.start();
     std::cout << "UBLOX: " << ublox_start << std::endl;
     double heading_tolerance = 0.002;
-    while (true) {
+    while (true && ublox_start) {
         std::optional<Nav_Att> msg = ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
         if (msg.has_value()) {
             if (msg.value().heading < heading_tolerance && msg.value().heading > -heading_tolerance) {
