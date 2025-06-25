@@ -164,7 +164,6 @@ Sim_Display::hud()
         draw_log_line(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f] Acc:[%.2f)",
             robot.pose_state.velocity.linear.x(), robot.pose_state.velocity.linear.y(),
             robot.pose_state.velocity.linear.z(), robot.pose_state.velocity.angular.x(),
-            robot.pose_state.velocity.angular.y(), robot.pose_state.velocity.angular.z(),
-            robot.trajectory_controller->get_accel());
+            robot.pose_state.velocity.angular.y(), robot.pose_state.velocity.angular.z());
     }
 }
