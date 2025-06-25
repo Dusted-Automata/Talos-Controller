@@ -1,4 +1,5 @@
 #pragma once
+#include "types.hpp"
 #include <arpa/inet.h>
 #include <array>
 #include <string>
@@ -18,8 +19,10 @@ class TCP_Socket
     std::string server_ip;
     uint16_t port;
     std::array<char, TCP_BUFFER_LENGTH> recv_buf;
+    Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> ring;
     int fd = -1;
-    int buf_index = 0;
+    ssize_t buf_index = 0;
+    // Socket_Parser &parser;
 
   public:
     TCP_Socket(std::string ip, uint16_t port) : server_ip(ip), port(port) {};

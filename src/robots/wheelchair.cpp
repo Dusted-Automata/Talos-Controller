@@ -33,11 +33,11 @@ Wheelchair::init()
     tcsetattr(tty_acm_fd, TCSANOW, &acm_termios);
 
     std::array<char, 256> buf;
-    std::string incomingMessage = "";
 
     std::cout << "Waiting for 'IN,Setup' message..." << std::endl;
 
     bool setup = false;
+    std::string incomingMessage = "";
 
     while (!setup) {
         int n = read(tty_acm_fd, buf.data(), sizeof(buf));
@@ -55,8 +55,6 @@ Wheelchair::init()
 
     Command set_cmd(Command_Action::SET, Command_Target::INPUT, "1");
     ::write(tty_acm_fd, set_cmd.to_string().data(), set_cmd.to_string().size());
-    Command listen_cmd(Command_Action::LISTEN, Command_Target::JOYSTICK, "1");
-    ::write(tty_acm_fd, listen_cmd.to_string().data(), set_cmd.to_string().size());
 }
 
 Joystick
@@ -101,11 +99,6 @@ Wheelchair::send_velocity_command(Velocity2d &velocity)
     Command cmd(Command_Action::SET, Command_Target::JOYSTICK, js_hex);
     int written = ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
     std::cout << written << std::endl;
-
-    // std::cout << "vel: " << velocity.linear.x() << "|" << velocity.angular.z() << " " << cmd.to_string() <<
-    // std::endl;
-    ::read(tty_acm_fd, tty_read_buf.data(), tty_read_buf.size());
-    // std::cout << tty_read_buf.data() << std::endl;
 }
 
 Pose_State

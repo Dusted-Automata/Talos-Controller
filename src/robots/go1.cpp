@@ -81,7 +81,6 @@ main(void)
     Go1 robot;
     robot.path.path_looping = true;
     // robot.path.add_waypoints(waypoints);
-    robot.sensor_manager.init();
     // robot.frames.init(waypoints);
 
     UT::LoopFunc loop_control("control_loop", (float)(1.0 / robot.config.control_loop_hz), 3,

@@ -18,6 +18,7 @@ class Sim_Quadruped : public Robot
 
         config = {
             .control_loop_hz = 500,
+            .goal_tolerance_in_meters = 0.05,
             .kinematic_constraints =
             {
                 .v_max = 2.5,
@@ -39,6 +40,7 @@ class Sim_Quadruped : public Robot
 
         trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
         trajectory_controller->robot = this;
+        Robot::init();
     }
 
     ~Sim_Quadruped() { shutdown(); };
@@ -77,7 +79,6 @@ main()
 
     robot.path.path_looping = true;
     // robot.path.add_waypoints(waypoints);
-    robot.sensor_manager.init();
     // robot.frames.init(waypoints);
     robot.path.read_json_latlon("ecef_points.json");
     robot.frames.init(robot.path.path_points_all);

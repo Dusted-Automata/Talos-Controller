@@ -47,6 +47,7 @@ class Go1 : public Robot
 
         Robot_Config config = {
             .control_loop_hz = 500,
+            .goal_tolerance_in_meters = 0.75,
             .kinematic_constraints =
             {
                 .v_max = 0.5,
@@ -65,6 +66,8 @@ class Go1 : public Robot
         AngularPID angular_pid(config, angular_gains);
         trajectory_controller = std::make_unique<Linear_Controller>(linear_pid, angular_pid, config);
         trajectory_controller->robot = this;
+
+        Robot::init();
     }
     ~Go1() = default;
 

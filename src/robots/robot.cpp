@@ -7,8 +7,9 @@ bool
 Robot::init()
 {
 
-    ublox.start();
     std::cout << "ROBOT INIT!" << std::endl;
+    bool ublox_start = ublox.start();
+    std::cout << "UBLOX: " << ublox_start << std::endl;
     double heading_tolerance = 0.002;
     while (true) {
         std::optional<Nav_Att> msg = ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);

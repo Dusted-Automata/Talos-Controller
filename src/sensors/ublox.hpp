@@ -1,4 +1,5 @@
 #pragma once
+#include "NMEA.hpp"
 #include "sensor.hpp"
 #include "socket.hpp"
 #include <json.hpp>
@@ -51,8 +52,8 @@ struct Esf_Ins {
 
 struct Ublox_Msgs {
     Nav_Att nav_att;
-    Esf_Ins esf_ins;
-    // Whatever gives GGA
+    GGA gga;
+    // Esf_Ins esf_ins;
 };
 
 class Ublox : public Sensor<Ublox_Msgs>
@@ -60,7 +61,8 @@ class Ublox : public Sensor<Ublox_Msgs>
     // Ublox_Msgs msg = {};
 
     std::optional<Nav_Att> nav_att;
-    std::optional<Esf_Ins> esf_ins;
+    std::optional<GGA> gga;
+    // std::optional<Esf_Ins> esf_ins;
 
   public:
     Ublox() {};

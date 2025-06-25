@@ -19,19 +19,19 @@ Velocity2d
 Linear_Controller::calculate_cmd(Robot &robot, Motion_Profile &motion_profile, double dt)
 {
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-    // auto ublox_gga = robot->ublox.get_latest<GGA>(Msg_Type::NAV_ATT);
-    // if (ublox_gga.has_value()) {
-    //     GGA val = ublox_gga.value().val;
-    //     double lat = to_radian(val.latlng.lat);
-    //     double lng = to_radian(val.latlng.lng);
-    //     double alt = val.alt;
-    //
-    //     if (above_epsilon(lat, lng, alt)) {
-    //         // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
-    //         robot->frames.update_based_on_measurement({ lat, lng, alt });
-    //     }
-    //     robot->ublox.consume_measurement(Msg_Type::NAV_ATT);
-    // }
+    auto ublox_gga = robot->ublox.get_latest<GGA>(Msg_Type::GP_GGA);
+    if (ublox_gga.has_value()) {
+        GGA val = ublox_gga.value();
+        double lat = to_radian(val.latlng.lat);
+        double lng = to_radian(val.latlng.lng);
+        double alt = val.alt;
+
+        if (above_epsilon(lat, lng, alt)) {
+            // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
+            robot->frames.update_based_on_measurement({ lat, lng, alt });
+        }
+        robot->ublox.consume(Msg_Type::GP_GGA);
+    }
 
     auto ublox_simple = robot.ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
     if (ublox_simple.has_value()) {
@@ -41,7 +41,8 @@ Linear_Controller::calculate_cmd(Robot &robot, Motion_Profile &motion_profile, d
         // std::cout << heading << std::endl;
         Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
         Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
-        robot.frames.local_frame.orientation.linear() + rotationMatrix;
+        robot->frames.local_frame.orientation.linear() + rotationMatrix;
+        robot->ublox.consume(Msg_Type::NAV_ATT);
     }
 
     std::optional<Pose> target_waypoint = robot.path.get_next();
