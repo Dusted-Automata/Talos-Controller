@@ -45,7 +45,7 @@ Linear_Controller::calculate_cmd(Robot &robot, Motion_Profile &motion_profile, d
         robot.ublox.consume(Msg_Type::NAV_ATT);
     }
 
-    std::optional<Pose> target_waypoint = robot.path.get_next();
+    std::optional<Pose> target_waypoint = robot.path.next();
     if (!target_waypoint.has_value()) {
         motion_profile.reset();
         return cmd;
@@ -58,10 +58,10 @@ Linear_Controller::calculate_cmd(Robot &robot, Motion_Profile &motion_profile, d
     double yaw_error = atan2(diff.y(), diff.x());
 
     if (dist < robot.config.goal_tolerance_in_meters) {
-        robot.path.pop();
+        robot.path.progress();
         motion_profile.reset();
 
-        std::optional<Pose> target_waypoint = robot.path.get_next();
+        std::optional<Pose> target_waypoint = robot.path.next();
         if (target_waypoint.has_value()) {
             ENU goal = cppmap3d::ecef2enu(target_waypoint.value().point, robot.frames.local_frame.origin);
             Vector3d diff = goal.raw() - robot.frames.local_frame.pos.raw();

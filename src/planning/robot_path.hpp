@@ -5,16 +5,23 @@ class Robot_Path
 {
 
   private:
-    Thread_Safe_Queue<Pose> queue;
+    size_t goal_index = 1;
+    size_t current_index = 0;
+    std::vector<Pose> path;
 
   public:
-    std::vector<Pose> path_points_all;
     Robot_Path() = default;
 
     bool path_looping = false;
 
     void add_waypoints(const std::vector<Pose> &waypoints);
-    std::optional<Pose> get_next();
-    void pop();
+    std::optional<Pose> current();
+    std::optional<Pose> next();
+    void progress();
     bool read_json_latlon(std::string file_path);
+    size_t size();
+    void reset();
+
+    Pose &operator[](size_t index);
+    const Pose &operator[](size_t index) const;
 };

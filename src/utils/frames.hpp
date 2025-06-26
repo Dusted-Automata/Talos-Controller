@@ -1,4 +1,5 @@
 #pragma once
+#include "robot_path.hpp"
 #include "types.hpp"
 
 struct Frame {
@@ -26,8 +27,7 @@ class Frames
     ENU_Frame local_frame;
     Ecef_Frame global_frame;
 
-    void init(const std::optional<Pose> &coordinate);
-    void init(const std::vector<Pose> &waypoints);
+    void init(Robot_Path &path);
     void move_in_local_frame(Velocity2d velocity, const double dt);
     void move_in_global_frame(Velocity2d velocity, const double dt);
 

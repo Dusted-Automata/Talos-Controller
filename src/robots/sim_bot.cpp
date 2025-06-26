@@ -100,11 +100,11 @@ main()
 
         robot.path.path_looping = true;
         robot.path.read_json_latlon("ecef_points.json");
-        robot.frames.init(robot.path.path_points_all);
+        robot.frames.init(robot.path);
 
         std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller), dt);
 
-        Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
+        Sim_Display sim = Sim_Display(robot, robot.path);
         sim.display();
         robot.running = false;
         // sim_thread.join();

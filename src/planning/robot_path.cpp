@@ -12,27 +12,71 @@ Robot_Path::add_waypoints(const std::vector<Pose> &waypoints)
         std::cout << "Adding Waypoints!" << std::endl;
         std::cout << std::fixed;
         std::cout << waypoint.point.raw().transpose() << std::endl;
-        queue.push(waypoint);
-        path_points_all.push_back(waypoint);
+        path.push_back(waypoint);
     }
 };
 
 std::optional<Pose>
-Robot_Path::get_next()
+Robot_Path::current()
 {
-    return queue.front();
+    std::cout << current_index << " | " << path.size() << std::endl;
+    if (current_index >= path.size()) {
+        return std::nullopt;
+    }
+
+    return path[current_index];
+}
+
+std::optional<Pose>
+Robot_Path::next()
+{
+    if (goal_index >= path.size()) {
+        return std::nullopt;
+    }
+
+    return path[goal_index];
 }
 
 void
-Robot_Path::pop()
+Robot_Path::progress()
 {
-    queue.pop();
-    if (queue.empty() && path_looping && !path_points_all.empty()) {
-        std::cout << "looping!" << std::endl;
-        for (Pose &waypoint : path_points_all) {
-            queue.push(waypoint);
-        }
+    if (path.empty()) {
+        return;
     }
+    if (path_looping) {
+        current_index = (current_index + 1) % path.size();
+        goal_index = (goal_index + 1) % path.size();
+        std::cout << "LOOPING!" << std::endl;
+    } else if (current_index >= path.size() && goal_index >= path.size()) {
+        return;
+    }
+    current_index++;
+    goal_index++;
+}
+
+void
+Robot_Path::reset()
+{
+    current_index = 0;
+    goal_index = 1;
+}
+
+size_t
+Robot_Path::size()
+{
+    return path.size();
+}
+
+Pose &
+Robot_Path::operator[](size_t index)
+{
+    return path[index];
+}
+
+const Pose &
+Robot_Path::operator[](size_t index) const
+{
+    return path[index];
 }
 
 using json = nlohmann::json;
