@@ -21,5 +21,6 @@ Robot::init()
             }
         }
     }
+    running = true;
     return true;
 }

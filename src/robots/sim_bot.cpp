@@ -1,8 +1,8 @@
 #include "linear_controller.hpp"
 #include "pid.hpp"
-#include "raylib.h"
 #include "sim.hpp"
 #include "transformations.hpp"
+#include <chrono>
 
 class Sim_Quadruped : public Robot
 {
@@ -60,6 +60,24 @@ class Sim_Quadruped : public Robot
     };
 };
 
+void
+control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
+{
+    while (robot.running) { // Control loop
+        while (!robot.pause && robot.running) {
+            robot.pose_state = robot.read_state();
+            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
+            robot.logger.savePosesToFile(robot.frames);
+            // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
+            // motion_time_start).count());
+
+            Velocity2d cmd = controller.get_cmd(robot, dt);
+            robot.send_velocity_command(cmd);
+            std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
+        }
+    }
+}
+
 int
 main()
 {
@@ -84,23 +102,13 @@ main()
         robot.path.read_json_latlon("ecef_points.json");
         robot.frames.init(robot.path.path_points_all);
 
+        std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller), dt);
+
         Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);
-        std::jthread sim_thread(&Sim_Display::display, sim);
-
-        while (robot.running) { // Control loop
-            while (!robot.pause && robot.running) {
-                robot.pose_state = robot.read_state();
-                robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
-                robot.logger.savePosesToFile(robot.frames);
-                // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
-                // motion_time_start).count());
-
-                Velocity2d cmd = traj_controller.get_cmd(robot, dt);
-                robot.send_velocity_command(cmd);
-            }
-        }
+        sim.display();
+        robot.running = false;
+        // sim_thread.join();
     }
 
-    CloseWindow();
     return 0;
 }

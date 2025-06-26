@@ -121,7 +121,7 @@ class MPPI_Controller : public Trajectory_Controller
     {
         target_position = target;
     }
-    Velocity2d get_cmd() override;
+    Velocity2d get_cmd(Robot &robot, double dt) override;
     void shiftControlHorizon();
     double dt = 0;
     std::vector<Trajectory> perturbed_trajectories;

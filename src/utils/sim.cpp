@@ -130,6 +130,13 @@ Sim_Display::display()
 
         EndDrawing();
     }
+    CloseWindow();
+}
+
+void
+Sim_Display::close()
+{
+    CloseWindow();
 }
 
 void

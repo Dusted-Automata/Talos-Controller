@@ -131,7 +131,7 @@ MPPI_Controller::updateNominalTrajectory(const std::vector<Trajectory> &trajecto
 }
 
 Velocity2d
-MPPI_Controller::get_cmd()
+MPPI_Controller::get_cmd(Robot &robot, double dt)
 {
     // update(state);
     Velocity2d cmd = nominal_controls.velocities[0];

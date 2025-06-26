@@ -33,4 +33,5 @@ class Sim_Display
     void display();
     void hud();
     void draw_robot();
+    void close();
 };

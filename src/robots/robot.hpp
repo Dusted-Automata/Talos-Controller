@@ -9,6 +9,8 @@ class Robot
 {
 
   public:
+    std::atomic<bool> running = false;
+    std::atomic<bool> pause = false;
     Pose_State pose_state;
     Frames frames = {};
 
