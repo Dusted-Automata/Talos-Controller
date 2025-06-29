@@ -2,8 +2,15 @@
 #include "EGM96.hpp"
 #include "cppmap3d.hh"
 #include "json.hpp"
+#include <format>
 #include <fstream>
 #include <iostream>
+
+void
+Robot_Path::add_waypoint(const Pose waypoint)
+{
+    path.push_back(waypoint);
+};
 
 void
 Robot_Path::add_waypoints(const std::vector<Pose> &waypoints)
@@ -19,7 +26,6 @@ Robot_Path::add_waypoints(const std::vector<Pose> &waypoints)
 std::optional<Pose>
 Robot_Path::current()
 {
-    std::cout << current_index << " | " << path.size() << std::endl;
     if (current_index >= path.size()) {
         return std::nullopt;
     }
@@ -43,15 +49,16 @@ Robot_Path::progress()
     if (path.empty()) {
         return;
     }
-    if (path_looping) {
-        current_index = (current_index + 1) % path.size();
-        goal_index = (goal_index + 1) % path.size();
-        std::cout << "LOOPING!" << std::endl;
-    } else if (current_index >= path.size() && goal_index >= path.size()) {
+    if (!path_looping && current_index >= path.size() && goal_index >= path.size()) {
         return;
     }
     current_index++;
     goal_index++;
+    if (path_looping && (current_index >= path.size() || goal_index >= path.size())) {
+        current_index = current_index % path.size();
+        goal_index = goal_index % path.size();
+        std::cout << "LOOPING!" << std::endl;
+    }
 }
 
 void
@@ -77,6 +84,18 @@ const Pose &
 Robot_Path::operator[](size_t index) const
 {
     return path[index];
+}
+
+void
+Robot_Path::print()
+{
+    std::cout << "------------" << std::endl;
+    std::string msg = std::format("Index: C{} | G{} - Path_Looping : ", current_index, goal_index, path_looping);
+    std::cout << msg << std::endl;
+    for (Pose &point : path) {
+        std::cout << point.point.raw().transpose() << std::endl;
+    }
+    std::cout << "-----------" << std::endl;
 }
 
 using json = nlohmann::json;

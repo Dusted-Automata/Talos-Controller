@@ -1,4 +1,5 @@
 #include "linear_controller.hpp"
+#include "path_planner.hpp"
 #include "pid.hpp"
 #include "sim.hpp"
 #include "transformations.hpp"
@@ -18,15 +19,15 @@ class Sim_Quadruped : public Robot
 
         config = {
             .control_loop_hz = 500,
-            .goal_tolerance_in_meters = 0.05,
+            .goal_tolerance_in_meters = 0.5,
             .kinematic_constraints =
             {
-                .v_max = 2.5,
-                .v_min = -2.0,
-                .omega_max = 2.0,
-                .omega_min = -2.0,
-                .a_max = 1.0,
-                .a_min = -1.0,
+                .v_max = 20.5,
+                .v_min = -20.0,
+                .omega_max = 200.0,
+                .omega_min = -200.0,
+                .a_max = 100.0,
+                .a_min = -100.0,
                 .j_max = 0.0,
             },
         };
@@ -90,8 +91,8 @@ main()
         // PIDGains linear_gains = { 0.8, 0.05, 0.15 };
         PIDGains linear_gains = { 1.0, 0.0, 0.0 };
         LinearPID linear_pid(robot.config, linear_gains);
-        // PIDGains angular_gains = { 1.0, 1.15, 0.06 };
-        PIDGains angular_gains = { 1.0, 0.0, 0.0 };
+        PIDGains angular_gains = { 100.0, 5.15, 0.60 };
+        // PIDGains angular_gains = { 1.0, 0.0, 0.0 };
         AngularPID angular_pid(robot.config, angular_gains);
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
             robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
@@ -100,14 +101,17 @@ main()
 
         robot.path.path_looping = true;
         robot.path.read_json_latlon("ecef_points.json");
+        Path_Planner pplanner(robot.path);
+        pplanner.gen_global_path(2.5);
         robot.frames.init(robot.path);
+        robot.frames.init(pplanner.global_path);
 
         std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller), dt);
-
-        Sim_Display sim = Sim_Display(robot, robot.path);
+        //
+        // Sim_Display sim = Sim_Display(robot, robot.path);
+        Sim_Display sim = Sim_Display(robot, pplanner.global_path);
         sim.display();
         robot.running = false;
-        // sim_thread.join();
     }
 
     return 0;
