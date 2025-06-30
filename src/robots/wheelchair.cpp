@@ -13,7 +13,7 @@ Wheelchair::init()
 {
 
 #define BAUDRATE B115200
-#define TTY "/dev/ttyACM0"
+#define TTY "/dev/ttyACM1"
 
     tty_acm_fd = open(TTY, O_RDWR | O_NOCTTY | O_SYNC);
 
@@ -145,7 +145,8 @@ main(void)
 
     // ============+ TMP ============
 
-    robot.path.read_json_latlon("ecef_points.json");
+    // robot.path.read_json_latlon("ecef_points.json");
+    robot.path.read_json_latlon("Parkinglot_Loop.json");
     robot.frames.init(robot.path.path_points_all);
 
     Sim_Display sim = Sim_Display(robot, robot.path.path_points_all);

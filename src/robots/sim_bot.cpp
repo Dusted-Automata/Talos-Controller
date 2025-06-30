@@ -80,7 +80,8 @@ main()
     robot.path.path_looping = true;
     // robot.path.add_waypoints(waypoints);
     // robot.frames.init(waypoints);
-    robot.path.read_json_latlon("ecef_points.json");
+    // robot.path.read_json_latlon("ecef_points.json");
+    robot.path.read_json_latlon("Parkinglot_Loop.json");
     robot.frames.init(robot.path.path_points_all);
     robot.path.pop();
 
