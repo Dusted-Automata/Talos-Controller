@@ -119,6 +119,23 @@ Wheelchair::read_state()
 //     robot.send_velocity_command(cmd);
 // }
 
+void
+control_loop(Wheelchair &robot, Linear_Controller &controller, double dt)
+{
+    while (robot.running) { // Control loop
+        while (!robot.pause && robot.running) {
+            robot.pose_state = robot.read_state();
+            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
+            robot.logger.savePosesToFile(robot.frames);
+            // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
+            // motion_time_start).count());
+
+            Velocity2d cmd = controller.get_cmd(robot, dt);
+            robot.send_velocity_command(cmd);
+            std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
+        }
+    }
+}
 int
 main(void)
 {
@@ -134,23 +151,13 @@ main(void)
     Linear_Controller traj_controller(linear_gains, angular_gains, linear_profile, robot.config);
 
     robot.path.path_looping = true;
-    robot.path.read_json_latlon("ecef_points.json");
+    robot.path.read_json_latlon("Parkinglot_Loop.json");
     robot.frames.init(robot.path);
 
+    std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller), dt);
+
     Sim_Display sim = Sim_Display(robot, robot.path);
-    std::jthread sim_thread(&Sim_Display::display, sim);
-
-    while (robot.running) { // Control loop
-        while (!robot.pause && robot.running) {
-            robot.pose_state = robot.read_state();
-            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
-            robot.logger.savePosesToFile(robot.frames);
-            // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
-
-            Velocity2d cmd = traj_controller.get_cmd(robot, dt);
-            robot.send_velocity_command(cmd);
-        }
-    }
+    sim.display();
 
     CloseWindow();
 
