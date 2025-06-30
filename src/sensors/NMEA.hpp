@@ -71,7 +71,9 @@ struct GGA {
         std::string lon_dir = j["EW"];
         alt = j["alt"];
         // diff_age = j["diffAge"];
-        diff_station = j["diffStation"];
+        if (!(j["diffStation"] == "")) {
+            diff_station = j["diffStation"];
+        }
         double lat = j["lat"];
         double lon = j["lon"];
         if (!(lat == 0.0 || lat_dir == "")) {

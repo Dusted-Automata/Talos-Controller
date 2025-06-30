@@ -56,6 +56,7 @@ set(COMMON_SOURCES
     src/control/linear_controller.cpp
     src/planning/robot_path.cpp
     src/planning/motion_profile.cpp
+    src/planning/path_planner.cpp
     src/sensors/ublox.cpp
     src/sensors/sensor.cpp
     src/utils/frames.cpp

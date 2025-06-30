@@ -14,7 +14,6 @@ Ublox::loop()
             running = false;
             socket.disconnect();
         }
-        std::cout << buf.count() << std::endl;
         for (size_t i = 0; i < buf.count(); i++) {
             if (buf[i] == '\n') {
                 int len = i + 1; // i + 1 to include the newline
@@ -36,11 +35,11 @@ Ublox::loop()
 
                 if (j["identity"] == "GPGGA" || j["identity"] == "NAV-ATT") {
                     if (j["identity"] == "GPGGA") {
-                        std::cout << j.dump(4) << std::endl;
+                        // std::cout << j.dump(4) << std::endl;
                         gga = GGA(j);
                     }
                     if (j["identity"] == "NAV-ATT") {
-                        std::cout << j.dump(4) << std::endl;
+                        // std::cout << j.dump(4) << std::endl;
                         nav_att = Nav_Att(j);
                     }
                 }
