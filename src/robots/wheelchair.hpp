@@ -98,18 +98,18 @@ class Wheelchair : public Robot
                 // .a_min = -0.2,
                 // .j_max = 0.0,
 
-                .v_max = 1.0,
+                .v_max = 0.8,
                 .v_min = 0.0,
-                .omega_max = 1.0,
-                .omega_min = -1.0,
-                .a_max = 0.7,
-                .a_min = -0.6,
+                .omega_max = 1.25,
+                .omega_min = -1.25,
+                .a_max = 1.7,
+                .a_min = -1.6,
                 .j_max = 0.0,
             },
         };
 
         init();
-        Robot::init();
+        // bool robo_init = Robot::init();
     }
 
     std::atomic<bool> running = false;
