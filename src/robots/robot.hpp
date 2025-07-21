@@ -21,6 +21,4 @@ class Robot
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual Pose_State read_state() = 0;
-
-    bool init();
 };

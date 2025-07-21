@@ -59,8 +59,6 @@ class Go1 : public Robot
                 .j_max = 0.0,
             },
         };
-
-        Robot::init();
     }
     ~Go1() = default;
 

@@ -22,17 +22,16 @@ class Sim_Quadruped : public Robot
             .goal_tolerance_in_meters = 0.5,
             .kinematic_constraints =
             {
-                .v_max = 20.5,
-                .v_min = -20.0,
-                .omega_max = 200.0,
-                .omega_min = -200.0,
-                .a_max = 100.0,
-                .a_min = -100.0,
+                .v_max = 2.5,
+                .v_min = -2.0,
+                .omega_max = 2.0,
+                .omega_min = -2.0,
+                .a_max = 1.0,
+                .a_min = -1.0,
                 .j_max = 0.0,
             },
         };
-
-        Robot::init();
+        running = true;
     }
 
     void
@@ -68,7 +67,7 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
         while (!robot.pause && robot.running) {
             robot.pose_state = robot.read_state();
             robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
-            robot.logger.savePosesToFile(robot.frames);
+            // robot.logger.savePosesToFile(robot.frames);
             // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
             // motion_time_start).count());
 
@@ -89,9 +88,9 @@ main()
 
         double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
         // PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-        PIDGains linear_gains = { 1.0, 0.0, 0.0 };
+        PIDGains linear_gains = { 1.01, 0.0, 0.01 };
         LinearPID linear_pid(robot.config, linear_gains);
-        PIDGains angular_gains = { 100.0, 5.15, 0.60 };
+        PIDGains angular_gains = { 100.0, 0.00, 0.00 };
         // PIDGains angular_gains = { 1.0, 0.0, 0.0 };
         AngularPID angular_pid(robot.config, angular_gains);
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,

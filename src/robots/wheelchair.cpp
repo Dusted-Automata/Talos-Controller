@@ -53,6 +53,28 @@ Wheelchair::init()
         }
     }
 
+    {
+
+        std::cout << "ROBOT INIT!" << std::endl;
+        bool ublox_start = ublox.start();
+        std::cout << "UBLOX: " << ublox_start << std::endl;
+        double heading_tolerance = 0.5;
+        while (true && ublox_start) {
+            std::optional<Nav_Att> msg = ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
+            if (msg.has_value()) {
+                std::cout << "HEADING IS " << msg->heading << std::endl;
+                if (msg.value().heading < heading_tolerance || msg.value().heading > 360 - heading_tolerance) {
+                    std::cout << "HEADING IS UNDER TOLERANCE!" << std::endl;
+                    std::cout << "---------------------------" << std::endl;
+                    break;
+                } else {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                }
+            }
+        }
+        running = true;
+    }
+
     Command set_cmd(Command_Action::SET, Command_Target::INPUT, "1");
     ::write(tty_acm_fd, set_cmd.to_string().data(), set_cmd.to_string().size());
 }
@@ -98,7 +120,7 @@ Wheelchair::send_velocity_command(Velocity2d &velocity)
     std::string js_hex = joystick_to_hex(stick);
     Command cmd(Command_Action::SET, Command_Target::JOYSTICK, js_hex);
     int written = ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
-    std::cout << written << std::endl;
+    // std::cout << written << std::endl;
 }
 
 Pose_State
@@ -143,7 +165,7 @@ main(void)
     Wheelchair robot;
 
     double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
-    PIDGains linear_gains = { 0.8, 0.05, 0.15 };
+    PIDGains linear_gains = { 1.2, 0.05, 0.15 };
     PIDGains angular_gains = { 1.0, 0.01, 0.25 };
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
         robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
