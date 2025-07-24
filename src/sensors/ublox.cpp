@@ -114,3 +114,46 @@ Ublox::get_latest(Msg_Type msg)
     }
     return std::nullopt;
 }
+
+inline bool
+above_epsilon(double lat, double lng, double alt)
+{
+    if (std::abs(lat) > 0.001 || std::abs(lng) > 0.001 || std::abs(alt) > 0.001) {
+        return true;
+    }
+    return false;
+}
+
+void
+update_position(Ublox &ublox, Frames &frames)
+{
+    auto ublox_gga = ublox.get_latest<GGA>(Msg_Type::GP_GGA);
+    if (ublox_gga.has_value()) {
+        GGA val = ublox_gga.value();
+        double lat = to_radian(val.latlng.lat);
+        double lng = to_radian(val.latlng.lng);
+        double alt = val.alt;
+
+        if (above_epsilon(lat, lng, alt)) {
+            // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
+            frames.update_based_on_measurement({ lat, lng, alt });
+        }
+        ublox.consume(Msg_Type::GP_GGA);
+    }
+}
+void
+update_heading(Ublox &ublox, Frames &frames)
+{
+
+    auto ublox_simple = ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
+    if (ublox_simple.has_value()) {
+        Nav_Att nav_att = ublox_simple.value();
+        double heading = to_radian(nav_att.heading);
+        std::cout << nav_att.heading << std::endl;
+        // std::cout << heading << std::endl;
+        Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
+        Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
+        frames.local_frame.orientation.linear() + rotationMatrix;
+        ublox.consume(Msg_Type::NAV_ATT);
+    }
+}

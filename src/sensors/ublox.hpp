@@ -1,5 +1,6 @@
 #pragma once
 #include "NMEA.hpp"
+#include "frames.hpp"
 #include "sensor.hpp"
 #include "socket.hpp"
 #include <json.hpp>
@@ -75,3 +76,6 @@ class Ublox : public Sensor<Ublox_Msgs>
     void consume(Msg_Type sensor);
     template<typename T> std::optional<T> get_latest(Msg_Type sensor);
 };
+
+void update_position(Ublox &ublox, Frames &frames);
+void update_heading(Ublox &ublox, Frames &frames);

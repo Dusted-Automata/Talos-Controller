@@ -6,44 +6,10 @@
 #include "types.hpp"
 #include <cmath>
 
-bool
-above_epsilon(double lat, double lng, double alt)
-{
-    if (std::abs(lat) > 0.001 || std::abs(lng) > 0.001 || std::abs(alt) > 0.001) {
-        return true;
-    }
-    return false;
-}
-
 Velocity2d
 Linear_Controller::calculate_cmd(Robot &robot, Motion_Profile &motion_profile, double dt)
 {
     Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-    auto ublox_gga = robot.ublox.get_latest<GGA>(Msg_Type::GP_GGA);
-    if (ublox_gga.has_value()) {
-        GGA val = ublox_gga.value();
-        double lat = to_radian(val.latlng.lat);
-        double lng = to_radian(val.latlng.lng);
-        double alt = val.alt;
-
-        if (above_epsilon(lat, lng, alt)) {
-            // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
-            robot.frames.update_based_on_measurement({ lat, lng, alt });
-        }
-        robot.ublox.consume(Msg_Type::GP_GGA);
-    }
-
-    auto ublox_simple = robot.ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
-    if (ublox_simple.has_value()) {
-        Nav_Att nav_att = ublox_simple.value();
-        double heading = to_radian(nav_att.heading);
-        std::cout << nav_att.heading << std::endl;
-        // std::cout << heading << std::endl;
-        Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
-        Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
-        robot.frames.local_frame.orientation.linear() + rotationMatrix;
-        robot.ublox.consume(Msg_Type::NAV_ATT);
-    }
 
     std::optional<Pose> target_waypoint = robot.path.next();
     if (!target_waypoint.has_value()) {
