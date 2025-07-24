@@ -1,5 +1,6 @@
 #pragma once
 #include "robot.hpp"
+#include "ublox.hpp"
 
 enum class Command_Action {
     SET,
@@ -112,6 +113,7 @@ class Wheelchair : public Robot
         // bool robo_init = Robot::init();
     }
 
+    Ublox ublox = {};
     std::atomic<bool> running = false;
     std::atomic<bool> pause = false;
     ~Wheelchair()

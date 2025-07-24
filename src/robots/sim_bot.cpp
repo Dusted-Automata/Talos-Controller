@@ -3,6 +3,7 @@
 #include "pid.hpp"
 #include "sim.hpp"
 #include "transformations.hpp"
+#include "ublox.hpp"
 #include <chrono>
 
 class Sim_Quadruped : public Robot
@@ -58,6 +59,8 @@ class Sim_Quadruped : public Robot
     {
         return sim_pose;
     };
+
+    Ublox ublox = {};
 };
 
 void
