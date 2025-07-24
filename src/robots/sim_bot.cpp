@@ -67,17 +67,14 @@ void
 control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
 {
     while (robot.running) { // Control loop
-        while (!robot.pause && robot.running) {
-            robot.pose_state = robot.read_state();
-            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
-            // robot.logger.savePosesToFile(robot.frames);
-            // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
-            // motion_time_start).count());
-
-            Velocity2d cmd = controller.get_cmd(robot, dt);
-            robot.send_velocity_command(cmd);
-            std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
+        update_position(robot.ublox, robot.frames);
+        update_heading(robot.ublox, robot.frames);
+        if (!robot.pause) {
+            update<Sim_Quadruped, Linear_Controller>(robot, controller, dt);
+        } else {
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
     }
 }
 
