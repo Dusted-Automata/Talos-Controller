@@ -75,6 +75,11 @@ Go1::read_state()
 void
 control_loop(Go1 &robot, Linear_Controller &controller, double dt)
 {
+    using clock = std::chrono::steady_clock;
+    auto next = clock::now();
+    // auto motion_time_start = clock::now();
+    std::chrono::milliseconds period(1000 / robot.config.control_loop_hz);
+
     while (robot.running) { // Control loop
         update_position(robot.ublox, robot.frames);
         update_heading(robot.ublox, robot.frames);
@@ -83,6 +88,8 @@ control_loop(Go1 &robot, Linear_Controller &controller, double dt)
             robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
             robot.logger.savePosesToFile(robot.frames);
             Pose target_waypoint = robot.path.next();
+            // std::cout << target_waypoint.local_point.raw().transpose() << " | "
+            //           << target_waypoint.point.raw().transpose() << std::endl;
             Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
 
             Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
@@ -99,12 +106,17 @@ control_loop(Go1 &robot, Linear_Controller &controller, double dt)
                     break;
                 }
             }
-
             robot.send_velocity_command(cmd);
         } else {
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
+        next += period;
+        std::this_thread::sleep_until(next);
+
+        if (clock::now() > next + period) {
+            std::cerr << "control-loop overrun" << std::endl;
+            next = clock::now();
+        }
     }
 }
 

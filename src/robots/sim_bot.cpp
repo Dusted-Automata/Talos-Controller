@@ -73,6 +73,12 @@ class Sim_Quadruped : public Robot
 void
 control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
 {
+
+    using clock = std::chrono::steady_clock;
+    auto next = clock::now();
+    // auto motion_time_start = clock::now();
+    std::chrono::milliseconds period(1000 / robot.config.control_loop_hz);
+
     while (robot.running) { // Control loop
         update_position(robot.ublox, robot.frames);
         update_heading(robot.ublox, robot.frames);
@@ -99,12 +105,17 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
                     break;
                 }
             }
-
             robot.send_velocity_command(cmd);
         } else {
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
+        next += period;
+        std::this_thread::sleep_until(next);
+
+        if (clock::now() > next + period) {
+            std::cerr << "control-loop overrun" << std::endl;
+            next = clock::now();
+        }
     }
 }
 
