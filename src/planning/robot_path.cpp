@@ -19,46 +19,50 @@ Robot_Path::add_waypoints(const std::vector<Pose> &waypoints)
         std::cout << "Adding Waypoints!" << std::endl;
         std::cout << std::fixed;
         std::cout << waypoint.point.raw().transpose() << std::endl;
+        std::cout << waypoint.local_point.raw().transpose() << std::endl;
         path.push_back(waypoint);
     }
 };
 
-std::optional<Pose>
+Pose
 Robot_Path::current()
 {
-    if (current_index >= path.size()) {
-        return std::nullopt;
-    }
-
     return path[current_index];
 }
 
-std::optional<Pose>
+Pose
 Robot_Path::next()
 {
-    if (goal_index >= path.size()) {
-        return std::nullopt;
-    }
-
     return path[goal_index];
 }
 
-void
+bool
 Robot_Path::progress()
 {
     if (path.empty()) {
-        return;
+        return false;
     }
     if (!path_looping && current_index >= path.size() && goal_index >= path.size()) {
-        return;
+        return false;
     }
-    current_index++;
-    goal_index++;
-    if (path_looping && (current_index >= path.size() || goal_index >= path.size())) {
-        current_index = current_index % path.size();
-        goal_index = goal_index % path.size();
-        std::cout << "LOOPING!" << std::endl;
+
+    if (path_looping) {
+        current_index = (++current_index) % path.size();
+        goal_index = (++goal_index) % path.size();
+        if (current_index == 0) {
+            std::cout << "LOOPING!" << std::endl;
+        }
+
+    } else {
+        if (current_index < path.size() - 1) {
+            ++current_index;
+        }
+        if (goal_index < path.size() - 1) {
+            ++goal_index;
+        }
     }
+
+    return true;
 }
 
 void
@@ -92,8 +96,8 @@ Robot_Path::print()
     std::cout << "------------" << std::endl;
     std::string msg = std::format("Index: C{} | G{} - Path_Looping : ", current_index, goal_index, path_looping);
     std::cout << msg << std::endl;
-    for (Pose &point : path) {
-        std::cout << point.point.raw().transpose() << std::endl;
+    for (size_t i = 0; i < path.size(); i++) {
+        std::cout << path[i].point.raw().transpose() << std::endl;
     }
     std::cout << "-----------" << std::endl;
 }
@@ -109,7 +113,16 @@ Robot_Path::read_json_latlon(std::string file_path)
         return 1;
     }
     json data = json::parse(file);
-    LLH llh;
+    LLH llh, llh_origin;
+
+    // Get origin LLH, to be able to compute ENU differences
+    auto point = data["points"].front();
+    llh_origin.lat() = to_radian(point["lat"]);
+    llh_origin.lon() = to_radian(point["lon"]);
+    llh_origin.alt() = point["alt"];
+    double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
+    llh_origin.alt() += offset;
+
     std::vector<Pose> waypoints;
     for (auto point : data["points"]) {
         Pose pose;
@@ -118,10 +131,15 @@ Robot_Path::read_json_latlon(std::string file_path)
         llh.alt() = point["alt"];
         double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
         llh.alt() += offset;
+        std::cout << "lat: " << llh.lat() << " long: " << llh.lon() << " alt: " << llh.alt() << std::endl;
+
         Ecef ecef = cppmap3d::geodetic2ecef(llh);
         pose.point = ecef;
+
+        ENU local = cppmap3d::ecef2enu(ecef, llh_origin);
+        pose.local_point = local;
+
         waypoints.push_back(pose);
-        std::cout << "lat: " << llh.lat() << " long: " << llh.lon() << " alt: " << llh.alt() << std::endl;
     }
     add_waypoints(waypoints);
     return 0;

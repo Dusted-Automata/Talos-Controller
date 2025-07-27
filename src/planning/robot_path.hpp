@@ -16,9 +16,9 @@ class Robot_Path
 
     void add_waypoints(const std::vector<Pose> &waypoints);
     void add_waypoint(const Pose waypoint);
-    std::optional<Pose> current();
-    std::optional<Pose> next();
-    void progress();
+    Pose current();
+    Pose next();
+    bool progress();
     bool read_json_latlon(std::string file_path);
     size_t size();
     void reset();
@@ -26,25 +26,4 @@ class Robot_Path
 
     Pose &operator[](size_t index);
     const Pose &operator[](size_t index) const;
-
-    auto
-    begin()
-    {
-        return path.begin();
-    }
-    auto
-    end()
-    {
-        return path.end();
-    }
-    auto
-    begin() const
-    {
-        return path.begin();
-    }
-    auto
-    end() const
-    {
-        return path.end();
-    }
 };

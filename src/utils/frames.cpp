@@ -43,11 +43,12 @@ Frames::update_based_on_measurement(const LLH &llh)
 void
 Frames::init(Robot_Path &path)
 {
-    if (!path.current().has_value()) {
+    if (path.size() < 1) {
         return;
     }
-    local_frame.origin = cppmap3d::ecef2geodetic(path.current()->point);
-    global_frame.pos = path.current()->point;
+
+    local_frame.origin = cppmap3d::ecef2geodetic(path.current().point);
+    global_frame.pos = path.current().point;
 
     // Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     // global_frame.orientation = M;
@@ -56,11 +57,11 @@ Frames::init(Robot_Path &path)
     Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
     local_frame.orientation = rot_yaw.toRotationMatrix();
 
-    if (!path.next().has_value()) {
+    if (path.size() < 2) {
         return;
     }
 
-    ENU goal = cppmap3d::ecef2enu(path.next()->point, local_frame.origin);
+    ENU goal = path.next().local_point;
     double goal_theta = atan2(goal.east(), goal.north());
     Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
     local_frame.orientation = local_frame.orientation * rot_yaw_goal;
