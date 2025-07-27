@@ -66,3 +66,18 @@ Frames::init(Robot_Path &path)
     Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
     local_frame.orientation = local_frame.orientation * rot_yaw_goal;
 }
+
+Vector3d
+frames_diff(const ENU &goal, const Frames &frames) // fine with running every frame
+{
+
+    Vector3d diff = goal.raw() - frames.local_frame.pos.raw();
+    diff = frames.local_frame.orientation.rotation().transpose() * diff;
+    return diff;
+}
+
+double
+frames_dist(const Vector3d &diff) // fine with running every frame
+{
+    return sqrt(diff.x() * diff.x() + diff.y() * diff.y());
+}

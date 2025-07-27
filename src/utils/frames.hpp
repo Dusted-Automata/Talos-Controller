@@ -34,3 +34,7 @@ class Frames
     void update_based_on_measurement(const LLH &llh);
     Vector3d get_error_vector_in_NED(const LLH &llh);
 };
+
+Vector3d frames_diff(const ENU &goal, const Frames &frames);
+
+double frames_dist(const Vector3d &diff);

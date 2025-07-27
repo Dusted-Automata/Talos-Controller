@@ -1,17 +1,12 @@
 #pragma once
 #include "motion_profile.hpp"
 #include "pid.hpp"
-#include "trajectory_controller.hpp"
 #include "types.hpp"
 
 class Linear_Controller
 {
 
   private:
-    LinearPID linear_pid;
-    AngularPID angular_pid;
-    Motion_Profile &motion_profile;
-
   public:
     Linear_Controller(
         PIDGains linear_gains, PIDGains angular_gains, Motion_Profile &motion_profile, Robot_Config config)
@@ -20,6 +15,9 @@ class Linear_Controller
     {
     }
 
-    static Velocity2d calculate_cmd(Robot &robot, Motion_Profile &motion_profile, double dt);
-    Velocity2d get_cmd(Robot &robot, double dt);
+    Velocity2d get_cmd(Pose_State pose_state, Vector3d diff, double dt);
+    double goal_tolerance_in_meters;
+    LinearPID linear_pid;
+    AngularPID angular_pid;
+    Motion_Profile &motion_profile;
 };

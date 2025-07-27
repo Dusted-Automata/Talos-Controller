@@ -70,7 +70,30 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
         update_position(robot.ublox, robot.frames);
         update_heading(robot.ublox, robot.frames);
         if (!robot.pause) {
-            update<Sim_Quadruped, Linear_Controller>(robot, controller, dt);
+            robot.pose_state = robot.read_state();
+            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
+            robot.logger.savePosesToFile(robot.frames);
+            Pose target_waypoint = robot.path.next();
+            // std::cout << target_waypoint.local_point.raw().transpose() << " | "
+            //           << target_waypoint.point.raw().transpose() << std::endl;
+            Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
+
+            Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
+            if (frames_dist(dif) > robot.config.goal_tolerance_in_meters) {
+                cmd = controller.get_cmd(robot.pose_state, dif, dt);
+            } else {
+                controller.motion_profile.reset();
+                controller.linear_pid.reset();
+                controller.angular_pid.reset();
+                if (robot.path.progress()) {
+                    Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
+                    controller.motion_profile.set_setpoint(frames_dist(dif));
+                } else {
+                    break;
+                }
+            }
+
+            robot.send_velocity_command(cmd);
         } else {
         }
 
@@ -96,7 +119,8 @@ main()
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
             robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
             robot.config.kinematic_constraints.a_min);
-        Linear_Controller traj_controller(linear_gains, angular_gains, linear_profile, robot.config);
+        Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile,
+            robot.config);
 
         robot.path.path_looping = true;
         robot.path.read_json_latlon("ecef_points.json");

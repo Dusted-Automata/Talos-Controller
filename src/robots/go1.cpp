@@ -1,4 +1,6 @@
 #include "go1.hpp"
+#include "frames.hpp"
+#include "linear_controller.hpp"
 #include "raylib.h"
 #include "utils/sim.hpp"
 #include <iostream>
@@ -70,6 +72,42 @@ Go1::read_state()
     return ps;
 }
 
+void
+control_loop(Go1 &robot, Linear_Controller &controller, double dt)
+{
+    while (robot.running) { // Control loop
+        update_position(robot.ublox, robot.frames);
+        update_heading(robot.ublox, robot.frames);
+        if (!robot.pause) {
+            robot.pose_state = robot.read_state();
+            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
+            robot.logger.savePosesToFile(robot.frames);
+            Pose target_waypoint = robot.path.next();
+            Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
+
+            Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
+            if (frames_dist(dif) > robot.config.goal_tolerance_in_meters) {
+                cmd = controller.get_cmd(robot.pose_state, dif, dt);
+            } else {
+                controller.motion_profile.reset();
+                controller.linear_pid.reset();
+                controller.angular_pid.reset();
+                if (robot.path.progress()) {
+                    Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
+                    controller.motion_profile.set_setpoint(frames_dist(dif));
+                } else {
+                    break;
+                }
+            }
+
+            robot.send_velocity_command(cmd);
+        } else {
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
+    }
+}
+
 int
 main(void)
 {
@@ -105,18 +143,7 @@ main(void)
         Sim_Display sim = Sim_Display(robot, robot.path);
         std::jthread sim_thread(&Sim_Display::display, sim);
 
-        while (robot.running) { // Control loop
-            while (!robot.pause && robot.running) {
-                robot.pose_state = robot.read_state();
-                robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
-                robot.logger.savePosesToFile(robot.frames);
-                // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
-                // motion_time_start).count());
-
-                Velocity2d cmd = traj_controller.get_cmd(robot, dt);
-                robot.send_velocity_command(cmd);
-            }
-        }
+        control_loop(robot, traj_controller, dt);
     }
 
     CloseWindow();
