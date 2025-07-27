@@ -50,7 +50,6 @@ target_link_directories(common_settings INTERFACE
 )
 
 set(COMMON_SOURCES
-    src/robots/robot.cpp
     src/control/pid.cpp
     # src/control/mppi.cpp
     src/control/linear_controller.cpp
@@ -58,7 +57,6 @@ set(COMMON_SOURCES
     src/planning/motion_profile.cpp
     src/planning/path_planner.cpp
     src/sensors/ublox.cpp
-    src/sensors/sensor.cpp
     src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/socket.cpp

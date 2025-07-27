@@ -35,28 +35,14 @@ Ublox::loop()
 
                 if (j["identity"] == "GPGGA" || j["identity"] == "NAV-ATT") {
                     if (j["identity"] == "GPGGA") {
-                        // std::cout << j.dump(4) << std::endl;
                         gga = GGA(j);
                     }
                     if (j["identity"] == "NAV-ATT") {
-                        // std::cout << j.dump(4) << std::endl;
                         nav_att = Nav_Att(j);
                     }
                 }
             }
         }
-
-        // std::optional<json> j = socket.recv();
-        // if (j.has_value()) {
-        //     if (j.value()["identity"] == "GPGGA") {
-        //         std::cout << j.value().dump(4) << std::endl;
-        //         gga = GGA(j.value());
-        //     }
-        //     if (j.value()["identity"] == "NAV-ATT") {
-        //         std::cout << j.value().dump(4) << std::endl;
-        //         nav_att = Nav_Att(j.value());
-        //     }
-        // }
     }
 }
 

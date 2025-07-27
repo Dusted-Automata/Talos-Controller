@@ -1,6 +1,6 @@
 #include "sim.hpp"
 #include "cppmap3d.hh"
-#include "mppi.hpp"
+// #include "mppi.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include "transformations.hpp"
@@ -27,28 +27,28 @@ Sim_Display::draw_absolute_grid(Camera2D camera, float gridStep)
     }
 }
 
-void
-showcaseTrajectory(Pose_State state, Control_Sequence controls, double dt, float thickness, Color color)
-{
-    Eigen::Matrix3d traj_R = state.orientation.rotation();
-    Ecef traj_pos = state.position;
-    Vector3d to_front = { 1.0, 0.0, 0.0 };
-    to_front = traj_R * to_front;
-    traj_pos += to_front;
-    // traj_pos.y() += 0.5;
-    for (auto control : controls) {
-
-        // Linear_Velocity lv = traj_R * control.linear * dt;
-        Eigen::AngleAxisd yaw_rotation(Eigen::AngleAxisd((control.angular.z() * dt), Vector3d::UnitZ()));
-        traj_R = traj_R * yaw_rotation;
-        // traj_R.normalize();
-        Linear_Velocity lv = traj_R * control.linear * dt;
-
-        DrawLineEx({ (float)traj_pos.x(), (float)-traj_pos.y() },
-            { (float)(traj_pos.x() + lv.x()), (float)(-traj_pos.y() - lv.y()) }, thickness, color);
-        traj_pos = traj_pos + lv;
-    }
-}
+// void
+// showcaseTrajectory(Pose_State state, Control_Sequence controls, double dt, float thickness, Color color)
+// {
+//     Eigen::Matrix3d traj_R = state.orientation.rotation();
+//     Ecef traj_pos = state.position;
+//     Vector3d to_front = { 1.0, 0.0, 0.0 };
+//     to_front = traj_R * to_front;
+//     traj_pos += to_front;
+//     // traj_pos.y() += 0.5;
+//     for (auto control : controls) {
+//
+//         // Linear_Velocity lv = traj_R * control.linear * dt;
+//         Eigen::AngleAxisd yaw_rotation(Eigen::AngleAxisd((control.angular.z() * dt), Vector3d::UnitZ()));
+//         traj_R = traj_R * yaw_rotation;
+//         // traj_R.normalize();
+//         Linear_Velocity lv = traj_R * control.linear * dt;
+//
+//         DrawLineEx({ (float)traj_pos.x(), (float)-traj_pos.y() },
+//             { (float)(traj_pos.x() + lv.x()), (float)(-traj_pos.y() - lv.y()) }, thickness, color);
+//         traj_pos = traj_pos + lv;
+//     }
+// }
 
 void
 Sim_Display::draw_robot()

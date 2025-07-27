@@ -21,7 +21,6 @@ class TCP_Socket
     std::array<char, TCP_BUFFER_LENGTH> recv_buf;
     int fd = -1;
     ssize_t buf_index = 0;
-    // Socket_Parser &parser;
 
   public:
     TCP_Socket(std::string ip, uint16_t port) : server_ip(ip), port(port) {};

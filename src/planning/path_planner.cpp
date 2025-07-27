@@ -18,8 +18,6 @@ Path_Planner::gen_global_path(double meters_per_point)
     }
 
     Pose prev_point = path[0];
-    // path.progress();
-    // for (Pose &point : path) {
     for (size_t i = 0; i < path.size(); i++) {
         double d = dist(prev_point, path[i]);
         int d_count = (int)(d / meters_per_point);

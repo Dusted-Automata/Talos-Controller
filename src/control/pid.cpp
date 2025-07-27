@@ -36,16 +36,3 @@ PIDController::reset()
     prev_error = 0.0;
     integral = 0.0;
 }
-
-// public:
-//   PIDController(double kp = 1.0, double ki = 0.0, double kd = 0.0)
-//       : kp(kp), ki(ki), kd(kd), setpoint(0.0), prev_error(0.0),
-//       integral(0.0),
-//         first_update_(true),
-//         output_min_(-std::numeric_limits<double>::infinity()),
-//         output_max_(std::numeric_limits<double>::infinity()),
-//         integral_min_(-std::numeric_limits<double>::infinity()),
-//         integral_max_(std::numeric_limits<double>::infinity()) {
-//     reset();
-//   }
-//

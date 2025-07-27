@@ -1,5 +1,5 @@
 #pragma once
-#include "trajectory_controller.hpp"
+#include "robot.hpp"
 #include "types.hpp"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
@@ -75,7 +75,7 @@ struct Trajectory {
     double weight;
 };
 
-class MPPI_Controller : public Trajectory_Controller
+class MPPI_Controller
 {
   private:
     int horizon_steps;
@@ -121,7 +121,7 @@ class MPPI_Controller : public Trajectory_Controller
     {
         target_position = target;
     }
-    Velocity2d get_cmd(Robot &robot, double dt) override;
+    Velocity2d get_cmd(Robot &robot, double dt);
     void shiftControlHorizon();
     double dt = 0;
     std::vector<Trajectory> perturbed_trajectories;

@@ -58,8 +58,6 @@ TCP_Socket::recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring)
 
     bytes_received = ::recv(fd, recv_buf.data(), recv_buf.size(), 0);
     ring.write(std::span(recv_buf.data(), bytes_received));
-    // bytes_received = ::recv(fd, ring.data() + ring.count(), ring.contigues_space_from_head(), 0);
-    // ring.set_head(bytes_received);
 
     if (bytes_received == 0) {
         std::cerr << "socket closed" << std::endl;

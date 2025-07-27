@@ -128,22 +128,6 @@ Wheelchair::read_state()
     return pose_state;
 }
 
-// void
-// control_loop(Wheelchair &robot, Linear_Controller &controller)
-// {
-//     double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
-//     while (robot.running) {                         // Control loop
-//         update_position(robot.ublox, robot.frames);
-//         update_heading(robot.ublox, robot.frames);
-//         if (!robot.pause) {
-//             update<Wheelchair, Linear_Controller>(robot, controller, dt);
-//         } else {
-//         }
-//
-//         std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
-//     }
-// }
-
 void
 control_loop(Wheelchair &robot, Linear_Controller &controller, double dt)
 {
