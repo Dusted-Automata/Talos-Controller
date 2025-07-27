@@ -1,3 +1,4 @@
+#include "frames.hpp"
 #include "linear_controller.hpp"
 #include "path_planner.hpp"
 #include "pid.hpp"
@@ -5,6 +6,11 @@
 #include "transformations.hpp"
 #include "ublox.hpp"
 #include <chrono>
+
+struct Config : public Robot_Config {
+    PIDGains linear_gains;
+    PIDGains angular_gains;
+};
 
 class Sim_Quadruped : public Robot
 {
@@ -18,20 +24,20 @@ class Sim_Quadruped : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        config = {
-            .control_loop_hz = 500,
-            .goal_tolerance_in_meters = 0.5,
-            .kinematic_constraints =
-            {
-                .v_max = 2.5,
-                .v_min = -2.0,
-                .omega_max = 2.0,
-                .omega_min = -2.0,
-                .a_max = 1.0,
-                .a_min = -1.0,
-                .j_max = 0.0,
-            },
+        config.control_loop_hz = 500;
+        config.goal_tolerance_in_meters = 0.75;
+        config.kinematic_constraints = {
+            .v_max = 0.5,
+            .v_min = 0.0,
+            .omega_max = 2.5,
+            .omega_min = -2.5,
+            .a_max = 100.0,
+            .a_min = -100.0,
+            .j_max = 0.0,
         };
+        config.linear_gains = { 1.01, 0.0, 0.01 };
+        config.angular_gains = { 100.0, 0.01, 0.00 };
+
         running = true;
     }
 
@@ -61,6 +67,7 @@ class Sim_Quadruped : public Robot
     };
 
     Ublox ublox = {};
+    Config config = {};
 };
 
 void
@@ -110,12 +117,6 @@ main()
     { // Find out how to extract this.
 
         double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
-        // PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-        PIDGains linear_gains = { 1.01, 0.0, 0.01 };
-        LinearPID linear_pid(robot.config, linear_gains);
-        PIDGains angular_gains = { 100.0, 0.00, 0.00 };
-        // PIDGains angular_gains = { 1.0, 0.0, 0.0 };
-        AngularPID angular_pid(robot.config, angular_gains);
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
             robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
             robot.config.kinematic_constraints.a_min);

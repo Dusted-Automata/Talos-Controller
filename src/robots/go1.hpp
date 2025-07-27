@@ -1,8 +1,8 @@
 #pragma once
 #include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
-#include "linear_controller.hpp"
 #include "pid.hpp"
 #include "robot.hpp"
+#include "ublox.hpp"
 #include "unitree_legged_sdk/comm.h"
 #include "utils/types.hpp"
 #include <stdint.h>
@@ -28,6 +28,11 @@ enum class Go1_mode : uint8_t {
                       //  1 first
 };
 
+struct Config : public Robot_Config {
+    PIDGains linear_gains;
+    PIDGains angular_gains;
+};
+
 class Go1 : public Robot
 {
     UT::HighCmd moveCmd(const Velocity2d &trajectory);
@@ -45,29 +50,31 @@ class Go1 : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        config = {
-            .control_loop_hz = 500,
-            .goal_tolerance_in_meters = 0.75,
-            .kinematic_constraints =
-            {
-                .v_max = 0.5,
-                .v_min = 0.0,
-                .omega_max = 2.5,
-                .omega_min = -2.5,
-                .a_max = 100.0,
-                .a_min = -100.0,
-                .j_max = 0.0,
-            },
+        config.control_loop_hz = 500;
+        config.goal_tolerance_in_meters = 0.75;
+        config.kinematic_constraints = {
+            .v_max = 0.5,
+            .v_min = 0.0,
+            .omega_max = 2.5,
+            .omega_min = -2.5,
+            .a_max = 100.0,
+            .a_min = -100.0,
+            .j_max = 0.0,
         };
-    }
+        config.linear_gains = { 0.8, 0.05, 0.15 };
+        config.angular_gains = { 1.0, 0.01, 0.25 };
+    };
+
     ~Go1() = default;
 
+    Config config;
     UT::Safety safe;
     UT::UDP udp;
     UT::HighState state = {};
     UT::LowState low_state = {};
 
     UT::HighCmd cmd = {};
+    Ublox ublox = {};
 
     Go1_mode mode = Go1_mode::Force_stand;
     GaitType gait_type = GaitType::Trot;

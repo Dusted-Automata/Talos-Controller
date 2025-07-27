@@ -117,7 +117,8 @@ Wheelchair::send_velocity_command(Velocity2d &velocity)
     Joystick stick = scale_to_joystick(velocity);
     std::string js_hex = joystick_to_hex(stick);
     Command cmd(Command_Action::SET, Command_Target::JOYSTICK, js_hex);
-    int written = ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
+    ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
+    // int written = ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
     // std::cout << written << std::endl;
 }
 
@@ -185,9 +186,6 @@ main(void)
 
     Wheelchair robot;
 
-    double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
-    PIDGains linear_gains = { 1.2, 0.05, 0.15 };
-    PIDGains angular_gains = { 1.0, 0.01, 0.25 };
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
         robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
         robot.config.kinematic_constraints.a_min);

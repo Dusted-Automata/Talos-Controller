@@ -1,4 +1,5 @@
 #pragma once
+#include "pid.hpp"
 #include "robot.hpp"
 #include "ublox.hpp"
 
@@ -69,10 +70,14 @@ struct Joystick {
     uint8_t y;
 };
 
+struct Config : public Robot_Config {
+    PIDGains linear_gains;
+    PIDGains angular_gains;
+};
+
 class Wheelchair : public Robot
 {
   private:
-    void init();
     int tty_acm_fd = -1;
     Joystick scale_to_joystick(const Velocity2d &vel);
     std::string joystick_to_hex(Joystick stick_pos);
@@ -86,34 +91,31 @@ class Wheelchair : public Robot
         pose_state.velocity.linear = Vector3d::Zero();
         pose_state.velocity.angular = Vector3d::Zero();
 
-        config = {
-            .control_loop_hz = 15,
-            .goal_tolerance_in_meters = 0.75,
-            .kinematic_constraints =
-            {
-                // .v_max = 0.5,
-                // .v_min = 0.0,
-                // .omega_max = 0.6,
-                // .omega_min = -0.6,
-                // .a_max = 0.3,
-                // .a_min = -0.2,
-                // .j_max = 0.0,
+        config.control_loop_hz = 15;
+        config.goal_tolerance_in_meters = 0.75;
+        config.kinematic_constraints = {
+            // .v_max = 0.5,
+            // .v_min = 0.0,
+            // .omega_max = 0.6,
+            // .omega_min = -0.6,
+            // .a_max = 0.3,
+            // .a_min = -0.2,
+            // .j_max = 0.0,
 
-                .v_max = 0.8,
-                .v_min = 0.0,
-                .omega_max = 1.25,
-                .omega_min = -1.25,
-                .a_max = 1.7,
-                .a_min = -1.6,
-                .j_max = 0.0,
-            },
+            .v_max = 0.8,
+            .v_min = 0.0,
+            .omega_max = 1.25,
+            .omega_min = -1.25,
+            .a_max = 1.7,
+            .a_min = -1.6,
+            .j_max = 0.0,
         };
-
-        init();
-        // bool robo_init = Robot::init();
+        config.linear_gains = { 1.2, 0.05, 0.15 };
+        config.angular_gains = { 1.0, 0.01, 0.25 };
     }
 
     Ublox ublox = {};
+    Config config = {};
     std::atomic<bool> running = false;
     std::atomic<bool> pause = false;
     ~Wheelchair()
@@ -124,5 +126,5 @@ class Wheelchair : public Robot
 
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;
-    void control_loop();
+    void init();
 };
