@@ -3,6 +3,7 @@
 
 #include "types.hpp"
 #include <cmath>
+#include <iostream>
 #include <stdexcept>
 
 /**
@@ -215,10 +216,10 @@ inline Vector3d
 enu2uvw(ENU enu, LLH ll)
 {
     Vector3d out;
-    double t = std::cos(ll.lat()) * enu.up() - std::sin(ll.lat()) * enu.north();
-    out.x() = std::cos(ll.lon()) * t - std::sin(ll.lon()) * enu.east();
-    out.y() = std::sin(ll.lon()) * t + std::cos(ll.lon()) * enu.east();
-    out.z() = std::sin(ll.lat()) * enu.up() + std::cos(ll.lat()) * enu.north();
+    double t = std::cos(ll.lat()) * enu.up() - std::sin(ll.lat()) * enu.east();
+    out.x() = std::cos(ll.lon()) * t - std::sin(ll.lon()) * enu.north();
+    out.y() = std::sin(ll.lon()) * t + std::cos(ll.lon()) * enu.north();
+    out.z() = std::sin(ll.lat()) * enu.up() + std::cos(ll.lat()) * enu.east();
     return out;
 }
 
