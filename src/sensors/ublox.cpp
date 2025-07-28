@@ -33,15 +33,19 @@ Ublox::loop()
                     break;
                 }
 
-                if (j["identity"] == "GPGGA" || j["identity"] == "NAV-ATT") {
-                    if (j["identity"] == "GPGGA") {
-                        // std::cout << j.dump(4) << std::endl;
-                        gga = GGA(j);
-                    }
-                    if (j["identity"] == "NAV-ATT") {
-                        // std::cout << j.dump(4) << std::endl;
-                        nav_att = Nav_Att(j);
-                    }
+                std::string id = j["identity"];
+                if (id == "GPGGA") {
+                    // std::cout << j.dump(4) << std::endl;
+                    gga = GGA(j);
+                }
+                if (id == "NAV-ATT") {
+                    // std::cout << j.dump(4) << std::endl;
+                    nav_att = Nav_Att(j);
+                }
+
+                if (id == "NAV-PVAT") {
+                    std::cout << j.dump(4) << std::endl;
+                    nav_pvat = Nav_Pvat(j);
                 }
             }
         }
@@ -88,6 +92,7 @@ void
 Ublox::consume(Msg_Type msg)
 {
     switch (msg) {
+    case Msg_Type::NAV_PVAT: nav_att.reset(); return;
     case Msg_Type::NAV_ATT: nav_att.reset(); return;
     case Msg_Type::GP_GGA: gga.reset(); return;
     }
@@ -111,6 +116,17 @@ Ublox::get_latest(Msg_Type msg)
     // std::unique_lock<std::mutex> lock(sensor_mutex);
     if (msg == GP_GGA) {
         return gga;
+    }
+    return std::nullopt;
+}
+
+template<>
+std::optional<Nav_Pvat>
+Ublox::get_latest(Msg_Type msg)
+{
+    // std::unique_lock<std::mutex> lock(sensor_mutex);
+    if (msg == NAV_PVAT) {
+        return nav_pvat;
     }
     return std::nullopt;
 }
