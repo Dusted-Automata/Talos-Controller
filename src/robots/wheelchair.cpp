@@ -16,7 +16,7 @@ Wheelchair::init()
 {
 
 #define BAUDRATE B115200
-#define TTY "/dev/ttyACM1"
+#define TTY "/dev/ttyACM0"
 
     tty_acm_fd = open(TTY, O_RDWR | O_NOCTTY | O_SYNC);
 
@@ -56,20 +56,20 @@ Wheelchair::init()
     {
 
         bool ublox_start = ublox.start();
-        std::cout << "UBLOX: " << ublox_start << std::endl;
-        double heading_tolerance = 0.5;
-        while (true && ublox_start) {
-            std::optional<Nav_Att> msg = ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
-            if (msg.has_value()) {
-                ublox.consume(Msg_Type::NAV_ATT);
-                std::cout << "HEADING IS " << msg->heading << std::endl;
-                if (msg.value().heading < heading_tolerance || msg.value().heading > 360 - heading_tolerance) {
-                    std::cout << "HEADING IS UNDER TOLERANCE!" << std::endl;
-                    std::cout << "---------------------------" << std::endl;
-                    break;
-                }
-            }
-        }
+        // std::cout << "UBLOX: " << ublox_start << std::endl;
+        // double heading_tolerance = 0.5;
+        // while (true && ublox_start) {
+        //     std::optional<Nav_Att> msg = ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
+        //     if (msg.has_value()) {
+        //         ublox.consume(Msg_Type::NAV_ATT);
+        //         std::cout << "HEADING IS " << msg->heading << std::endl;
+        //         if (msg.value().heading < heading_tolerance || msg.value().heading > 360 - heading_tolerance) {
+        //             std::cout << "HEADING IS UNDER TOLERANCE!" << std::endl;
+        //             std::cout << "---------------------------" << std::endl;
+        //             break;
+        //         }
+        //     }
+        // }
         running = true;
     }
 
@@ -129,9 +129,10 @@ Wheelchair::read_state()
 }
 
 void
-control_loop(Wheelchair &robot, Linear_Controller &controller, double dt)
+control_loop(Wheelchair &robot, Linear_Controller &controller)
 {
 
+    double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
     using clock = std::chrono::steady_clock;
     auto next = clock::now();
     // auto motion_time_start = clock::now();
@@ -194,7 +195,7 @@ main(void)
     robot.frames.init(robot.path);
     robot.init();
 
-    // std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller));
+    std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller));
 
     Sim_Display sim = Sim_Display(robot, robot.path);
     sim.display();
