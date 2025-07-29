@@ -102,6 +102,7 @@ using json = nlohmann::json;
 bool
 Robot_Path::read_json_latlon(std::string file_path)
 {
+    int llh_height_TMP = 241;
     std::ifstream file(file_path);
 
     if (!file) {
@@ -109,7 +110,14 @@ Robot_Path::read_json_latlon(std::string file_path)
         return 1;
     }
     json data = json::parse(file);
-    LLH llh;
+    LLH llh, llh_origin;
+    auto point = data["points"].front();
+    llh_origin.lat() = to_radian(point["lat"]);
+    llh_origin.lon() = to_radian(point["lon"]);
+    llh_origin.alt() = point["alt"];
+    double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
+    llh_origin.alt() -= offset;
+
     std::vector<Pose> waypoints;
     for (auto point : data["points"]) {
         Pose pose;
@@ -117,11 +125,22 @@ Robot_Path::read_json_latlon(std::string file_path)
         llh.lon() = to_radian(point["lon"]);
         llh.alt() = point["alt"];
         double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
-        llh.alt() += offset;
+        // llh.alt() += offset;
+        llh.alt() = llh_height_TMP;
+        std::cout << offset << std::endl;
         Ecef ecef = cppmap3d::geodetic2ecef(llh);
         pose.point = ecef;
         waypoints.push_back(pose);
         std::cout << "lat: " << llh.lat() << " long: " << llh.lon() << " alt: " << llh.alt() << std::endl;
+
+        ENU enu_test = cppmap3d::ecef2enu(ecef, llh_origin);
+        Ecef ecef_test2 = cppmap3d::enu2ecef(enu_test, llh_origin);
+        std::cout << std::fixed;
+        std::cout << " --- " << std::endl;
+        std::cout << "ecef: " << ecef.raw().transpose() << std::endl;
+        std::cout << "ecef: " << enu_test.raw().transpose() << std::endl;
+        std::cout << "ecef: " << ecef_test2.raw().transpose() << std::endl;
+        std::cout << " --- " << std::endl;
     }
     add_waypoints(waypoints);
     return 0;
