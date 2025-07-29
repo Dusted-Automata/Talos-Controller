@@ -63,17 +63,29 @@ class Sim_Quadruped : public Robot
 void
 control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
 {
+    using clock = std::chrono::steady_clock;
+    auto next = clock::now();
+    auto motion_time_start = clock::now();
+    std::chrono::milliseconds period(1000 / robot.config.control_loop_hz);
+
     while (robot.running) { // Control loop
         while (!robot.pause && robot.running) {
             robot.pose_state = robot.read_state();
             robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
-            // robot.logger.savePosesToFile(robot.frames);
-            // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
-            // motion_time_start).count());
+            robot.logger.savePosesToFile(robot.frames);
+            robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
             Velocity2d cmd = controller.get_cmd(robot, dt);
             robot.send_velocity_command(cmd);
-            std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
+
+            next += period;
+            std::this_thread::sleep_until(next);
+
+            if (clock::now() > next + period) {
+                std::cerr << "control-loop overrun" << std::endl;
+                next = clock::now();
+            }
+            // std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
         }
     }
 }
@@ -90,7 +102,7 @@ main()
         // PIDGains linear_gains = { 0.8, 0.05, 0.15 };
         PIDGains linear_gains = { 1.01, 0.0, 0.01 };
         LinearPID linear_pid(robot.config, linear_gains);
-        PIDGains angular_gains = { 100.0, 0.00, 0.00 };
+        PIDGains angular_gains = { 1.0, 0.00, 0.00 };
         // PIDGains angular_gains = { 1.0, 0.0, 0.0 };
         AngularPID angular_pid(robot.config, angular_gains);
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
@@ -98,8 +110,8 @@ main()
             robot.config.kinematic_constraints.a_min);
         Linear_Controller traj_controller(linear_gains, angular_gains, linear_profile, robot.config);
 
-        robot.path.path_looping = true;
-        robot.path.read_json_latlon("ecef_points.json");
+        robot.path.path_looping = false;
+        robot.path.read_json_latlon("Table_Grab.json");
         Path_Planner pplanner(robot.path);
         pplanner.gen_global_path(2.5);
         robot.frames.init(robot.path);
