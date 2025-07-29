@@ -32,4 +32,5 @@ class TCP_Socket
     std::optional<json> recv();
 
     bool recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring);
+    bool send(const char *buf, size_t size);
 };

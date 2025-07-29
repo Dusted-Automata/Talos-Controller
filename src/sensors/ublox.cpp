@@ -130,3 +130,16 @@ Ublox::get_latest(Msg_Type msg)
     }
     return std::nullopt;
 }
+
+bool
+Ublox::update_speed(Velocity2d vel)
+{
+    json j;
+    j["identity"] = "ESF-MEAS-SPEED";
+    j["speed"] = vel.linear.norm();
+    std::string msg = j.dump();
+    if (socket.send(msg.c_str(), msg.size())) {
+        return true;
+    }
+    return false;
+}

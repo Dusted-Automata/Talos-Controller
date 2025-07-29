@@ -1,6 +1,7 @@
 #pragma once
 #include "sensor.hpp"
 #include "socket.hpp"
+#include <iostream>
 #include <json.hpp>
 
 using nlohmann::json;
@@ -218,4 +219,5 @@ class Ublox : public Sensor<Ublox_Msgs>
 
     void consume(Msg_Type sensor);
     template<typename T> std::optional<T> get_latest(Msg_Type sensor);
+    bool update_speed(Velocity2d vel);
 };

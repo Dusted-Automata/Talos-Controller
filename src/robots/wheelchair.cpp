@@ -147,6 +147,7 @@ control_loop(Wheelchair &robot, Linear_Controller &controller, double dt)
     while (robot.running) { // Control loop
         while (!robot.pause && robot.running) {
             robot.pose_state = robot.read_state();
+            robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
             robot.logger.savePosesToFile(robot.frames);
             // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
