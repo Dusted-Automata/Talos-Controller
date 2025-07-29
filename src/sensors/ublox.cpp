@@ -138,8 +138,10 @@ Ublox::update_speed(Velocity2d vel)
     j["identity"] = "ESF-MEAS-SPEED";
     j["speed"] = vel.linear.norm();
     std::string msg = j.dump();
-    if (socket.send(msg.c_str(), msg.size())) {
-        return true;
+    if (socket.get_fd() != -1) {
+        if (socket.send(msg.c_str(), msg.size())) {
+            return true;
+        }
     }
     return false;
 }
