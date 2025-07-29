@@ -14,8 +14,8 @@ Frames::move_in_local_frame(Velocity2d velocity, const double dt)
     local_frame.pos += local_frame.orientation.rotation() * velocity.linear;
 
     Ecef new_local_position = cppmap3d::enu2ecef(local_frame.pos, local_frame.origin);
-    global_frame.orientation.rotate(Eigen::AngleAxisd(velocity.angular.z(), Vector3d::UnitY()));
     global_frame.pos = new_local_position;
+    global_frame.orientation.rotate(Eigen::AngleAxisd(velocity.angular.z(), Vector3d::UnitY()));
 }
 
 void
@@ -52,9 +52,9 @@ Frames::init(Robot_Path &path)
     // Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     // global_frame.orientation = M;
 
-    // double theta = atan2(local_frame.origin.lon(), local_frame.origin.lat());
-    // Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
-    // local_frame.orientation = rot_yaw.toRotationMatrix();
+    double theta = atan2(local_frame.origin.lon(), local_frame.origin.lat());
+    Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
+    local_frame.orientation = rot_yaw.toRotationMatrix();
 
     if (!path.next().has_value()) {
         return;
@@ -63,5 +63,6 @@ Frames::init(Robot_Path &path)
     ENU goal = cppmap3d::ecef2enu(path.next()->point, local_frame.origin);
     double goal_theta = atan2(goal.east(), goal.north());
     Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
-    local_frame.orientation = rot_yaw_goal.toRotationMatrix();
+    Eigen::Matrix3d rotationMatrix = rot_yaw_goal.toRotationMatrix();
+    local_frame.orientation = local_frame.orientation * rot_yaw_goal;
 }
