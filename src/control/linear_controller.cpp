@@ -33,16 +33,17 @@ Linear_Controller::calculate_cmd(Robot &robot, Motion_Profile &motion_profile, d
         robot.ublox.consume(Msg_Type::GP_GGA);
     }
 
-    auto ublox_simple = robot.ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
-    if (ublox_simple.has_value()) {
-        Nav_Att nav_att = ublox_simple.value();
-        double heading = to_radian(nav_att.heading);
-        std::cout << nav_att.heading << std::endl;
+    std::optional<Nav_Pvat> ulobx_pvat = robot.ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
+    if (ulobx_pvat.has_value()) {
+        Nav_Pvat nav_att = ulobx_pvat.value();
+        nav_att.mot_heading += 90;
+        double heading = to_radian(nav_att.mot_heading);
+        std::cout << nav_att.mot_heading << std::endl;
         // std::cout << heading << std::endl;
         Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
         Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
-        robot.frames.local_frame.orientation.linear() + rotationMatrix;
-        robot.ublox.consume(Msg_Type::NAV_ATT);
+        robot.frames.local_frame.orientation = rotationMatrix;
+        robot.ublox.consume(Msg_Type::NAV_PVAT);
     }
 
     std::optional<Pose> target_waypoint = robot.path.next();
@@ -88,7 +89,7 @@ Velocity2d
 Linear_Controller::get_cmd(Robot &robot, double dt)
 {
     Velocity2d cmd = calculate_cmd(robot, motion_profile, dt);
-    cmd.linear.x() = linear_pid.update(cmd.linear.x(), robot.pose_state.velocity.linear.x(), dt);
+    // cmd.linear.x() = linear_pid.update(cmd.linear.x(), robot.pose_state.velocity.linear.x(), dt);
     cmd.angular.z() = angular_pid.update(0, -cmd.angular.z(), dt);
     return cmd;
 }
