@@ -144,18 +144,30 @@ Wheelchair::read_state()
 void
 control_loop(Wheelchair &robot, Linear_Controller &controller, double dt)
 {
+    using clock = std::chrono::steady_clock;
+    auto next = clock::now();
+    auto motion_time_start = clock::now();
+    std::chrono::milliseconds period(1000 / robot.config.control_loop_hz);
+
     while (robot.running) { // Control loop
         while (!robot.pause && robot.running) {
             robot.pose_state = robot.read_state();
             robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
             robot.logger.savePosesToFile(robot.frames);
-            // robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() -
-            // motion_time_start).count());
+            robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
             Velocity2d cmd = controller.get_cmd(robot, dt);
             robot.send_velocity_command(cmd);
-            std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
+
+            next += period;
+            std::this_thread::sleep_until(next);
+
+            if (clock::now() > next + period) {
+                std::cerr << "control-loop overrun" << std::endl;
+                next = clock::now();
+            }
+            // std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000 * dt)));
         }
     }
 }
