@@ -150,14 +150,14 @@ struct Nav_Pvat {
         accRoll = j["accRoll"];
         veh_heading = j["vehHeading"];
         mot_heading = j["motHeading"];
-        pitch = j["pitch"];
-        roll = j["roll"];
+        pitch = j["vehPitch"];
+        roll = j["vehRoll"];
 
         time.hh = j["hour"];
-        time.mm = j["minute"];
-        time.ss = j["second"];
+        time.mm = j["min"];
+        time.ss = j["sec"];
         time.ms = j["iTOW"];
-
+        //
         num_satalites = j["numSV"];
         // j["msgID"];
         // j["msgmode"];

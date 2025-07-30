@@ -1,6 +1,7 @@
 #pragma once
 #include "frames.hpp"
 #include "logger.hpp"
+#include "path_planner.hpp"
 #include "robot_path.hpp"
 #include "types.hpp"
 
@@ -14,6 +15,8 @@ class Robot
     Frames frames = {};
     Logger logger = {};
     Robot_Path path = {};
+    Ublox ublox = {};
+    Path_Planner path = {};
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual Pose_State read_state() = 0;

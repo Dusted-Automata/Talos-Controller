@@ -9,6 +9,7 @@ void
 Ublox::loop()
 {
 
+    std::cout << "loop: " << socket.get_fd() << std::endl;
     while (!(socket.get_fd() < 0) && running) {
         if (!socket.recv(buf)) {
             running = false;
@@ -163,7 +164,10 @@ Ublox::update_speed(Velocity2d vel)
     j["identity"] = "ESF-MEAS-SPEED";
     j["speed"] = vel.linear.norm();
     std::string msg = j.dump();
-    if (socket.get_fd() != -1) {
+    msg.append("\n");
+    std::cout << socket.get_fd() << std::endl;
+    if (!(socket.get_fd() < 0)) {
+        std::cout << msg << std::endl;
         if (socket.send(msg.c_str(), msg.size())) {
             return true;
         }
