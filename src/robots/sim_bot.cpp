@@ -35,8 +35,25 @@ class Sim_Quadruped : public Robot
             .a_min = -100.0,
             .j_max = 0.0,
         };
-        config.linear_gains = { 1.01, 0.0, 0.01 };
-        config.angular_gains = { 100.0, 0.01, 0.00 };
+        config.linear_gains = {
+            .k_p = 1.01,
+            .k_i = 0.05,
+            .k_d = 0.15,
+            .output_min = config.kinematic_constraints.v_min,
+            .output_max = config.kinematic_constraints.v_max,
+            .integral_min = -100,
+            .integral_max = 100,
+        };
+
+        config.linear_gains = {
+            .k_p = 1.0,
+            .k_i = 0.01,
+            .k_d = 0.25,
+            .output_min = config.kinematic_constraints.omega_min,
+            .output_max = config.kinematic_constraints.omega_max,
+            .integral_min = -100,
+            .integral_max = 100,
+        };
 
         running = true;
     }
@@ -131,8 +148,7 @@ main()
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
             robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
             robot.config.kinematic_constraints.a_min);
-        Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile,
-            robot.config);
+        Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
         robot.path.path_looping = true;
         robot.path.read_json_latlon("ecef_points.json");

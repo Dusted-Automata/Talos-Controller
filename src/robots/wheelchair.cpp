@@ -187,8 +187,7 @@ main(void)
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
         robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
         robot.config.kinematic_constraints.a_min);
-    Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile,
-        robot.config);
+    Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
     robot.path.path_looping = true;
     robot.path.read_json_latlon("Parkinglot_Loop.json");

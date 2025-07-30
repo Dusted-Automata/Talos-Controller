@@ -136,14 +136,10 @@ main(void)
 
     {
         double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
-        PIDGains linear_gains = { 0.8, 0.05, 0.15 };
-        LinearPID linear_pid(robot.config, linear_gains);
-        PIDGains angular_gains = { 1.0, 0.01, 0.25 };
-        AngularPID angular_pid(robot.config, angular_gains);
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
             robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
             robot.config.kinematic_constraints.a_min);
-        Linear_Controller traj_controller(linear_gains, angular_gains, linear_profile, robot.config);
+        Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
         robot.path.path_looping = true;
         robot.path.read_json_latlon("ecef_points.json");

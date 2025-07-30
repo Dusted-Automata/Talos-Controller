@@ -110,8 +110,25 @@ class Wheelchair : public Robot
             .a_min = -1.6,
             .j_max = 0.0,
         };
-        config.linear_gains = { 1.2, 0.05, 0.15 };
-        config.angular_gains = { 1.0, 0.01, 0.25 };
+        config.linear_gains = {
+            .k_p = 1.2,
+            .k_i = 0.05,
+            .k_d = 0.15,
+            .output_min = config.kinematic_constraints.v_min,
+            .output_max = config.kinematic_constraints.v_max,
+            .integral_min = -100,
+            .integral_max = 100,
+        };
+
+        config.linear_gains = {
+            .k_p = 1.0,
+            .k_i = 0.01,
+            .k_d = 0.25,
+            .output_min = config.kinematic_constraints.omega_min,
+            .output_max = config.kinematic_constraints.omega_max,
+            .integral_min = -100,
+            .integral_max = 100,
+        };
     }
 
     Ublox ublox = {};
