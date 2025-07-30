@@ -88,21 +88,30 @@ class Sim_Quadruped : public Robot
 };
 
 void
-control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
+control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
 {
 
     using clock = std::chrono::steady_clock;
     auto next = clock::now();
-    // auto motion_time_start = clock::now();
+    auto previous_time = clock::now();
+    auto motion_time_start = clock::now();
     std::chrono::milliseconds period(1000 / robot.config.control_loop_hz);
 
-    while (robot.running) { // Control loop
+    while (robot.running) {               // Control loop
+        auto current_time = clock::now(); // Current iteration time
+        std::chrono::duration<double> elapsed = current_time - previous_time;
+        double dt = elapsed.count(); // `dt` in seconds
+        previous_time = current_time;
+
         update_position(robot.ublox, robot.frames);
         update_heading(robot.ublox, robot.frames);
         if (!robot.pause) {
             robot.pose_state = robot.read_state();
+            robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
             robot.logger.savePosesToFile(robot.frames);
+            robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
+
             Pose target_waypoint = robot.path.next();
             // std::cout << target_waypoint.local_point.raw().transpose() << " | "
             //           << target_waypoint.point.raw().transpose() << std::endl;
@@ -132,6 +141,7 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller, double dt)
         if (clock::now() > next + period) {
             std::cerr << "control-loop overrun" << std::endl;
             next = clock::now();
+            previous_time = next;
         }
     }
 }
@@ -144,21 +154,20 @@ main()
 
     { // Find out how to extract this.
 
-        double dt = 1.0 / robot.config.control_loop_hz; // TODO change with real dt
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
             robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
             robot.config.kinematic_constraints.a_min);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
         robot.path.path_looping = true;
-        robot.path.read_json_latlon("ecef_points.json");
+        robot.path.read_json_latlon("Table_Grab.json");
         Path_Planner pplanner(robot.path);
         pplanner.gen_global_path(2.5);
         robot.frames.init(robot.path);
         robot.frames.init(pplanner.global_path);
 
-        std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller), dt);
-        //
+        std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller));
+
         // Sim_Display sim = Sim_Display(robot, robot.path);
         Sim_Display sim = Sim_Display(robot, pplanner.global_path);
         sim.display();
