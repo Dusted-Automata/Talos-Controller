@@ -123,6 +123,14 @@ Sim_Display::display()
             // robot.frames.update_based_on_measurement(llh);
             robot.pause = !robot.pause;
         }
+        if (IsKeyPressed(KEY_P)) {
+
+            Vector3d push = { 1.0, 2.0, 0.0 };
+            ENU fake_measurement = robot.frames.local_frame.pos + push;
+            Ecef ecef = cppmap3d::enu2ecef(fake_measurement, robot.frames.local_frame.origin);
+            LLH llh = cppmap3d::ecef2geodetic(ecef);
+            robot.frames.update_based_on_measurement(llh);
+        }
 
         EndMode2D();
 
