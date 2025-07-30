@@ -19,7 +19,7 @@ Linear_Controller::get_cmd(Pose_State pose_state, Vector3d diff, double dt)
     cmd.angular.y() = 0.0;
     cmd.angular.x() = 0.0;
 
-    cmd.linear.x() = linear_pid.update(cmd.linear.x(), pose_state.velocity.linear.x(), dt);
+    // cmd.linear.x() = linear_pid.update(cmd.linear.x(), pose_state.velocity.linear.x(), dt);
     cmd.angular.z() = angular_pid.update(0, -cmd.angular.z(), dt);
     return cmd;
 }
