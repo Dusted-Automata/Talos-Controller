@@ -143,16 +143,16 @@ void
 update_heading(Ublox &ublox, Frames &frames)
 {
 
-    auto ublox_simple = ublox.get_latest<Nav_Att>(Msg_Type::NAV_ATT);
+    auto ublox_simple = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
     if (ublox_simple.has_value()) {
-        Nav_Att nav_att = ublox_simple.value();
-        double heading = to_radian(nav_att.heading);
-        std::cout << nav_att.heading << std::endl;
+        Nav_Pvat nav_pvat = ublox_simple.value();
+        double heading = to_radian(nav_pvat.veh_heading);
+        std::cout << nav_pvat.veh_heading << std::endl;
         // std::cout << heading << std::endl;
         Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
         Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
         frames.local_frame.orientation.linear() + rotationMatrix;
-        ublox.consume(Msg_Type::NAV_ATT);
+        ublox.consume(Msg_Type::NAV_PVAT);
     }
 }
 

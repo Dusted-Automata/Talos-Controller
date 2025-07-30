@@ -3,7 +3,7 @@
 #include <optional>
 #include <thread>
 
-enum Msg_Type { NAV_ATT, GP_GGA };
+enum Msg_Type { NAV_ATT, NAV_PVAT, GP_GGA };
 
 template<typename T> class Sensor
 {
