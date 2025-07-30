@@ -142,6 +142,40 @@ struct Nav_Att {
     int8_t msgmode;
 };
 
+struct Nav_Pvat {
+    Nav_Pvat(json j)
+    {
+        accHeading = j["accHeading"];
+        accPitch = j["accPitch"];
+        accRoll = j["accRoll"];
+        veh_heading = j["vehHeading"];
+        mot_heading = j["motHeading"];
+        pitch = j["pitch"];
+        roll = j["roll"];
+
+        time.hh = j["hour"];
+        time.mm = j["minute"];
+        time.ss = j["second"];
+        time.ms = j["iTOW"];
+
+        num_satalites = j["numSV"];
+        // j["msgID"];
+        // j["msgmode"];
+        // fix = static_cast<GGA::Fix>(j["quality"]);
+    }
+
+    UTC_Time time;         // UTC time - hhmmss.ss
+    uint8_t num_satalites; // Number of satellites used (0-12)
+
+    double accHeading;
+    double accPitch;
+    double accRoll;
+    double veh_heading;
+    double mot_heading;
+    double pitch;
+    double roll;
+};
+
 struct Esf_Ins {
     int32_t iTOW;
     int32_t length;
@@ -163,6 +197,7 @@ struct Esf_Ins {
 
 struct Ublox_Msgs {
     Nav_Att nav_att;
+    Nav_Pvat nav_pvat;
     GGA gga;
     // Esf_Ins esf_ins;
 };
@@ -171,6 +206,7 @@ class Ublox : public Sensor<Ublox_Msgs>
 {
     // Ublox_Msgs msg = {};
 
+    std::optional<Nav_Pvat> nav_pvat;
     std::optional<Nav_Att> nav_att;
     std::optional<GGA> gga;
     // std::optional<Esf_Ins> esf_ins;
@@ -185,6 +221,7 @@ class Ublox : public Sensor<Ublox_Msgs>
 
     void consume(Msg_Type sensor);
     template<typename T> std::optional<T> get_latest(Msg_Type sensor);
+    bool update_speed(Velocity2d vel);
 };
 
 void update_position(Ublox &ublox, Frames &frames);

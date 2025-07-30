@@ -1,7 +1,6 @@
 #include "socket.hpp"
 #include <fcntl.h>
 #include <iostream>
-#include <optional>
 #include <unistd.h>
 
 bool
@@ -71,4 +70,20 @@ TCP_Socket::recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring)
     }
 
     return true;
+}
+
+bool
+TCP_Socket::send(const char *buf, size_t length)
+{
+    size_t total_sent = 0;
+    while (total_sent < length) {
+        ssize_t bytes_sent = ::send(fd, buf + total_sent, length - total_sent, 0);
+        if (bytes_sent <= 0) {
+            if (errno == EINTR) continue; // Retry if interrupted
+            std::cerr << "Send error: " << strerror(errno) << std::endl;
+            return false;
+        }
+        total_sent += bytes_sent;
+    }
+    return false;
 }
