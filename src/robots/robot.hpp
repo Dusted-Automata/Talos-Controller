@@ -14,8 +14,7 @@ class Robot
     Pose_State pose_state;
     Frames frames = {};
     Logger logger = {};
-    Robot_Path path = {};
-    Ublox ublox = {};
+    // Robot_Path path = {};
     Path_Planner path = {};
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
