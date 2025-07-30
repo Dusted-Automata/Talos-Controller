@@ -2,7 +2,7 @@
 #include <algorithm>
 
 double
-PIDController::update(double setpoint, double measured_value, double dt)
+PID::update(double setpoint, double measured_value, double dt)
 {
 
     double error = setpoint - measured_value;
@@ -10,7 +10,7 @@ PIDController::update(double setpoint, double measured_value, double dt)
 
     integral += error * dt;
     // Apply integral limits (anti-windup)
-    integral = std::max(integral_min, std::min(integral_max, integral));
+    integral = std::max(gains.integral_min, std::min(gains.integral_max, integral));
     double i_term = gains.k_i * integral;
 
     double derivative;
@@ -23,7 +23,7 @@ PIDController::update(double setpoint, double measured_value, double dt)
 
     double output = p_term + i_term + d_term;
 
-    output = std::max(output_min, std::min(output_max, output));
+    output = std::max(gains.output_min, std::min(gains.output_max, output));
 
     prev_error = error;
 
@@ -31,7 +31,7 @@ PIDController::update(double setpoint, double measured_value, double dt)
 }
 
 void
-PIDController::reset()
+PID::reset()
 {
     prev_error = 0.0;
     integral = 0.0;
