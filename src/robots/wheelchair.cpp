@@ -55,7 +55,19 @@ Wheelchair::init()
 
     {
 
+        std::cout << "ROBOT INIT!" << std::endl;
         bool ublox_start = ublox.start();
+        std::cout << "UBLOX: " << ublox_start << std::endl;
+        while (true && ublox_start) {
+            std::optional<Nav_Pvat> msg = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
+            if (msg.has_value()) {
+                std::cout << "VEH_HEADING IS " << msg->veh_heading << std::endl;
+                std::cout << "MOT_HEADING IS " << msg->mot_heading << std::endl;
+                config.heading.heading = msg->veh_heading;
+                break;
+            }
+        }
+
         running = true;
     }
 
