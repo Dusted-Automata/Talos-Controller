@@ -97,7 +97,7 @@ Robot_Path::print()
     std::string msg = std::format("Index: C{} | G{} - Path_Looping : ", current_index, goal_index, path_looping);
     std::cout << msg << std::endl;
     for (size_t i = 0; i < path.size(); i++) {
-        std::cout << path[i].point.raw().transpose() << std::endl;
+        std::cout << path[i].point.raw().transpose() << " | " << path[i].local_point.raw().transpose() << std::endl;
     }
     std::cout << "-----------" << std::endl;
 }
