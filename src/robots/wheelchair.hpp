@@ -121,9 +121,9 @@ class Wheelchair : public Robot
         };
 
         config.linear_gains = {
-            .k_p = 1.0,
-            .k_i = 0.01,
-            .k_d = 0.25,
+            .k_p = 2.0,
+            .k_i = 0.00,
+            .k_d = 0.00,
             .output_min = config.kinematic_constraints.omega_min,
             .output_max = config.kinematic_constraints.omega_max,
             .integral_min = -100,
