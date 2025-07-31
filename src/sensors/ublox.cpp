@@ -9,7 +9,6 @@ void
 Ublox::loop()
 {
 
-    std::cout << "loop: " << socket.get_fd() << std::endl;
     while (!(socket.get_fd() < 0) && running) {
         if (!socket.recv(buf)) {
             running = false;
@@ -34,16 +33,34 @@ Ublox::loop()
                     break;
                 }
 
-                if (j["identity"] == "GPGGA" || j["identity"] == "NAV-ATT") {
-                    if (j["identity"] == "GPGGA") {
-                        gga = GGA(j);
-                    }
-                    if (j["identity"] == "NAV-ATT") {
-                        nav_att = Nav_Att(j);
-                    }
+                std::string id = j["identity"];
+                if (id == "GPGGA") {
+                    // std::cout << j.dump(4) << std::endl;
+                    gga = GGA(j);
+                }
+                if (id == "NAV-ATT") {
+                    // std::cout << j.dump(4) << std::endl;
+                    nav_att = Nav_Att(j);
+                }
+
+                if (id == "NAV-PVAT") {
+                    // std::cout << j.dump(4) << std::endl;
+                    nav_pvat = Nav_Pvat(j);
                 }
             }
         }
+
+        // std::optional<json> j = socket.recv();
+        // if (j.has_value()) {
+        //     if (j.value()["identity"] == "GPGGA") {
+        //         std::cout << j.value().dump(4) << std::endl;
+        //         gga = GGA(j.value());
+        //     }
+        //     if (j.value()["identity"] == "NAV-ATT") {
+        //         std::cout << j.value().dump(4) << std::endl;
+        //         nav_att = Nav_Att(j.value());
+        //     }
+        // }
     }
 }
 
