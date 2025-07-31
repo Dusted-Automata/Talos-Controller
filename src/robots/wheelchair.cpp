@@ -196,9 +196,10 @@ main(void)
         robot.config.kinematic_constraints.a_min);
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-    robot.path.path_looping = true;
-    robot.path.read_json_latlon("Parkinglot_Loop.json");
-    robot.frames.init(robot.path);
+    // robot.path.path.path_looping = true;
+    robot.path.path.read_json_latlon("Parkinglot_Loop.json");
+    robot.path.gen_global_path(2.5);
+    robot.frames.init(robot.path.path);
     robot.init();
 
     std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller));
