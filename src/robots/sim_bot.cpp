@@ -28,12 +28,12 @@ class Sim_Quadruped : public Robot
         config.control_loop_hz = 500;
         config.goal_tolerance_in_meters = 0.75;
         config.kinematic_constraints = {
-            .v_max = 0.5,
+            .v_max = 2.5,
             .v_min = 0.0,
             .omega_max = 2.5,
             .omega_min = -2.5,
-            .a_max = 100.0,
-            .a_min = -100.0,
+            .a_max = 1.0,
+            .a_min = -1.0,
             .j_max = 0.0,
         };
         config.linear_gains = {
@@ -46,7 +46,7 @@ class Sim_Quadruped : public Robot
             .integral_max = 100,
         };
 
-        config.linear_gains = {
+        config.angular_gains = {
             .k_p = 1.0,
             .k_i = 0.01,
             .k_d = 0.25,
@@ -105,35 +105,38 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
         previous_time = current_time;
 
         update_position(robot.ublox, robot.frames);
-        update_heading(robot.ublox, robot.frames);
+        update_heading(robot.ublox, robot.frames, robot.config.heading);
         if (!robot.pause) {
             robot.pose_state = robot.read_state();
-            robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
+            bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
+            // std::cout << "ublox_update_speed: " << update_speed << std::endl;
             robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
             robot.logger.savePosesToFile(robot.frames);
             robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
-            Pose target_waypoint = robot.path.next();
-            // std::cout << target_waypoint.local_point.raw().transpose() << " | "
-            //           << target_waypoint.point.raw().transpose() << std::endl;
+            // Pose target_waypoint = robot.path.global_path.next();
             Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
 
-            Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-            if (frames_dist(dif) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pose_state, dif, dt);
+            Vector3d global_dif = frames_diff(robot.path.global_path.next().local_point, robot.frames);
+            Vector3d local_dif = frames_diff(robot.path.path.next().local_point, robot.frames);
+            if (frames_dist(global_dif) > robot.config.goal_tolerance_in_meters) {
+                cmd = controller.get_cmd(robot.pose_state, global_dif, local_dif, dt);
+                // std::cout << "cmd: " << cmd.linear.transpose() << std::endl;
             } else {
+                robot.path.global_path.progress();
+            }
+
+            std::cout << "local_dif: " << local_dif.transpose() << std::endl;
+            if (frames_dist(local_dif) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
-                controller.linear_pid.reset();
-                controller.angular_pid.reset();
-                if (robot.path.progress()) {
-                    Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-                    controller.motion_profile.set_setpoint(frames_dist(dif));
+                if (robot.path.path.progress()) {
+                    // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
+                    controller.motion_profile.set_setpoint(frames_dist(local_dif));
                 } else {
                     break;
                 }
             }
             robot.send_velocity_command(cmd);
-        } else {
         }
 
         next += period;
@@ -160,17 +163,19 @@ main()
             robot.config.kinematic_constraints.a_min);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-        robot.path.path_looping = true;
-        robot.path.read_json_latlon("Table_Grab.json");
-        Path_Planner pplanner(robot.path);
-        pplanner.gen_global_path(2.5);
-        robot.frames.init(robot.path);
-        robot.frames.init(pplanner.global_path);
+        // robot.path.path.path_looping = true;
+        robot.path.path.read_json_latlon("Table_Grab.json");
+        robot.frames.init(robot.path.path);
+        robot.path.gen_global_path(2.5);
+        // robot.path.path.print();
+        // robot.path.global_path.print();
+        // robot.frames.init(robot.path.global_path);
+        bool ublox_start = robot.ublox.start();
 
         std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller));
 
         // Sim_Display sim = Sim_Display(robot, robot.path);
-        Sim_Display sim = Sim_Display(robot, pplanner.global_path);
+        Sim_Display sim = Sim_Display(robot, robot.path);
         sim.display();
         robot.running = false;
     }
