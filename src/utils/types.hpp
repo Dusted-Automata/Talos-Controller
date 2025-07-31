@@ -28,6 +28,12 @@ struct Robot_State {
                                    // IMU imu;
 };
 
+struct Heading {
+    double heading;
+    double heading_offset;
+    double heading_from_ublox;
+};
+
 struct LLH {
   private:
     Eigen::Vector3d v;

@@ -73,6 +73,7 @@ struct Joystick {
 struct Config : public Robot_Config {
     PIDGains linear_gains;
     PIDGains angular_gains;
+    Heading heading;
 };
 
 class Wheelchair : public Robot

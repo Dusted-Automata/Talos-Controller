@@ -158,14 +158,18 @@ update_position(Ublox &ublox, Frames &frames)
     }
 }
 void
-update_heading(Ublox &ublox, Frames &frames)
+update_heading(Ublox &ublox, Frames &frames, Heading h)
 {
 
     auto ublox_simple = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
     if (ublox_simple.has_value()) {
         Nav_Pvat nav_pvat = ublox_simple.value();
-        double heading = to_radian(nav_pvat.veh_heading);
-        std::cout << nav_pvat.veh_heading << std::endl;
+        double heading = to_radian(nav_pvat.veh_heading - h.heading);
+        std::cout << " ==== " << std::endl;
+        std::cout << "NAV_PVAT.VEH_HEADING: " << nav_pvat.veh_heading
+                  << " | "
+                     "NAV_PVAT.VEH_HEADING: "
+                  << nav_pvat.mot_heading << " | " << nav_pvat.accHeading << std::endl;
         // std::cout << heading << std::endl;
         Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
         Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
@@ -182,9 +186,9 @@ Ublox::update_speed(Velocity2d vel)
     j["speed"] = vel.linear.norm();
     std::string msg = j.dump();
     msg.append("\n");
-    std::cout << socket.get_fd() << std::endl;
+    // std::cout << socket.get_fd() << std::endl;
     if (!(socket.get_fd() < 0)) {
-        std::cout << msg << std::endl;
+        // std::cout << msg << std::endl;
         if (socket.send(msg.c_str(), msg.size())) {
             return true;
         }

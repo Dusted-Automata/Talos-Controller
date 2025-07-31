@@ -225,4 +225,4 @@ class Ublox : public Sensor<Ublox_Msgs>
 };
 
 void update_position(Ublox &ublox, Frames &frames);
-void update_heading(Ublox &ublox, Frames &frames);
+void update_heading(Ublox &ublox, Frames &frames, Heading heading);
