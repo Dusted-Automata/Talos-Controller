@@ -14,11 +14,6 @@ struct UTC_Time {
     uint16_t ms;
 };
 
-struct LatLng {
-    double lat;
-    double lng;
-};
-
 enum class NMEA_Cmd {
     UNKNOWN,
     GGA,
@@ -59,7 +54,7 @@ struct GGA {
 
     // All of the char arrays, have space for null termination.
     UTC_Time time; // UTC time - hhmmss.ss
-    LatLng latlng;
+    LLH llh;
     Fix fix;                // Quality indicator for position fix
     uint8_t num_satalites;  // Number of satellites used (0-12)
     float hdop;             // Horizontal Dilution of Precision
@@ -84,7 +79,8 @@ struct GGA {
             if (lat_dir == "S") {
                 lat *= -1.0;
             }
-            latlng.lat = lat;
+            lat = to_radian(lat);
+            llh.lat() = lat;
         }
 
         if (!(lon == 0.0) && !(lon_dir == "")) {
@@ -92,13 +88,17 @@ struct GGA {
                 lon *= -1.0;
             }
 
-            latlng.lng = lon;
+            lon = to_radian(lon);
+            llh.lon() = lon;
         }
 
         num_satalites = j["numSV"];
         // j["msgID"];
         // j["msgmode"];
         // fix = static_cast<GGA::Fix>(j["quality"]);
+        alt = j["alt"];
+        geoid_seperation = j["sep"];
+        llh.alt() = alt + geoid_seperation;
     }
 
     void
@@ -106,7 +106,7 @@ struct GGA {
     {
         std::cout << "time: " << (int)time.hh << ":" << (int)time.mm << ":" << (int)time.ss << ":" << (int)time.ms
                   << std::endl;
-        std::cout << "latlng: " << latlng.lat << " , " << latlng.lng << std::endl;
+        std::cout << "LLH: " << llh.lat() << " , " << llh.lon() << " , " << llh.alt() << std::endl;
         std::cout << "fix: " << fixToString(fix) << std::endl;
         std::cout << "num_satellites: " << static_cast<int>(num_satalites) << std::endl;
         std::cout << "hdop: " << hdop << std::endl;
@@ -159,6 +159,12 @@ struct Nav_Pvat {
         time.ms = j["iTOW"];
         //
         num_satalites = j["numSV"];
+        llh.lat() = j["lat"];
+        llh.lat() = to_radian(llh.lat());
+        llh.lon() = j["lon"];
+        llh.lon() = to_radian(llh.lon());
+        llh.alt() = j["height"];      // in mm
+        llh.alt() = llh.alt() / 1000; // in M
         // j["msgID"];
         // j["msgmode"];
         // fix = static_cast<GGA::Fix>(j["quality"]);
@@ -174,6 +180,8 @@ struct Nav_Pvat {
     double mot_heading;
     double pitch;
     double roll;
+    LLH llh;
+    double height;
 };
 
 struct Esf_Ins {
@@ -225,4 +233,4 @@ class Ublox : public Sensor<Ublox_Msgs>
 };
 
 void update_position(Ublox &ublox, Frames &frames);
-void update_heading(Ublox &ublox, Frames &frames, Heading heading);
+void update_heading(Ublox &ublox, Frames &frames, Heading &heading);

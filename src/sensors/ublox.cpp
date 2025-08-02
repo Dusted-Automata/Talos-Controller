@@ -1,5 +1,6 @@
 
 #include "ublox.hpp"
+#include "cppmap3d.hh"
 #include "sensor.hpp"
 #include <arpa/inet.h>
 #include <iostream>
@@ -37,6 +38,9 @@ Ublox::loop()
                 if (id == "GPGGA") {
                     // std::cout << j.dump(4) << std::endl;
                     gga = GGA(j);
+                    // LatLng latlng = gga.value().latlng;
+                    // LLH llh = LLH(latlng.lat, latlng.lng, 241);
+                    // Ecef ecef = cppmap3d::geodetic2ecef(llh);
                 }
                 if (id == "NAV-ATT") {
                     // std::cout << j.dump(4) << std::endl;
@@ -46,6 +50,9 @@ Ublox::loop()
                 if (id == "NAV-PVAT") {
                     // std::cout << j.dump(4) << std::endl;
                     nav_pvat = Nav_Pvat(j);
+                    LLH llh = nav_pvat->llh;
+                    Ecef ecef = cppmap3d::geodetic2ecef(llh);
+                    std::cout << "ECEF: " << ecef.raw().transpose() << " | " << llh.raw().transpose() << std::endl;
                 }
             }
         }
@@ -146,34 +153,34 @@ update_position(Ublox &ublox, Frames &frames)
     auto ublox_gga = ublox.get_latest<GGA>(Msg_Type::GP_GGA);
     if (ublox_gga.has_value()) {
         GGA val = ublox_gga.value();
-        double lat = to_radian(val.latlng.lat);
-        double lng = to_radian(val.latlng.lng);
-        double alt = val.alt;
 
-        if (above_epsilon(lat, lng, alt)) {
+        if (above_epsilon(val.llh.lat(), val.llh.lon(), val.llh.alt())) {
             // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
-            frames.update_based_on_measurement({ lat, lng, alt });
+            frames.update_based_on_measurement(val.llh);
         }
         ublox.consume(Msg_Type::GP_GGA);
     }
 }
 void
-update_heading(Ublox &ublox, Frames &frames, Heading h)
+update_heading(Ublox &ublox, Frames &frames, Heading &h)
 {
 
     auto ublox_simple = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
     if (ublox_simple.has_value()) {
         Nav_Pvat nav_pvat = ublox_simple.value();
-        double heading = to_radian(nav_pvat.veh_heading - h.heading);
-        std::cout << " ==== " << std::endl;
-        std::cout << "NAV_PVAT.VEH_HEADING: " << nav_pvat.veh_heading
-                  << " | "
-                     "NAV_PVAT.VEH_HEADING: "
-                  << nav_pvat.mot_heading << " | " << nav_pvat.accHeading << std::endl;
+        double heading = to_radian(nav_pvat.veh_heading - h.heading_offset);
+        // std::cout << " ==== " << std::endl;
+        // std::cout << "NAV_PVAT.VEH_HEADING: " << nav_pvat.veh_heading
+        //           << " | "
+        //              "NAV_PVAT.VEH_HEADING: "
+        //           << nav_pvat.mot_heading << " | " << nav_pvat.accHeading << std::endl;
         // std::cout << heading << std::endl;
-        Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
-        Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
-        frames.local_frame.orientation.linear() + rotationMatrix;
+        h.heading_from_ublox = nav_pvat.veh_heading;
+        if (nav_pvat.accHeading < 30.0) {
+            Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
+            Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
+            // frames.local_frame.orientation.linear() = rotationMatrix;
+        }
         ublox.consume(Msg_Type::NAV_PVAT);
     }
 }
