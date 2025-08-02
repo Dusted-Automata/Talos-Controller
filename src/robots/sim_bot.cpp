@@ -105,7 +105,12 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
         previous_time = current_time;
 
         update_position(robot.ublox, robot.frames);
-        update_heading(robot.ublox, robot.frames, robot.config.heading);
+        Eigen::AngleAxisd aa(robot.frames.local_frame.orientation.linear());
+        double old_heading = aa.angle();
+        update_heading(robot.ublox, robot.frames, robot.heading);
+        Eigen::AngleAxisd ab(robot.frames.local_frame.orientation.linear());
+        double new_heading = ab.angle();
+        // std::cout << "old-new heading: " << old_heading << " | " << new_heading << std::endl;
         if (!robot.pause) {
             robot.pose_state = robot.read_state();
             bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
@@ -126,7 +131,7 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
                 robot.path.global_path.progress();
             }
 
-            std::cout << "local_dif: " << local_dif.transpose() << std::endl;
+            // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
             if (frames_dist(local_dif) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
                 if (robot.path.path.progress()) {
@@ -163,8 +168,11 @@ main()
             robot.config.kinematic_constraints.a_min);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-        // robot.path.path.path_looping = true;
-        robot.path.path.read_json_latlon("Table_Grab.json");
+        robot.path.path.path_looping = true;
+        robot.path.path.read_json_latlon("waypoints/basketball_loop.json");
+        // robot.path.path.read_json_latlon("waypoints/basketball_loop_other.json");
+        // robot.path.path.read_json_latlon("waypoints/parkplatz_quick_iteration_loop.json");
+        // robot.path.path.read_json_latlon("waypoints/shotter_weg_loop.json");
         robot.frames.init(robot.path.path);
         robot.path.gen_global_path(2.5);
         // robot.path.path.print();

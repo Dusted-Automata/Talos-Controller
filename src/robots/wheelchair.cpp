@@ -63,7 +63,7 @@ Wheelchair::init()
             if (msg.has_value()) {
                 std::cout << "VEH_HEADING IS " << msg->veh_heading << std::endl;
                 std::cout << "MOT_HEADING IS " << msg->mot_heading << std::endl;
-                config.heading.heading = msg->veh_heading;
+                heading.heading_offset = msg->veh_heading;
                 break;
             }
         }
@@ -145,10 +145,10 @@ control_loop(Wheelchair &robot, Linear_Controller &controller)
         update_position(robot.ublox, robot.frames);
         Eigen::AngleAxisd aa(robot.frames.local_frame.orientation.linear());
         double old_heading = aa.angle();
-        update_heading(robot.ublox, robot.frames, robot.config.heading);
+        update_heading(robot.ublox, robot.frames, robot.heading);
         Eigen::AngleAxisd ab(robot.frames.local_frame.orientation.linear());
         double new_heading = ab.angle();
-        std::cout << "old-new heading: " << old_heading << " | " << new_heading << std::endl;
+        // std::cout << "old-new heading: " << old_heading << " | " << new_heading << std::endl;
         if (!robot.pause) {
             robot.pose_state = robot.read_state();
             // bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
@@ -164,12 +164,12 @@ control_loop(Wheelchair &robot, Linear_Controller &controller)
             Vector3d local_dif = frames_diff(robot.path.path.next().local_point, robot.frames);
             if (frames_dist(global_dif) > robot.config.goal_tolerance_in_meters) {
                 cmd = controller.get_cmd(robot.pose_state, global_dif, local_dif, dt);
-                // std::cout << "cmd: " << cmd.linear.transpose() << std::endl;
+                // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
             } else {
                 robot.path.global_path.progress();
             }
 
-            std::cout << "local_dif: " << local_dif.transpose() << std::endl;
+            // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
             if (frames_dist(local_dif) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
                 if (robot.path.path.progress()) {
@@ -205,7 +205,7 @@ main(void)
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
     // robot.path.path.path_looping = true;
-    robot.path.path.read_json_latlon("Parkinglot_Loop.json");
+    robot.path.path.read_json_latlon("Table_Grab.json");
     robot.path.gen_global_path(2.5);
     robot.frames.init(robot.path.path);
     robot.init();

@@ -4,6 +4,7 @@
 #include "path_planner.hpp"
 #include "robot_path.hpp"
 #include "types.hpp"
+#include "ublox.hpp"
 
 class Robot
 {
@@ -14,8 +15,10 @@ class Robot
     Pose_State pose_state;
     Frames frames = {};
     Logger logger = {};
+    Ublox ublox = {};
     // Robot_Path path = {};
     Path_Planner path = {};
+    Heading heading;
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual Pose_State read_state() = 0;

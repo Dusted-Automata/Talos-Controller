@@ -394,6 +394,13 @@ to_radian(double degrees)
     return rad - M_PI;
 }
 
+static inline double
+to_degrees(double rad)
+{
+    constexpr double RAD_TO_DEG = 180.0 / M_PI;
+    return rad * RAD_TO_DEG;
+};
+
 struct Pose_State {
     Ecef position = Eigen::Vector3d(0, 0, 0); // x, y, z
     Affine3d orientation = Eigen::Affine3d::Identity();

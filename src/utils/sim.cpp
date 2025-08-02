@@ -1,10 +1,13 @@
 #include "sim.hpp"
 #include "cppmap3d.hh"
 // #include "mppi.hpp"
+#include "json.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include "transformations.hpp"
+#include "ublox.hpp"
 #include <stdio.h>
+using json = nlohmann::json;
 
 void
 Sim_Display::draw_absolute_grid(Camera2D camera, float gridStep)
@@ -58,7 +61,13 @@ Sim_Display::draw_robot()
     Rectangle bot = { static_cast<float>(robot.frames.local_frame.pos.north()),
         static_cast<float>(-robot.frames.local_frame.pos.east()), 1.0, 0.5 };
     Vector2 origin = { bot.width / 2, bot.height / 2 };
-    DrawRectanglePro(bot, origin, (float)(-(yaw * 180.0) / M_PI), RED);
+    DrawRectanglePro(bot, origin, (float)(-to_degrees(yaw)), RED);
+
+    // Rectangle heading_indicator = { static_cast<float>(robot.frames.local_frame.pos.north()),
+    //     static_cast<float>(-robot.frames.local_frame.pos.east() + bot.height), 0.10, 1.0 };
+    // Vector2 heading_origin = { (float)robot.frames.local_frame.pos.north(),
+    // (float)robot.frames.local_frame.pos.east() }; DrawRectanglePro(heading_indicator, heading_origin,
+    //     robot.heading.heading_from_ublox, GREEN);
 
     // showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
     // GetFrameTime(),
@@ -119,6 +128,9 @@ Sim_Display::display()
             DrawCircleV({ (float)waypoint.north(), (float)-waypoint.east() }, 0.1f, BLUE);
         }
 
+        ENU waypoint = path.global_path.next().local_point;
+        DrawCircleV({ (float)waypoint.north(), (float)-waypoint.east() }, 0.25f, ORANGE);
+
         draw_robot();
 
         if (IsKeyPressed(KEY_SPACE)) {
@@ -137,6 +149,56 @@ Sim_Display::display()
             Ecef ecef = cppmap3d::enu2ecef(fake_measurement, robot.frames.local_frame.origin);
             LLH llh = cppmap3d::ecef2geodetic(ecef);
             robot.frames.update_based_on_measurement(llh);
+        }
+
+        if (IsKeyPressed(KEY_O)) {
+            std::string filename = "new_positions.json";
+
+            // 1. Open the file for reading
+            std::ifstream input_file(filename);
+            json j;
+            int id = 0;
+
+            if (input_file.is_open()) {
+                input_file >> j;
+                input_file.close();
+            } else {
+                // If the file doesn't exist or is empty, start with an empty array
+                j = json::object();
+            }
+            if (!j.contains("points") || !j["points"].is_array()) {
+                j["points"] = json::array();
+            }
+
+            if (!j["points"].empty() && j["points"].back().contains("id")) {
+                id = j["points"].back()["id"];
+                id += 1; // increment for new entry
+            }
+
+            auto nav = robot.ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
+            if (nav.has_value()) {
+                Nav_Pvat nav_pvat = nav.value();
+                Ecef ecef = cppmap3d::geodetic2ecef(nav_pvat.llh);
+                json new_entry = {
+                    {      "id",                   id },
+                    {       "x",             ecef.x() },
+                    {       "y",             ecef.y() },
+                    {       "z",             ecef.z() },
+                    {     "lat",   nav_pvat.llh.lat() },
+                    {     "lon",   nav_pvat.llh.lon() },
+                    {     "alt",   nav_pvat.llh.alt() },
+                    { "bearing", nav_pvat.veh_heading },
+                };
+                j["points"].push_back(new_entry);
+            }
+
+            std::ofstream output_file(filename);
+            if (output_file.is_open()) {
+                output_file << j.dump(4); // Pretty print with 4-space indentation
+                output_file.close();
+            } else {
+                std::cerr << "Failed to open file for writing\n";
+            }
         }
 
         EndMode2D();
