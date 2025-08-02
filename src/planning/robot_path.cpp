@@ -117,30 +117,55 @@ Robot_Path::read_json_latlon(std::string file_path)
 
     // Get origin LLH, to be able to compute ENU differences
     auto point = data["points"].front();
-    llh_origin.lat() = to_radian(point["lat"]);
-    llh_origin.lon() = to_radian(point["lon"]);
-    llh_origin.alt() = point["alt"];
-    double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
-    llh_origin.alt() += offset;
+    if (point.contains("lat")) {
 
-    std::vector<Pose> waypoints;
-    for (auto point : data["points"]) {
-        Pose pose;
-        llh.lat() = to_radian(point["lat"]);
-        llh.lon() = to_radian(point["lon"]);
-        llh.alt() = point["alt"];
+        llh_origin.lat() = to_radian(point["lat"]);
+        llh_origin.lon() = to_radian(point["lon"]);
+        llh_origin.alt() = point["alt"];
         double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
-        llh.alt() += offset;
-        std::cout << "lat: " << llh.lat() << " long: " << llh.lon() << " alt: " << llh.alt() << std::endl;
+        llh_origin.alt() += offset;
 
-        Ecef ecef = cppmap3d::geodetic2ecef(llh);
-        pose.point = ecef;
+        std::vector<Pose> waypoints;
+        for (auto point : data["points"]) {
+            Pose pose;
+            llh.lat() = to_radian(point["lat"]);
+            llh.lon() = to_radian(point["lon"]);
+            llh.alt() = point["alt"];
+            double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
+            llh.alt() += offset;
+            std::cout << "lat: " << llh.lat() << " long: " << llh.lon() << " alt: " << llh.alt() << std::endl;
 
-        ENU local = cppmap3d::ecef2enu(ecef, llh_origin);
-        pose.local_point = local;
+            Ecef ecef = cppmap3d::geodetic2ecef(llh);
+            pose.point = ecef;
 
-        waypoints.push_back(pose);
+            ENU local = cppmap3d::ecef2enu(ecef, llh_origin);
+            pose.local_point = local;
+
+            waypoints.push_back(pose);
+        }
+        add_waypoints(waypoints);
+    } else {
+        auto x = point["x"];
+        auto y = point["y"];
+        auto z = point["z"];
+        llh_origin = cppmap3d::ecef2geodetic({ x, y, z });
+
+        std::vector<Pose> waypoints;
+        for (auto point : data["points"]) {
+            Pose pose;
+            auto x = point["x"];
+            auto y = point["y"];
+            auto z = point["z"];
+
+            Ecef ecef = { x, y, z };
+            pose.point = ecef;
+
+            ENU local = cppmap3d::ecef2enu(ecef, llh_origin);
+            pose.local_point = local;
+
+            waypoints.push_back(pose);
+        }
+        add_waypoints(waypoints);
     }
-    add_waypoints(waypoints);
     return 0;
 }
