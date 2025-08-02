@@ -73,7 +73,6 @@ struct Joystick {
 struct Config : public Robot_Config {
     PIDGains linear_gains;
     PIDGains angular_gains;
-    Heading heading;
 };
 
 class Wheelchair : public Robot
@@ -103,12 +102,20 @@ class Wheelchair : public Robot
             // .a_min = -0.2,
             // .j_max = 0.0,
 
+            // .v_max = 0.8,
+            // .v_min = 0.0,
+            // .omega_max = 1.25,
+            // .omega_min = -1.25,
+            // .a_max = 1.7,
+            // .a_min = -1.6,
+            // .j_max = 0.0,
+
             .v_max = 0.8,
             .v_min = 0.0,
             .omega_max = 1.25,
             .omega_min = -1.25,
-            .a_max = 1.7,
-            .a_min = -1.6,
+            .a_max = 0.7,
+            .a_min = -0.6,
             .j_max = 0.0,
         };
         config.linear_gains = {
@@ -121,7 +128,7 @@ class Wheelchair : public Robot
             .integral_max = 100,
         };
 
-        config.linear_gains = {
+        config.angular_gains = {
             .k_p = 2.0,
             .k_i = 0.00,
             .k_d = 0.00,
