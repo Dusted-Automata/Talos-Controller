@@ -22,8 +22,8 @@ Trapezoidal_Profile::calculate_velocity(const double position, const double dt)
 {
     // Check if we need to de-accelerate
     double vel = 0;
-    double stopping_distance = velocity / (std::abs(a_min));
-    std::cout << "position: " << position << " | stopping_distance " << stopping_distance << std::endl;
+    double stopping_distance = (2 * velocity) / (std::abs(a_min));
+    // std::cout << "position: " << position << " | stopping_distance " << stopping_distance << std::endl;
     if (std::abs(position) <= stopping_distance) {
         vel = velocity + (a_min * dt);
         if (velocity < 0.0) {
