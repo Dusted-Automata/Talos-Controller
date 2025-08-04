@@ -148,7 +148,7 @@ Sim_Display::display()
             ENU fake_measurement = robot.frames.local_frame.pos + push;
             Ecef ecef = cppmap3d::enu2ecef(fake_measurement, robot.frames.local_frame.origin);
             LLH llh = cppmap3d::ecef2geodetic(ecef);
-            robot.frames.update_based_on_measurement(llh);
+            frames_update_based_on_measurement(robot.frames, llh);
         }
 
         if (IsKeyPressed(KEY_O)) {

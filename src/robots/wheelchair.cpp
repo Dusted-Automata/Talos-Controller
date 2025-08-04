@@ -153,15 +153,15 @@ control_loop(Wheelchair &robot, Linear_Controller &controller)
             robot.pose_state = robot.read_state();
             // bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             // std::cout << "ublox_update_speed: " << update_speed << std::endl;
-            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
+            frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
             robot.logger.savePosesToFile(robot.frames);
             robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
             // Pose target_waypoint = robot.path.global_path.next();
             Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
 
-            Vector3d global_dif = frames_diff(robot.path.global_path.next().local_point, robot.frames);
-            Vector3d local_dif = frames_diff(robot.path.path.next().local_point, robot.frames);
+            Vector3d global_dif = frames_diff(robot.frames, robot.path.global_path.next().local_point);
+            Vector3d local_dif = frames_diff(robot.frames, robot.path.path.next().local_point);
             if (frames_dist(global_dif) > robot.config.goal_tolerance_in_meters) {
                 cmd = controller.get_cmd(robot.pose_state, global_dif, local_dif, dt);
                 // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
@@ -207,7 +207,7 @@ main(void)
     // robot.path.path.path_looping = true;
     robot.path.path.read_json_latlon("Table_Grab.json");
     robot.path.gen_global_path(2.5);
-    robot.frames.init(robot.path.path);
+    frames_init(robot.frames, robot.path.path);
     robot.init();
 
     std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller));

@@ -156,7 +156,7 @@ update_position(Ublox &ublox, Frames &frames)
 
         if (above_epsilon(val.llh.lat(), val.llh.lon(), val.llh.alt())) {
             // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
-            frames.update_based_on_measurement(val.llh);
+            frames_update_based_on_measurement(frames, val.llh);
         }
         ublox.consume(Msg_Type::GP_GGA);
     }
@@ -169,17 +169,17 @@ update_heading(Ublox &ublox, Frames &frames, Heading &h)
     if (ublox_simple.has_value()) {
         Nav_Pvat nav_pvat = ublox_simple.value();
         double heading = to_radian(nav_pvat.veh_heading - h.heading_offset);
-        // std::cout << " ==== " << std::endl;
-        // std::cout << "NAV_PVAT.VEH_HEADING: " << nav_pvat.veh_heading
-        //           << " | "
-        //              "NAV_PVAT.VEH_HEADING: "
-        //           << nav_pvat.mot_heading << " | " << nav_pvat.accHeading << std::endl;
-        // std::cout << heading << std::endl;
+        std::cout << " ==== " << std::endl;
+        std::cout << "NAV_PVAT.VEH_HEADING: " << nav_pvat.veh_heading
+                  << " | "
+                     "NAV_PVAT.VEH_HEADING: "
+                  << nav_pvat.mot_heading << " | " << nav_pvat.accHeading << std::endl;
+        std::cout << heading << std::endl;
         h.heading_from_ublox = nav_pvat.veh_heading;
         if (nav_pvat.accHeading < 30.0) {
             Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
             Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
-            // frames.local_frame.orientation.linear() = rotationMatrix;
+            frames.local_frame.orientation.linear() = rotationMatrix;
         }
         ublox.consume(Msg_Type::NAV_PVAT);
     }

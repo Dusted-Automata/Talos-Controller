@@ -5,70 +5,61 @@
 #include <iostream>
 
 void
-Frames::move_in_local_frame(Velocity2d velocity, const double dt)
+frames_move_in_local_frame(Frames &frames, Velocity2d velocity, const double dt)
 {
 
     velocity.linear *= dt;
     velocity.angular *= dt;
-    local_frame.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z()), Vector3d::UnitZ()));
-    local_frame.pos += local_frame.orientation.rotation() * velocity.linear;
+    frames.local_frame.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z()), Vector3d::UnitZ()));
+    frames.local_frame.pos += frames.local_frame.orientation.rotation() * velocity.linear;
 
-    Ecef new_local_position = cppmap3d::enu2ecef(local_frame.pos, local_frame.origin);
-    global_frame.orientation.rotate(Eigen::AngleAxisd(velocity.angular.z(), Vector3d::UnitY()));
-    global_frame.pos = new_local_position;
+    Ecef new_local_position = cppmap3d::enu2ecef(frames.local_frame.pos, frames.local_frame.origin);
+    frames.global_frame.orientation.rotate(Eigen::AngleAxisd(velocity.angular.z(), Vector3d::UnitY()));
+    frames.global_frame.pos = new_local_position;
 }
 
 void
-Frames::move_in_global_frame(Velocity2d velocity, const double dt)
-{
-    velocity.linear *= dt;
-    velocity.angular *= dt;
-
-    local_frame.orientation.rotate(Eigen::AngleAxisd((velocity.angular.z()), Vector3d::UnitZ()));
-    Linear_Velocity local_vel = local_frame.orientation.rotation() * velocity.linear;
-    local_frame.pos += local_vel;
-}
-
-void
-Frames::update_based_on_measurement(const LLH &llh)
+frames_update_based_on_measurement(Frames &frames, const LLH &llh)
 {
     // std::cout << "LOCAL_FRAME: " << local_frame.pos.transpose() << std::endl;
-    Ecef measured_ecef = cppmap3d::geodetic2ecef(llh);
+    Ecef measured_ecef;
+    cppmap3d::geodetic2ecef(to_radian(llh.lat()), to_radian(llh.lon()), llh.alt(), measured_ecef.x(), measured_ecef.y(),
+        measured_ecef.z());
     std::cout << std::fixed;
     std::cout << "ECEF: " << measured_ecef.raw().transpose() << std::endl;
     // std::cout << "GLOB : " << global_frame.pos.transpose() << std::endl;
-    ENU enu = cppmap3d::ecef2enu(measured_ecef, local_frame.origin);
-    local_frame.pos = enu;
+    ENU enu = cppmap3d::ecef2enu(measured_ecef, frames.local_frame.origin);
+    frames.local_frame.pos = enu;
 }
 void
-Frames::init(Robot_Path &path)
+frames_init(Frames &frames, Robot_Path &path)
 {
     if (path.size() < 1) {
         return;
     }
 
-    local_frame.origin = cppmap3d::ecef2geodetic(path.current().point);
-    global_frame.pos = path.current().point;
+    frames.local_frame.origin = cppmap3d::ecef2geodetic(path.current().point);
+    frames.global_frame.pos = path.current().point;
 
     // Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     // global_frame.orientation = M;
 
-    double theta = atan2(local_frame.origin.lon(), local_frame.origin.lat());
-    Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
-    local_frame.orientation = rot_yaw.toRotationMatrix();
-
-    if (path.size() < 2) {
-        return;
-    }
-
-    ENU goal = path.next().local_point;
-    double goal_theta = atan2(goal.east(), goal.north());
-    Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
-    local_frame.orientation = local_frame.orientation * rot_yaw_goal;
+    // double theta = atan2(local_frame.origin.lon(), local_frame.origin.lat());
+    // Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
+    // local_frame.orientation = rot_yaw.toRotationMatrix();
+    //
+    // if (path.size() < 2) {
+    //     return;
+    // }
+    //
+    // ENU goal = path.next().local_point;
+    // double goal_theta = atan2(goal.east(), goal.north());
+    // Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
+    // local_frame.orientation = local_frame.orientation * rot_yaw_goal;
 }
 
 Vector3d
-frames_diff(const ENU &goal, const Frames &frames) // fine with running every frame
+frames_diff(const Frames &frames, const ENU &goal) // fine with running every frame
 {
 
     Vector3d diff = goal.raw() - frames.local_frame.pos.raw();
