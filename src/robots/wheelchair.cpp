@@ -63,7 +63,10 @@ Wheelchair::init()
             if (msg.has_value()) {
                 std::cout << "VEH_HEADING IS " << msg->veh_heading << std::endl;
                 std::cout << "MOT_HEADING IS " << msg->mot_heading << std::endl;
-                heading.heading_offset = msg->veh_heading;
+                heading.initial_heading_in_radians = msg->veh_heading;
+                Eigen::Matrix3d rotationMatrix;
+                rotationMatrix = Eigen::AngleAxisd(heading.initial_heading_in_radians, Eigen::Vector3d::UnitZ());
+                frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
                 break;
             }
         }

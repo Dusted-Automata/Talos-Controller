@@ -165,11 +165,21 @@ update_position(Ublox &ublox, Frames &frames)
 }
 
 double
+convert_to_positive_radians(double angle)
+{
+
+    if (angle < 0) {
+        return angle + 2 * M_PI;
+    }
+    return angle;
+}
+
+double
 min_angle_difference(double angle1, double angle2)
 {
     // https://stackoverflow.com/questions/1878907/how-can-i-find-the-smallest-difference-between-two-angles-around-a-point
     // Angles must be subtracted differently than other values.
-    return atan2(sin(angle1 - angle2), cos(angle1 - angle2));
+    return atan2(sin(angle2 - angle1), cos(angle2 - angle1));
 }
 
 void
@@ -179,11 +189,23 @@ update_heading(Ublox &ublox, Frames &frames, Heading &h)
     auto ublox_simple = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
     if (ublox_simple.has_value()) {
         Nav_Pvat nav_pvat = ublox_simple.value();
-        double heading = to_radian(min_angle_difference(nav_pvat.veh_heading, h.heading_offset));
+        double heading_difference = min_angle_difference(nav_pvat.veh_heading, h.initial_heading_in_radians);
+        std::cout << "initial_heading: " << h.initial_heading_in_radians
+                  << " | heading_difference: " << heading_difference << " | veh_heading: " << nav_pvat.veh_heading
+                  << std::endl;
+        double heading = convert_to_positive_radians(heading_difference);
         if (nav_pvat.accHeading < 30.0) { // NOTE: TBD
-            Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
-            Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
-            // frames.local_frame.orientation.linear() = rotationMatrix; // NOTE: To be checked!
+            double old_local_orientation = convert_to_positive_radians(atan2(
+                frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
+            Eigen::Affine3d rotationMatrix;
+
+            rotationMatrix = Eigen::AngleAxisd(heading, Eigen::Vector3d::UnitZ());
+            frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
+            double new_local_orientation = convert_to_positive_radians(atan2(
+                frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
+
+            std::cout << "old_orientation: " << old_local_orientation << " | nav_heading: " << heading
+                      << " | local_frame heading " << new_local_orientation << std::endl;
         }
         ublox.consume(Msg_Type::NAV_PVAT);
     }

@@ -29,8 +29,8 @@ struct Robot_State {
 };
 
 struct Heading {
-    double heading;
-    double heading_offset;
+    double heading_in_radians;
+    double initial_heading_in_radians;
     double heading_from_ublox;
 };
 
@@ -387,11 +387,11 @@ struct Velocity2d {
 static inline double
 to_radian(double degrees)
 {
-    double rad = degrees * (M_PI / 180);
-    const double TWO_PI = 2.0 * M_PI;
-    rad = fmod(rad + M_PI, TWO_PI);
-    if (rad < 0) rad += TWO_PI;
-    return rad - M_PI;
+    double rad = degrees * (M_PI / 180.);
+    // const double TWO_PI = 2.0 * M_PI;
+    // rad = fmod(rad + M_PI, TWO_PI);
+    // if (rad < 0) rad += TWO_PI;
+    return rad;
 }
 
 static inline double

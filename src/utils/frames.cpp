@@ -2,6 +2,7 @@
 #include "cppmap3d.hh"
 #include "transformations.hpp"
 #include "types.hpp"
+#include "ublox.hpp"
 #include <iostream>
 
 void
@@ -13,9 +14,9 @@ frames_move_in_local_frame(Frames &frames, Velocity2d velocity, const double dt)
     frames.local_frame.orientation.rotate(Eigen::AngleAxisd((angle_update.z()), Vector3d::UnitZ()));
     frames.local_frame.pos += frames.local_frame.orientation.rotation() * position_update;
 
-    Ecef new_local_position = cppmap3d::enu2ecef(frames.local_frame.pos, frames.local_frame.origin);
-    frames.global_frame.orientation.rotate(Eigen::AngleAxisd(angle_update.z(), Vector3d::UnitZ()));
-    frames.global_frame.pos = new_local_position;
+    // Ecef new_local_position = cppmap3d::enu2ecef(frames.local_frame.pos, frames.local_frame.origin);
+    // frames.global_frame.orientation.rotate(Eigen::AngleAxisd(angle_update.z(), Vector3d::UnitZ()));
+    // frames.global_frame.pos = new_local_position;
 }
 
 void
@@ -47,16 +48,16 @@ frames_init(Frames &frames, Robot_Path &path)
     // Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     // frames.global_frame.orientation = M;
 
-    double theta = atan2(frames.local_frame.origin.lon(), frames.local_frame.origin.lat());
-    Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
-    frames.local_frame.orientation = rot_yaw.toRotationMatrix();
+    // double theta = atan2(frames.local_frame.origin.lon(), frames.local_frame.origin.lat());
+    // Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
+    // frames.local_frame.orientation = rot_yaw.toRotationMatrix();
 
     if (path.size() < 2) {
         return;
     }
 
     ENU goal = path.next().local_point;
-    double goal_theta = atan2(goal.east(), goal.north());
+    double goal_theta = convert_to_positive_radians(atan2(goal.east(), goal.north()));
     Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
     frames.local_frame.orientation = frames.local_frame.orientation * rot_yaw_goal;
 }

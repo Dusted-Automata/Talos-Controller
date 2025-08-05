@@ -21,6 +21,7 @@ enum class NMEA_Cmd {
 
 // https://cdn.sparkfun.com/assets/f/7/4/3/5/PM-15136.pdf#%5B%7B%22num%22%3A64%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C0%2C609.45%2Cnull%5D
 
+double convert_to_positive_radians(double angle);
 using nlohmann::json;
 struct GGA {
     enum class Fix {
@@ -148,8 +149,15 @@ struct Nav_Pvat {
         accHeading = j["accHeading"];
         accPitch = j["accPitch"];
         accRoll = j["accRoll"];
-        veh_heading = j["vehHeading"];
+        double angle_heading = j["vehHeading"];
+        double radian_heading = to_radian(angle_heading);
+        double positive_radian = convert_to_positive_radians(radian_heading - (M_PI / 2));
+        // veh_heading = convert_to_positive_radians(to_radian(angle_heading) - (M_PI / 2));
+        veh_heading = positive_radian;
+        std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
+                  << " | positive_radian: " << positive_radian << std::endl;
         mot_heading = j["motHeading"];
+        mot_heading = convert_to_positive_radians(to_radian(mot_heading) - (M_PI / 2));
         pitch = j["vehPitch"];
         roll = j["vehRoll"];
 
