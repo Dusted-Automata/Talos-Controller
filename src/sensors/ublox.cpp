@@ -50,9 +50,11 @@ Ublox::loop()
                 if (id == "NAV-PVAT") {
                     // std::cout << j.dump(4) << std::endl;
                     nav_pvat = Nav_Pvat(j);
-                    LLH llh = nav_pvat->llh;
-                    Ecef ecef = cppmap3d::geodetic2ecef(llh);
-                    std::cout << "ECEF: " << ecef.raw().transpose() << " | " << llh.raw().transpose() << std::endl;
+                    // LLH llh = nav_pvat->llh;
+                    // Ecef ecef = cppmap3d::geodetic2ecef(llh);
+                    // std::cout << "ECEF: " << ecef.raw().transpose() << " | " << llh.raw().transpose() << std::endl;
+                    std::cout << nav_pvat->veh_heading << " | " << nav_pvat->mot_heading << " | "
+                              << nav_pvat->accHeading << std::endl;
                 }
             }
         }
@@ -161,6 +163,15 @@ update_position(Ublox &ublox, Frames &frames)
         ublox.consume(Msg_Type::GP_GGA);
     }
 }
+
+double
+min_angle_difference(double angle1, double angle2)
+{
+    // https://stackoverflow.com/questions/1878907/how-can-i-find-the-smallest-difference-between-two-angles-around-a-point
+    // Angles must be subtracted differently than other values.
+    return atan2(sin(angle1 - angle2), cos(angle1 - angle2));
+}
+
 void
 update_heading(Ublox &ublox, Frames &frames, Heading &h)
 {
@@ -168,18 +179,11 @@ update_heading(Ublox &ublox, Frames &frames, Heading &h)
     auto ublox_simple = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
     if (ublox_simple.has_value()) {
         Nav_Pvat nav_pvat = ublox_simple.value();
-        double heading = to_radian(nav_pvat.veh_heading - h.heading_offset);
-        std::cout << " ==== " << std::endl;
-        std::cout << "NAV_PVAT.VEH_HEADING: " << nav_pvat.veh_heading
-                  << " | "
-                     "NAV_PVAT.VEH_HEADING: "
-                  << nav_pvat.mot_heading << " | " << nav_pvat.accHeading << std::endl;
-        std::cout << heading << std::endl;
-        h.heading_from_ublox = nav_pvat.veh_heading;
-        if (nav_pvat.accHeading < 30.0) {
+        double heading = to_radian(min_angle_difference(nav_pvat.veh_heading, h.heading_offset));
+        if (nav_pvat.accHeading < 30.0) { // NOTE: TBD
             Eigen::AngleAxisd yawAngle(heading, Eigen::Vector3d::UnitZ());
             Eigen::Matrix3d rotationMatrix = yawAngle.toRotationMatrix();
-            frames.local_frame.orientation.linear() = rotationMatrix;
+            // frames.local_frame.orientation.linear() = rotationMatrix; // NOTE: To be checked!
         }
         ublox.consume(Msg_Type::NAV_PVAT);
     }
@@ -190,7 +194,7 @@ Ublox::update_speed(Velocity2d vel)
 {
     json j;
     j["identity"] = "ESF-MEAS-SPEED";
-    j["speed"] = vel.linear.norm();
+    j["speed"] = vel.linear_vel.norm();
     std::string msg = j.dump();
     msg.append("\n");
     // std::cout << socket.get_fd() << std::endl;

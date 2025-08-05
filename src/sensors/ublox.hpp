@@ -79,6 +79,7 @@ struct GGA {
             if (lat_dir == "S") {
                 lat *= -1.0;
             }
+            lat = to_radian(lat);
             llh.lat() = lat;
         }
 
@@ -87,6 +88,7 @@ struct GGA {
                 lon *= -1.0;
             }
 
+            lon = to_radian(lon);
             llh.lon() = lon;
         }
 
@@ -158,7 +160,9 @@ struct Nav_Pvat {
         //
         num_satalites = j["numSV"];
         llh.lat() = j["lat"];
+        llh.lat() = to_radian(llh.lat());
         llh.lon() = j["lon"];
+        llh.lon() = to_radian(llh.lon());
         llh.alt() = j["height"];      // in mm
         llh.alt() = llh.alt() / 1000; // in M
         // j["msgID"];

@@ -81,19 +81,21 @@ Wheelchair::scale_to_joystick(const Velocity2d &vel)
     int8_t scaled_x;
     int8_t scaled_yaw;
 
-    if (vel.linear.x() >= 0) {
-        scaled_x = static_cast<int8_t>(std::min(100.0, (vel.linear.x() / config.kinematic_constraints.v_max) * 100));
+    if (vel.linear_vel.x() >= 0) {
+        scaled_x = static_cast<int8_t>(
+            std::min(100.0, (vel.linear_vel.x() / config.kinematic_constraints.v_max) * 100));
     } else {
-        scaled_x = static_cast<int8_t>(std::abs((vel.linear.x() / config.kinematic_constraints.v_min) * 100));
+        scaled_x = static_cast<int8_t>(std::abs((vel.linear_vel.x() / config.kinematic_constraints.v_min) * 100));
     }
 
     // TODO: Check if the wheelchair even has a different yaw speed, or if it needs to just be scaled with the
     // general velocity max range, and just capped.
-    if (-vel.angular.z() >= 0) {
+    if (-vel.angular_vel.z() >= 0) {
         scaled_yaw = static_cast<int8_t>(
-            std::min(100.0, (-vel.angular.z() / config.kinematic_constraints.omega_max) * 100));
+            std::min(100.0, (-vel.angular_vel.z() / config.kinematic_constraints.omega_max) * 100));
     } else {
-        scaled_yaw = -static_cast<int8_t>(std::abs((vel.angular.z() / config.kinematic_constraints.omega_min) * 100));
+        scaled_yaw = -static_cast<int8_t>(
+            std::abs((vel.angular_vel.z() / config.kinematic_constraints.omega_min) * 100));
     }
 
     Joystick stick = { .x = static_cast<uint8_t>(scaled_yaw), .y = static_cast<uint8_t>(scaled_x) };
@@ -146,8 +148,8 @@ control_loop(Wheelchair &robot, Linear_Controller &controller)
         Eigen::AngleAxisd aa(robot.frames.local_frame.orientation.linear());
         double old_heading = aa.angle();
         update_heading(robot.ublox, robot.frames, robot.heading);
-        Eigen::AngleAxisd ab(robot.frames.local_frame.orientation.linear());
-        double new_heading = ab.angle();
+        // Eigen::AngleAxisd ab(robot.frames.local_frame.orientation.linear());
+        // double new_heading = ab.angle();
         // std::cout << "old-new heading: " << old_heading << " | " << new_heading << std::endl;
         if (!robot.pause) {
             robot.pose_state = robot.read_state();
@@ -158,23 +160,24 @@ control_loop(Wheelchair &robot, Linear_Controller &controller)
             robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
             // Pose target_waypoint = robot.path.global_path.next();
-            Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
+            Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 
-            Vector3d global_dif = frames_diff(robot.frames, robot.path.global_path.next().local_point);
-            Vector3d local_dif = frames_diff(robot.frames, robot.path.path.next().local_point);
-            if (frames_dist(global_dif) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pose_state, global_dif, local_dif, dt);
+            Vector3d global_difference = frames_diff(robot.frames, robot.path.global_path.next().local_point);
+            Vector3d local_difference = frames_diff(robot.frames, robot.path.path.next().local_point);
+            if (eucledean_xy_norm(global_difference) > robot.config.goal_tolerance_in_meters) {
+                cmd = controller.get_cmd(robot.pose_state, global_difference, local_difference, dt);
                 // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
             } else {
                 robot.path.global_path.progress();
             }
 
             // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
-            if (frames_dist(local_dif) < robot.config.goal_tolerance_in_meters) {
+            if (eucledean_xy_norm(local_difference) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
                 if (robot.path.path.progress()) {
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-                    controller.motion_profile.set_setpoint(frames_dist(local_dif));
+                    controller.motion_profile.set_setpoint(eucledean_xy_norm(local_difference));
+
                 } else {
                     break;
                 }
@@ -205,7 +208,10 @@ main(void)
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
     // robot.path.path.path_looping = true;
-    robot.path.path.read_json_latlon("Table_Grab.json");
+    // robot.path.path.read_json_latlon("Table_Grab.json");
+    robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
+    // robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
+    // robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
     robot.path.gen_global_path(2.5);
     frames_init(robot.frames, robot.path.path);
     robot.init();

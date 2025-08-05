@@ -22,8 +22,8 @@ class Sim_Quadruped : public Robot
     {
         pose_state.position = Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
         pose_state.orientation = Eigen::Affine3d::Identity();
-        pose_state.velocity.linear = Vector3d::Zero();
-        pose_state.velocity.angular = Vector3d::Zero();
+        pose_state.velocity.linear_vel = Vector3d::Zero();
+        pose_state.velocity.angular_vel = Vector3d::Zero();
 
         config.control_loop_hz = 500;
         config.goal_tolerance_in_meters = 0.75;
@@ -65,8 +65,8 @@ class Sim_Quadruped : public Robot
         std::cout << "Applying disturbance: force=" << force.transpose() << ", torque=" << torque.transpose()
                   << std::endl;
 
-        pose_state.velocity.linear += force * 0.1;
-        pose_state.velocity.angular += torque * 0.1;
+        pose_state.velocity.linear_vel += force * 0.1;
+        pose_state.velocity.angular_vel += torque * 0.1;
     }
     void
     send_velocity_command(Velocity2d &velocity) override
@@ -74,8 +74,8 @@ class Sim_Quadruped : public Robot
 
         sim_pose.velocity = velocity;
         sim_pose.dt = GetFrameTime();
-        velocity.linear *= sim_pose.dt;
-        velocity.angular *= sim_pose.dt;
+        velocity.linear_vel *= sim_pose.dt;
+        velocity.angular_vel *= sim_pose.dt;
     };
 
     Pose_State
@@ -84,7 +84,7 @@ class Sim_Quadruped : public Robot
         return sim_pose;
     };
 
-    Ublox ublox = {};
+    // Ublox ublox = {};
     Config config = {};
 };
 
@@ -120,11 +120,11 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
             robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
             // Pose target_waypoint = robot.path.global_path.next();
-            Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
+            Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 
             Vector3d global_dif = frames_diff(robot.frames, robot.path.global_path.next().local_point);
             Vector3d local_dif = frames_diff(robot.frames, robot.path.path.next().local_point);
-            if (frames_dist(global_dif) > robot.config.goal_tolerance_in_meters) {
+            if (eucledean_xy_norm(global_dif) > robot.config.goal_tolerance_in_meters) {
                 cmd = controller.get_cmd(robot.pose_state, global_dif, local_dif, dt);
                 // std::cout << "cmd: " << cmd.linear.transpose() << std::endl;
             } else {
@@ -132,11 +132,11 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
             }
 
             // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
-            if (frames_dist(local_dif) < robot.config.goal_tolerance_in_meters) {
+            if (eucledean_xy_norm(local_dif) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
                 if (robot.path.path.progress()) {
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-                    controller.motion_profile.set_setpoint(frames_dist(local_dif));
+                    controller.motion_profile.set_setpoint(eucledean_xy_norm(local_dif));
                 } else {
                     break;
                 }
@@ -168,11 +168,14 @@ main()
             robot.config.kinematic_constraints.a_min);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-        robot.path.path.path_looping = true;
-        robot.path.path.read_json_latlon("waypoints/basketball_loop.json");
-        // robot.path.path.read_json_latlon("waypoints/basketball_loop_other.json");
-        // robot.path.path.read_json_latlon("waypoints/parkplatz_quick_iteration_loop.json");
-        // robot.path.path.read_json_latlon("waypoints/shotter_weg_loop.json");
+        robot.path.path.path_looping = false;
+        // robot.path.path.read_json_latlon("waypoints/_Parkinglot_Loop_short.json");
+        robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
+        // robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
+        // robot.path.path.read_json_latlon("waypoints/_basketball_loop.json");
+        // robot.path.path.read_json_latlon("waypoints/_ramp_over_parkinglot.json");
+        // robot.path.path.read_json_latlon("waypoints/_ramp_over_parkinglot2.json");
+        // robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
         frames_init(robot.frames, robot.path.path);
         robot.path.gen_global_path(2.5);
         // robot.path.path.print();

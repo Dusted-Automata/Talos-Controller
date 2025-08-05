@@ -88,8 +88,8 @@ class Wheelchair : public Robot
     {
         pose_state.position = Eigen::Vector3d(0, 0, 0); // Starting position with z=0.5 (standing)
         pose_state.orientation = Eigen::Affine3d::Identity();
-        pose_state.velocity.linear = Vector3d::Zero();
-        pose_state.velocity.angular = Vector3d::Zero();
+        pose_state.velocity.linear_vel = Vector3d::Zero();
+        pose_state.velocity.angular_vel = Vector3d::Zero();
 
         config.control_loop_hz = 15;
         config.goal_tolerance_in_meters = 0.75;

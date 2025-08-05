@@ -380,8 +380,8 @@ struct NED {
 
 struct Velocity2d {
     // high-level representation
-    Linear_Velocity linear;   // x, y, z velocity (m/s)
-    Angular_Velocity angular; // roll, pitch, yaw rates (rad/s)
+    Linear_Velocity linear_vel;   // x, y, z velocity (m/s)
+    Angular_Velocity angular_vel; // roll, pitch, yaw rates (rad/s)
 };
 
 static inline double
@@ -405,7 +405,8 @@ struct Pose_State {
     Ecef position = Eigen::Vector3d(0, 0, 0); // x, y, z
     Affine3d orientation = Eigen::Affine3d::Identity();
     // Eigen::Quaterniond orientation; // quaternion
-    Velocity2d velocity = { .linear = Vector3d::Zero(), .angular = Vector3d::Zero() }; // vx, vy, vz \  wx, wy, wz
+    Velocity2d velocity = { .linear_vel = Vector3d::Zero(),
+        .angular_vel = Vector3d::Zero() }; // vx, vy, vz \  wx, wy, wz
     double dt;
 };
 
