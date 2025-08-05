@@ -180,16 +180,20 @@ Sim_Display::display()
                 Nav_Pvat nav_pvat = nav.value();
                 Ecef ecef = cppmap3d::geodetic2ecef(nav_pvat.llh);
                 json new_entry = {
-                    {      "id",                   id },
-                    {       "x",             ecef.x() },
-                    {       "y",             ecef.y() },
-                    {       "z",             ecef.z() },
-                    {     "lat",   nav_pvat.llh.lat() },
-                    {     "lon",   nav_pvat.llh.lon() },
-                    {     "alt",   nav_pvat.llh.alt() },
-                    { "bearing", nav_pvat.veh_heading },
+                    {      "id",                           id },
+                    {       "x",                     ecef.x() },
+                    {       "y",                     ecef.y() },
+                    {       "z",                     ecef.z() },
+                    {     "lat", nav_pvat.llh.lat() * RAD2DEG },
+                    {     "lon", nav_pvat.llh.lon() * RAD2DEG },
+                    {     "alt",           nav_pvat.llh.alt() },
+                    { "bearing",         nav_pvat.veh_heading },
                 };
                 j["points"].push_back(new_entry);
+                ecef.x() /= 1000;
+                ecef.y() /= 1000;
+                ecef.z() /= 1000;
+                std::cout << "pushed new Ecef_Point: " << ecef.raw().transpose() << std::endl;
             }
 
             std::ofstream output_file(filename);
@@ -246,8 +250,8 @@ Sim_Display::hud()
             robot.frames.global_frame.pos.y(), robot.frames.global_frame.pos.z());
 
         draw_log_line(4, "Velocity: Lin[%.2f, %.2f, %.2f] Ang[%.2f, %.2f, %.2f] Acc:[%.2f)",
-            robot.pose_state.velocity.linear.x(), robot.pose_state.velocity.linear.y(),
-            robot.pose_state.velocity.linear.z(), robot.pose_state.velocity.angular.x(),
-            robot.pose_state.velocity.angular.y(), robot.pose_state.velocity.angular.z());
+            robot.pose_state.velocity.linear_vel.x(), robot.pose_state.velocity.linear_vel.y(),
+            robot.pose_state.velocity.linear_vel.z(), robot.pose_state.velocity.angular_vel.x(),
+            robot.pose_state.velocity.angular_vel.y(), robot.pose_state.velocity.angular_vel.z());
     }
 }
