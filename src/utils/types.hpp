@@ -228,19 +228,19 @@ struct ENU {
 
     // Setter methods (non-const)
     double &
-    north()
+    east()
     {
         return v.x();
     }
 
     double &
-    east()
+    north()
     {
         return v.y();
     }
 
     double &
-    down()
+    up()
     {
         return v.z();
     }
