@@ -53,8 +53,10 @@ Ublox::loop()
                     // LLH llh = nav_pvat->llh;
                     // Ecef ecef = cppmap3d::geodetic2ecef(llh);
                     // std::cout << "ECEF: " << ecef.raw().transpose() << " | " << llh.raw().transpose() << std::endl;
-                    std::cout << nav_pvat->veh_heading << " | " << nav_pvat->mot_heading << " | "
-                              << nav_pvat->accHeading << std::endl;
+                    if (nav_pvat.has_value()) {
+                        // std::cout << nav_pvat->veh_heading << " | " << nav_pvat->mot_heading << " | "
+                        //           << nav_pvat->accHeading << std::endl;
+                    }
                 }
             }
         }
@@ -190,9 +192,9 @@ update_heading(Ublox &ublox, Frames &frames, Heading &h)
     if (ublox_simple.has_value()) {
         Nav_Pvat nav_pvat = ublox_simple.value();
         double heading_difference = min_angle_difference(nav_pvat.veh_heading, h.initial_heading_in_radians);
-        std::cout << "initial_heading: " << h.initial_heading_in_radians
-                  << " | heading_difference: " << heading_difference << " | veh_heading: " << nav_pvat.veh_heading
-                  << std::endl;
+        // std::cout << "initial_heading: " << h.initial_heading_in_radians
+        //           << " | heading_difference: " << heading_difference << " | veh_heading: " << nav_pvat.veh_heading
+        //           << std::endl;
         double heading = convert_to_positive_radians(heading_difference);
         if (nav_pvat.accHeading < 30.0) { // NOTE: TBD
             double old_local_orientation = convert_to_positive_radians(atan2(
@@ -204,8 +206,8 @@ update_heading(Ublox &ublox, Frames &frames, Heading &h)
             double new_local_orientation = convert_to_positive_radians(atan2(
                 frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
 
-            std::cout << "old_orientation: " << old_local_orientation << " | nav_heading: " << heading
-                      << " | local_frame heading " << new_local_orientation << std::endl;
+            // std::cout << "old_orientation: " << old_local_orientation << " | nav_heading: " << heading
+            //           << " | local_frame heading " << new_local_orientation << std::endl;
         }
         ublox.consume(Msg_Type::NAV_PVAT);
     }

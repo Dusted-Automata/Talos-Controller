@@ -151,13 +151,13 @@ struct Nav_Pvat {
         accRoll = j["accRoll"];
         double angle_heading = j["vehHeading"];
         double radian_heading = to_radian(angle_heading);
-        double positive_radian = convert_to_positive_radians(radian_heading - (M_PI / 2));
-        // veh_heading = convert_to_positive_radians(to_radian(angle_heading) - (M_PI / 2));
+        double positive_radian = convert_to_positive_radians(radian_heading);
+        // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
         veh_heading = positive_radian;
         std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
                   << " | positive_radian: " << positive_radian << std::endl;
         mot_heading = j["motHeading"];
-        mot_heading = convert_to_positive_radians(to_radian(mot_heading) - (M_PI / 2));
+        mot_heading = convert_to_positive_radians(to_radian(mot_heading));
         pitch = j["vehPitch"];
         roll = j["vehRoll"];
 

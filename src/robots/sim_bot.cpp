@@ -25,7 +25,7 @@ class Sim_Quadruped : public Robot
         pose_state.velocity.linear_vel = Vector3d::Zero();
         pose_state.velocity.angular_vel = Vector3d::Zero();
 
-        config.control_loop_hz = 500;
+        config.control_loop_hz = 15;
         config.goal_tolerance_in_meters = 0.75;
         config.kinematic_constraints = {
             .v_max = 2.5,
@@ -55,8 +55,6 @@ class Sim_Quadruped : public Robot
             .integral_min = -100,
             .integral_max = 100,
         };
-
-        running = true;
     }
 
     void
@@ -89,6 +87,29 @@ class Sim_Quadruped : public Robot
 };
 
 void
+init_bot(Sim_Quadruped &robot)
+{
+    std::cout << "ROBOT INIT!" << std::endl;
+    bool ublox_start = robot.ublox.start();
+    std::cout << "UBLOX: " << ublox_start << std::endl;
+    // while (true && ublox_start) {
+    //     std::optional<Nav_Pvat> msg = robot.ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
+    //     if (msg.has_value()) {
+    //         std::cout << "VEH_HEADING IS " << msg->veh_heading << std::endl;
+    //         std::cout << "MOT_HEADING IS " << msg->mot_heading << std::endl;
+    //         robot.heading.initial_heading_in_radians = msg->veh_heading;
+    //         Eigen::Matrix3d rotationMatrix;
+    //         rotationMatrix = Eigen::AngleAxisd(robot.heading.initial_heading_in_radians - M_PI / 2,
+    //             Eigen::Vector3d::UnitZ()); // ENU to NED Correction (-M_PI/2)
+    //         robot.frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
+    //         break;
+    //     }
+    // }
+
+    robot.running = true;
+}
+
+void
 control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
 {
 
@@ -104,18 +125,13 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
         double dt = elapsed.count(); // `dt` in seconds
         previous_time = current_time;
 
-        update_position(robot.ublox, robot.frames);
-        Eigen::AngleAxisd aa(robot.frames.local_frame.orientation.linear());
-        double old_heading = aa.angle();
-        update_heading(robot.ublox, robot.frames, robot.heading);
-        Eigen::AngleAxisd ab(robot.frames.local_frame.orientation.linear());
-        double new_heading = ab.angle();
-        // std::cout << "old-new heading: " << old_heading << " | " << new_heading << std::endl;
         if (!robot.pause) {
             robot.pose_state = robot.read_state();
             bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             // std::cout << "ublox_update_speed: " << update_speed << std::endl;
             frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
+            update_position(robot.ublox, robot.frames);
+            update_heading(robot.ublox, robot.frames, robot.heading);
             robot.logger.savePosesToFile(robot.frames);
             robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
@@ -176,13 +192,12 @@ main()
         // robot.path.path.read_json_latlon("waypoints/_ramp_over_parkinglot.json");
         // robot.path.path.read_json_latlon("waypoints/_ramp_over_parkinglot2.json");
         // robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
-        frames_init(robot.frames, robot.path.path);
         robot.path.gen_global_path(2.5);
+        frames_init(robot.frames, robot.path.path);
+        init_bot(robot);
         // robot.path.path.print();
         // robot.path.global_path.print();
         // robot.frames.init(robot.path.global_path);
-        bool ublox_start = robot.ublox.start();
-
         std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller));
 
         // Sim_Display sim = Sim_Display(robot, robot.path);

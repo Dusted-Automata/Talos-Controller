@@ -14,6 +14,12 @@ frames_move_in_local_frame(Frames &frames, Velocity2d velocity, const double dt)
     frames.local_frame.orientation.rotate(Eigen::AngleAxisd((angle_update.z()), Vector3d::UnitZ()));
     frames.local_frame.pos += frames.local_frame.orientation.rotation() * position_update;
 
+    {
+        double new_local_orientation = convert_to_positive_radians(
+            atan2(frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
+        std::cout << "move_in_local_frame: " << new_local_orientation << std::endl;
+    }
+
     // Ecef new_local_position = cppmap3d::enu2ecef(frames.local_frame.pos, frames.local_frame.origin);
     // frames.global_frame.orientation.rotate(Eigen::AngleAxisd(angle_update.z(), Vector3d::UnitZ()));
     // frames.global_frame.pos = new_local_position;
@@ -56,19 +62,20 @@ frames_init(Frames &frames, Robot_Path &path)
         return;
     }
 
-    ENU goal = path.next().local_point;
-    double goal_theta = convert_to_positive_radians(atan2(goal.east(), goal.north()));
-    Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
-    frames.local_frame.orientation = frames.local_frame.orientation * rot_yaw_goal;
+    // ENU goal = path.next().local_point;
+    // double goal_theta = convert_to_positive_radians(atan2(goal.east(), goal.north()));
+    // Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
+    // frames.local_frame.orientation = frames.local_frame.orientation.rotation() * rot_yaw_goal;
 }
 
 Vector3d
 frames_diff(const Frames &frames, const ENU &goal) // fine with running every frame
 {
 
-    Vector3d diff = goal.raw() - frames.local_frame.pos.raw();
-    diff = frames.local_frame.orientation.rotation().transpose() * diff; // TODO: CHECK correctness of transpose.
-    return diff;
+    Vector3d position_diff = goal.raw() - frames.local_frame.pos.raw();
+    position_diff = frames.local_frame.orientation.rotation().transpose()
+                    * position_diff; // TODO: CHECK correctness of transpose.
+    return position_diff;
 }
 
 double

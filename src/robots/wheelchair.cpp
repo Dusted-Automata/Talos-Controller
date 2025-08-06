@@ -65,7 +65,8 @@ Wheelchair::init()
                 std::cout << "MOT_HEADING IS " << msg->mot_heading << std::endl;
                 heading.initial_heading_in_radians = msg->veh_heading;
                 Eigen::Matrix3d rotationMatrix;
-                rotationMatrix = Eigen::AngleAxisd(heading.initial_heading_in_radians, Eigen::Vector3d::UnitZ());
+                rotationMatrix = Eigen::AngleAxisd(heading.initial_heading_in_radians + (M_PI / 2),
+                    Eigen::Vector3d::UnitZ());
                 frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
                 break;
             }
@@ -147,18 +148,13 @@ control_loop(Wheelchair &robot, Linear_Controller &controller)
         double dt = elapsed.count(); // `dt` in seconds
         previous_time = current_time;
 
-        update_position(robot.ublox, robot.frames);
-        Eigen::AngleAxisd aa(robot.frames.local_frame.orientation.linear());
-        double old_heading = aa.angle();
-        update_heading(robot.ublox, robot.frames, robot.heading);
-        // Eigen::AngleAxisd ab(robot.frames.local_frame.orientation.linear());
-        // double new_heading = ab.angle();
-        // std::cout << "old-new heading: " << old_heading << " | " << new_heading << std::endl;
         if (!robot.pause) {
             robot.pose_state = robot.read_state();
             // bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             // std::cout << "ublox_update_speed: " << update_speed << std::endl;
             frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
+            update_position(robot.ublox, robot.frames);
+            update_heading(robot.ublox, robot.frames, robot.heading);
             robot.logger.savePosesToFile(robot.frames);
             robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
