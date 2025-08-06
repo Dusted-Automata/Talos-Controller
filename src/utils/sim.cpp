@@ -58,20 +58,13 @@ Sim_Display::draw_robot()
 {
     Eigen::Matrix3d R = robot.frames.local_frame.orientation.rotation();
     double yaw = atan2(R(1, 0), R(0, 0));
-    Rectangle bot = { static_cast<float>(robot.frames.local_frame.pos.north()),
-        static_cast<float>(-robot.frames.local_frame.pos.east()), 1.0, 0.5 };
-    Vector2 origin = { bot.width / 2, bot.height / 2 };
-    DrawRectanglePro(bot, origin, (float)(-to_degrees(yaw)), RED);
-
-    // Rectangle heading_indicator = { static_cast<float>(robot.frames.local_frame.pos.north()),
-    //     static_cast<float>(-robot.frames.local_frame.pos.east() + bot.height), 0.10, 1.0 };
-    // Vector2 heading_origin = { (float)robot.frames.local_frame.pos.north(),
-    // (float)robot.frames.local_frame.pos.east() }; DrawRectanglePro(heading_indicator, heading_origin,
-    //     robot.heading.heading_from_ublox, GREEN);
-
-    // showcaseTrajectory(robot.pose_state, robot.mppi_controller.nominal_controls,
-    // GetFrameTime(),
-    //                    0.1, ORANGE);
+    Vector2 pos = { static_cast<float>(robot.frames.local_frame.pos.east()),
+        static_cast<float>(-robot.frames.local_frame.pos.north()) };
+    DrawCircleV(pos, 0.15, RED);
+    Vector2 end_pos = { static_cast<float>(0.5), 0 };
+    end_pos = Vector2Rotate(end_pos, -yaw);
+    end_pos = { end_pos.x + pos.x, end_pos.y + pos.y };
+    DrawLineEx(pos, end_pos, 0.05, PURPLE);
 }
 
 void
@@ -119,17 +112,17 @@ Sim_Display::display()
         for (size_t i = 0; i < path.path.size(); i++) {
             // ENU waypoint = cppmap3d::ecef2enu(path[i].point, robot.frames.local_frame.origin);
             ENU waypoint = path.path[i].local_point;
-            DrawCircleV({ (float)waypoint.north(), (float)-waypoint.east() }, 0.5f, GREEN);
+            DrawCircleV({ (float)waypoint.east(), (float)-waypoint.north() }, 0.5f, GREEN);
         }
 
         for (size_t i = 0; i < path.global_path.size(); i++) {
             // ENU waypoint = cppmap3d::ecef2enu(path[i].point, robot.frames.local_frame.origin);
             ENU waypoint = path.global_path[i].local_point;
-            DrawCircleV({ (float)waypoint.north(), (float)-waypoint.east() }, 0.1f, BLUE);
+            DrawCircleV({ (float)waypoint.east(), (float)-waypoint.north() }, 0.1f, BLUE);
         }
 
         ENU waypoint = path.global_path.next().local_point;
-        DrawCircleV({ (float)waypoint.north(), (float)-waypoint.east() }, 0.25f, ORANGE);
+        DrawCircleV({ (float)waypoint.east(), (float)-waypoint.north() }, 0.25f, ORANGE);
 
         draw_robot();
 
@@ -243,8 +236,8 @@ Sim_Display::hud()
         draw_log_line(1, "X: %.2f %.2f %.2f | Y: %.2f %.2f %.2f | Z: %.2f %.2f %.2f | YAW: %.1f°", R(0, 0), R(0, 1),
             R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2), yaw * RAD2DEG);
 
-        draw_log_line(2, "Local Position: %.2f, %.2f, %.2f", robot.frames.local_frame.pos.north(),
-            robot.frames.local_frame.pos.east(), robot.frames.local_frame.pos.down());
+        draw_log_line(2, "Local Position: %.2f, %.2f, %.2f", robot.frames.local_frame.pos.east(),
+            robot.frames.local_frame.pos.north(), robot.frames.local_frame.pos.up());
 
         draw_log_line(3, "Global Position: %.2f, %.2f, %.2f", robot.frames.global_frame.pos.x(),
             robot.frames.global_frame.pos.y(), robot.frames.global_frame.pos.z());
