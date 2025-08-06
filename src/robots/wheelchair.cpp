@@ -58,19 +58,18 @@ Wheelchair::init()
         std::cout << "ROBOT INIT!" << std::endl;
         bool ublox_start = ublox.start();
         std::cout << "UBLOX: " << ublox_start << std::endl;
-        while (true && ublox_start) {
-            std::optional<Nav_Pvat> msg = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
-            if (msg.has_value()) {
-                std::cout << "VEH_HEADING IS " << msg->veh_heading << std::endl;
-                std::cout << "MOT_HEADING IS " << msg->mot_heading << std::endl;
-                heading.initial_heading_in_radians = msg->veh_heading;
-                Eigen::Matrix3d rotationMatrix;
-                rotationMatrix = Eigen::AngleAxisd(heading.initial_heading_in_radians + (M_PI / 2),
-                    Eigen::Vector3d::UnitZ());
-                frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
-                break;
-            }
-        }
+        // while (true && ublox_start) {
+        //     std::optional<Nav_Pvat> msg = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
+        //     if (msg.has_value()) {
+        //         std::cout << "VEH_HEADING IS " << msg->veh_heading << std::endl;
+        //         std::cout << "MOT_HEADING IS " << msg->mot_heading << std::endl;
+        //         heading.initial_heading_in_radians = msg->veh_heading;
+        //         Eigen::Matrix3d rotationMatrix;
+        //         rotationMatrix = Eigen::AngleAxisd(heading.initial_heading_in_radians, Eigen::Vector3d::UnitZ());
+        //         frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
+        //         break;
+        //     }
+        // }
 
         running = true;
     }
@@ -208,8 +207,8 @@ main(void)
 
     // robot.path.path.path_looping = true;
     // robot.path.path.read_json_latlon("Table_Grab.json");
-    robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
-    // robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
+    // robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
+    robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
     // robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
     robot.path.gen_global_path(2.5);
     frames_init(robot.frames, robot.path.path);

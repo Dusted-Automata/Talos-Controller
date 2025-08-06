@@ -99,8 +99,8 @@ init_bot(Sim_Quadruped &robot)
     //         std::cout << "MOT_HEADING IS " << msg->mot_heading << std::endl;
     //         robot.heading.initial_heading_in_radians = msg->veh_heading;
     //         Eigen::Matrix3d rotationMatrix;
-    //         rotationMatrix = Eigen::AngleAxisd(robot.heading.initial_heading_in_radians - M_PI / 2,
-    //             Eigen::Vector3d::UnitZ()); // ENU to NED Correction (-M_PI/2)
+    //         rotationMatrix = Eigen::AngleAxisd(robot.heading.initial_heading_in_radians,
+    //             Eigen::Vector3d::UnitZ());                         // ENU to NED Correction (-M_PI/2)
     //         robot.frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
     //         break;
     //     }
@@ -186,8 +186,8 @@ main()
 
         robot.path.path.path_looping = false;
         // robot.path.path.read_json_latlon("waypoints/_Parkinglot_Loop_short.json");
-        robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
-        // robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
+        // robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
+        robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
         // robot.path.path.read_json_latlon("waypoints/_basketball_loop.json");
         // robot.path.path.read_json_latlon("waypoints/_ramp_over_parkinglot.json");
         // robot.path.path.read_json_latlon("waypoints/_ramp_over_parkinglot2.json");

@@ -151,7 +151,7 @@ struct Nav_Pvat {
         accRoll = j["accRoll"];
         double angle_heading = j["vehHeading"];
         double radian_heading = to_radian(angle_heading);
-        double positive_radian = convert_to_positive_radians(radian_heading);
+        double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
         // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
         veh_heading = positive_radian;
         std::cout << "angle: " << angle_heading << " | radian: " << radian_heading

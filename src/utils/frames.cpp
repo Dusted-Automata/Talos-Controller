@@ -17,7 +17,7 @@ frames_move_in_local_frame(Frames &frames, Velocity2d velocity, const double dt)
     {
         double new_local_orientation = convert_to_positive_radians(
             atan2(frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
-        std::cout << "move_in_local_frame: " << new_local_orientation << std::endl;
+        // std::cout << "move_in_local_frame: " << new_local_orientation << std::endl;
     }
 
     // Ecef new_local_position = cppmap3d::enu2ecef(frames.local_frame.pos, frames.local_frame.origin);

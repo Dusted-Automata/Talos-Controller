@@ -32,6 +32,7 @@ struct Heading {
     double heading_in_radians;
     double initial_heading_in_radians;
     double heading_from_ublox;
+    double heading_accuracy;
 };
 
 struct LLH {

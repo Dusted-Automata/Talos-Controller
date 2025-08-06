@@ -60,7 +60,11 @@ Sim_Display::draw_robot()
     double yaw = atan2(R(1, 0), R(0, 0));
     Vector2 pos = { static_cast<float>(robot.frames.local_frame.pos.east()),
         static_cast<float>(-robot.frames.local_frame.pos.north()) };
-    DrawCircleV(pos, 0.15, RED);
+    if (robot.heading.heading_accuracy > 30.0) {
+        DrawCircleV(pos, 0.15, RED);
+    } else {
+        DrawCircleV(pos, 0.15, SKYBLUE);
+    }
     Vector2 end_pos = { static_cast<float>(0.5), 0 };
     end_pos = Vector2Rotate(end_pos, -yaw);
     end_pos = { end_pos.x + pos.x, end_pos.y + pos.y };

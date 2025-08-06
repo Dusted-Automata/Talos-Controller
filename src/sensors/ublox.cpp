@@ -191,11 +191,16 @@ update_heading(Ublox &ublox, Frames &frames, Heading &h)
     auto ublox_simple = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
     if (ublox_simple.has_value()) {
         Nav_Pvat nav_pvat = ublox_simple.value();
-        double heading_difference = min_angle_difference(nav_pvat.veh_heading, h.initial_heading_in_radians);
+        // double heading_difference = min_angle_difference(nav_pvat.veh_heading, h.initial_heading_in_radians);
         // std::cout << "initial_heading: " << h.initial_heading_in_radians
         //           << " | heading_difference: " << heading_difference << " | veh_heading: " << nav_pvat.veh_heading
         //           << std::endl;
-        double heading = convert_to_positive_radians(heading_difference);
+
+        std::cout << "heading_in_radians: " << h.initial_heading_in_radians << " | accuracy: " << nav_pvat.accHeading
+                  << " | veh_heading: " << nav_pvat.veh_heading << std::endl;
+        // double heading = convert_to_positive_radians(heading_difference);
+        double heading = convert_to_positive_radians(nav_pvat.veh_heading);
+        h.heading_accuracy = nav_pvat.accHeading;
         if (nav_pvat.accHeading < 30.0) { // NOTE: TBD
             double old_local_orientation = convert_to_positive_radians(atan2(
                 frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
