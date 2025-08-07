@@ -18,4 +18,5 @@ class Linear_Controller
     PID linear_pid;
     PID angular_pid;
     Motion_Profile &motion_profile;
+    bool aligned_to_goal_waypoint = false;
 };

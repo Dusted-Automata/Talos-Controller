@@ -172,6 +172,7 @@ control_loop(Wheelchair &robot, Linear_Controller &controller)
             // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
             if (eucledean_xy_norm(local_difference) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
+                controller.aligned_to_goal_waypoint = false;
                 if (robot.path.path.progress()) {
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
                     controller.motion_profile.set_setpoint(eucledean_xy_norm(local_difference));

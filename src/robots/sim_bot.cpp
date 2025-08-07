@@ -35,6 +35,7 @@ class Sim_Quadruped : public Robot
             .a_max = 1.0,
             .a_min = -1.0,
             .j_max = 0.0,
+
         };
         config.linear_gains = {
             .k_p = 1.01,
@@ -100,7 +101,7 @@ init_bot(Sim_Quadruped &robot)
     //         robot.heading.initial_heading_in_radians = msg->veh_heading;
     //         Eigen::Matrix3d rotationMatrix;
     //         rotationMatrix = Eigen::AngleAxisd(robot.heading.initial_heading_in_radians,
-    //             Eigen::Vector3d::UnitZ());                         // ENU to NED Correction (-M_PI/2)
+    //             Eigen::Vector3d::UnitZ());
     //         robot.frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
     //         break;
     //     }
@@ -150,6 +151,7 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
             // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
             if (eucledean_xy_norm(local_dif) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
+                controller.aligned_to_goal_waypoint = false;
                 if (robot.path.path.progress()) {
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
                     controller.motion_profile.set_setpoint(eucledean_xy_norm(local_dif));
