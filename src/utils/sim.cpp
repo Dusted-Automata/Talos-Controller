@@ -217,6 +217,15 @@ Sim_Display::close()
     CloseWindow();
 }
 
+// double
+// convert_to_positive_radians(double angle)
+// {
+//
+//     if (angle < 0) {
+//         return angle + 2 * M_PI;
+//     }
+//     return angle;
+// }
 void
 Sim_Display::hud()
 {
@@ -226,13 +235,14 @@ Sim_Display::hud()
         const Vector2 mousePos = GetMousePosition();
         const Vector2 mouseWorldPos = GetScreenToWorld2D(mousePos, camera);
 
-        const auto R = robot.frames.local_frame.orientation.rotation();
+        // const auto R = robot.frames.local_frame.orientation.rotation();
+        const auto R = robot.frames.local_frame.orientation;
         // const Ecef ecef_pos = wgsned2ecef_d({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
         // robot.frames.local_frame.origin);
         const Ecef ecef_pos = cppmap3d::ned2ecef({ mouseWorldPos.x, -mouseWorldPos.y, 0 },
             robot.frames.local_frame.origin);
 
-        const double yaw = atan2(R(1, 0), R(0, 0));
+        const double yaw = convert_to_positive_radians(atan2(R(1, 0), R(0, 0)));
 
         draw_log_line(0, "World: (%.1f, %.1f, %.1f) Zoom: %.2f Time: %.2f", ecef_pos.x(), ecef_pos.y(), ecef_pos.z(),
             camera.zoom, currentTime);
