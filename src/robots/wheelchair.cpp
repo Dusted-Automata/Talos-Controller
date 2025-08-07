@@ -207,9 +207,9 @@ main(void)
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
     // robot.path.path.path_looping = true;
-    // robot.path.path.read_json_latlon("Table_Grab.json");
-    // robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
-    robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
+    // robot.path.path.read_json_latlon("waypoints/Table_Grab_full.json");
+    robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
+    // robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
     // robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
     robot.path.gen_global_path(2.5);
     frames_init(robot.frames, robot.path.path);

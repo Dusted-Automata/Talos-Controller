@@ -29,8 +29,9 @@ Linear_Controller::get_cmd(Pose_State pose_state, Vector3d diff, Vector3d motion
     cmd.angular_vel.y() = 0.0;
     cmd.angular_vel.x() = 0.0;
 
+    double yaw_error_offset = (M_PI / 180) * 10;
     // cmd.linear.x() = linear_pid.update(cmd.linear.x(), pose_state.velocity.linear.x(), dt);
-    cmd.angular_vel.z() = angular_pid.update(0, -yaw_error, dt);
+    cmd.angular_vel.z() = angular_pid.update(0, -(yaw_error + yaw_error_offset), dt);
 
     return cmd;
 }

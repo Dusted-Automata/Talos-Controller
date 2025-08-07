@@ -92,15 +92,15 @@ class Wheelchair : public Robot
         pose_state.velocity.angular_vel = Vector3d::Zero();
 
         config.control_loop_hz = 15;
-        config.goal_tolerance_in_meters = 0.75;
+        config.goal_tolerance_in_meters = 0.25;
         config.kinematic_constraints = {
-            // .v_max = 0.5,
-            // .v_min = 0.0,
-            // .omega_max = 0.6,
-            // .omega_min = -0.6,
-            // .a_max = 0.3,
-            // .a_min = -0.2,
-            // .j_max = 0.0,
+            .v_max = 0.4,
+            .v_min = 0.0,
+            .omega_max = 0.725,
+            .omega_min = -0.725,
+            .a_max = 0.3,
+            .a_min = -0.8,
+            .j_max = 0.0,
 
             // .v_max = 0.8,
             // .v_min = 0.0,
@@ -110,18 +110,18 @@ class Wheelchair : public Robot
             // .a_min = -1.6,
             // .j_max = 0.0,
 
-            .v_max = 0.8,
-            .v_min = 0.0,
-            .omega_max = 1.25,
-            .omega_min = -1.25,
-            .a_max = 0.7,
-            .a_min = -0.6,
-            .j_max = 0.0,
+            // .v_max = 0.8,
+            // .v_min = 0.0,
+            // .omega_max = 1.25,
+            // .omega_min = -1.25,
+            // .a_max = 0.7,
+            // .a_min = -0.6,
+            // .j_max = 0.0,
         };
         config.linear_gains = {
-            .k_p = 1.2,
-            .k_i = 0.05,
-            .k_d = 0.15,
+            .k_p = 0.6,
+            .k_i = 0.00,
+            .k_d = 0.00,
             .output_min = config.kinematic_constraints.v_min,
             .output_max = config.kinematic_constraints.v_max,
             .integral_min = -100,
@@ -129,7 +129,7 @@ class Wheelchair : public Robot
         };
 
         config.angular_gains = {
-            .k_p = 2.0,
+            .k_p = 0.28,
             .k_i = 0.00,
             .k_d = 0.00,
             .output_min = config.kinematic_constraints.omega_min,
