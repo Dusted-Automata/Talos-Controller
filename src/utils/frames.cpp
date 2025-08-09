@@ -62,10 +62,11 @@ frames_init(Frames &frames, Robot_Path &path)
         return;
     }
 
-    // ENU goal = path.next().local_point;
-    // double goal_theta = convert_to_positive_radians(atan2(goal.east(), goal.north()));
-    // Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
-    // frames.local_frame.orientation = frames.local_frame.orientation.rotation() * rot_yaw_goal;
+    ENU goal = path.next().local_point;
+    double goal_theta = convert_to_positive_radians(atan2(goal.north(), goal.east()));
+    // double goal_theta = convert_to_positive_radians(3.45575);
+    Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());
+    frames.local_frame.orientation = frames.local_frame.orientation.rotation() * rot_yaw_goal;
 }
 
 Vector3d

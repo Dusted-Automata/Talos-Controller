@@ -5,6 +5,7 @@
 struct Frame {
     // Eigen::Quaterniond orientation;
     Affine3d orientation = Affine3d::Identity();
+    // Eigen::Matrix3d orientation = Eigen::Matrix3d::Identity();
     Vector3d pos{ 0, 0, 0 };
 };
 
