@@ -2,6 +2,7 @@
 #include "frames.hpp"
 #include "transformations.hpp"
 #include "types.hpp"
+#include "ublox.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -11,7 +12,7 @@ Linear_Controller::get_cmd(Pose_State pose_state, Vector3d diff, Vector3d motion
     Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 
     double yaw_error = atan2(diff.y(), diff.x());
-    if (yaw_error < 0.10) {
+    if (convert_to_positive_radians(yaw_error) < to_radian(10)) {
         aligned_to_goal_waypoint = true;
     }
     // double yaw_error = atan2(diff.y(), diff.x());
@@ -29,9 +30,12 @@ Linear_Controller::get_cmd(Pose_State pose_state, Vector3d diff, Vector3d motion
     cmd.angular_vel.y() = 0.0;
     cmd.angular_vel.x() = 0.0;
 
-    double yaw_error_offset = (M_PI / 180) * 10;
+    double yaw_error_offset = to_radian(-50);
     // cmd.linear.x() = linear_pid.update(cmd.linear.x(), pose_state.velocity.linear.x(), dt);
-    cmd.angular_vel.z() = angular_pid.update(0, -(yaw_error + yaw_error_offset), dt);
+    // cmd.angular_vel.z() = angular_pid.update(0, -(yaw_error + yaw_error_offset), dt);
+    // cmd.angular_vel.z() = angular_pid.update(yaw_error_offset, -yaw_error, dt);
+    // cmd.angular_vel.z() = angular_pid.update(yaw_error_offset, -yaw_error, dt);
+    cmd.angular_vel.z() = angular_pid.update(0, -yaw_error, dt);
 
     return cmd;
 }
