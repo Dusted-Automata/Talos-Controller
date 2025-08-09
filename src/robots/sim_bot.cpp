@@ -150,9 +150,10 @@ main()
 
     { // Find out how to extract this.
 
-        Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
-            robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
-            robot.config.kinematic_constraints.a_min);
+        Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
+            robot.config.kinematic_constraints.acceleration_max,
+            robot.config.kinematic_constraints.velocity_backward_max,
+            robot.config.kinematic_constraints.deceleration_max);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
         robot.path.path.path_looping = false;

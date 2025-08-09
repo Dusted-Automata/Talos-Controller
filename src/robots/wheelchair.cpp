@@ -86,19 +86,20 @@ Wheelchair::scale_to_joystick(const Velocity2d &vel)
 
     if (vel.linear_vel.x() >= 0) {
         scaled_x = static_cast<int8_t>(
-            std::min(100.0, (vel.linear_vel.x() / config.kinematic_constraints.v_max) * 100));
+            std::min(100.0, (vel.linear_vel.x() / config.kinematic_constraints.velocity_forward_max) * 100));
     } else {
-        scaled_x = static_cast<int8_t>(std::abs((vel.linear_vel.x() / config.kinematic_constraints.v_min) * 100));
+        scaled_x = static_cast<int8_t>(
+            std::abs((vel.linear_vel.x() / config.kinematic_constraints.velocity_backward_max) * 100));
     }
 
     // TODO: Check if the wheelchair even has a different yaw speed, or if it needs to just be scaled with the
     // general velocity max range, and just capped.
     if (-vel.angular_vel.z() >= 0) {
         scaled_yaw = static_cast<int8_t>(
-            std::min(100.0, (-vel.angular_vel.z() / config.kinematic_constraints.omega_max) * 100));
+            std::min(100.0, (-vel.angular_vel.z() / config.kinematic_constraints.velocity_turning_left_max) * 100));
     } else {
         scaled_yaw = -static_cast<int8_t>(
-            std::abs((vel.angular_vel.z() / config.kinematic_constraints.omega_min) * 100));
+            std::abs((vel.angular_vel.z() / config.kinematic_constraints.velocity_turning_right_max) * 100));
     }
 
     Joystick stick = { .x = static_cast<uint8_t>(scaled_yaw), .y = static_cast<uint8_t>(scaled_x) };
@@ -202,9 +203,9 @@ main(void)
     Wheelchair robot;
     load_config(robot, "src/robots/wheelchair.json");
 
-    Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
-        robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
-        robot.config.kinematic_constraints.a_min);
+    Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
+        robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
+        robot.config.kinematic_constraints.deceleration_max);
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
     // robot.path.path.path_looping = true;
