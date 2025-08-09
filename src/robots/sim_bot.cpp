@@ -124,7 +124,7 @@ control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
                     controller.motion_profile.set_setpoint(eucledean_xy_norm(local_dif));
                 } else {
-                    break;
+                    // break;
                 }
             }
             robot.send_velocity_command(cmd);
@@ -147,6 +147,7 @@ main()
 
     Sim_Quadruped robot;
     load_config(robot, "src/robots/sim_bot.json");
+    printf("config: %i\n", robot.config.control_loop_hz);
 
     { // Find out how to extract this.
 
@@ -156,17 +157,17 @@ main()
             robot.config.kinematic_constraints.deceleration_max);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-        robot.path.path.path_looping = false;
+        robot.path.path.path_looping = true;
+        robot.path.global_path.path_looping = true;
         // robot.path.path.read_json_latlon("waypoints/_Parkinglot_Loop_short.json");
         // robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
-        // robot.path.path.read_json_latlon("waypoints/_Table_Grab_with_corrections.json");
         // robot.path.path.read_json_latlon("waypoints/_basketball_loop.json");
-        // robot.path.path.read_json_latlon("waypoints/_ramp_over_parkinglot.json");
-        // robot.path.path.read_json_latlon("waypoints/_ramp_over_parkinglot2.json");
-        robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
+        // robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
         // robot.path.path.read_json_latlon("waypoints/Table_Grab_full.json");
+        // robot.path.path.read_json_latlon("waypoints/T_Long_Straight_Path.json");
+        robot.path.path.read_json_latlon("waypoints/From_O_whole_campus_round.json");
         robot.path.gen_global_path(2.5);
-        frames_init(robot.frames, robot.path.path);
+        frames_init(robot.frames, robot.path.global_path);
         init_bot(robot);
         // robot.path.path.print();
         // robot.path.global_path.print();
