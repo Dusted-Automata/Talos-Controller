@@ -1,5 +1,6 @@
 #pragma once
 
+#include "pid.hpp"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
 #pragma GCC diagnostic ignored "-Wextra"
@@ -405,6 +406,7 @@ to_degrees(double rad)
 struct Pose_State {
     Ecef position = Eigen::Vector3d(0, 0, 0); // x, y, z
     Affine3d orientation = Eigen::Affine3d::Identity();
+    // Eigen::Matrix3d orientation = Eigen::Matrix3d::Identity();
     // Eigen::Quaterniond orientation; // quaternion
     Velocity2d velocity = { .linear_vel = Vector3d::Zero(),
         .angular_vel = Vector3d::Zero() }; // vx, vy, vz \  wx, wy, wz
@@ -417,22 +419,36 @@ struct Pose {
     Affine3d transformation_matrix; // Change this to Quaternion maybe
 };
 
+// struct Kinematic_Constraints {
+//     double v_max = 0;       // max linear velocity (m/s)
+//     double v_min = 0;       // min linear velocity (m/s)
+//     double omega_max = 0;   // max angular velocity (rad/s)
+//     double omega_min = 0;   // min angular velocity (rad/s)
+//     double a_max = 0;       // max linear acceleration (m/s^2)
+//     double a_min = 0;       // max linear deceleration (m/s^2), possibly negative
+//     double alpha_max = 0;   // max angular acceleration
+//     double j_max = 0;       // max Linear jerk (m/s^3)
+//     double j_omega_max = 0; // max Angular jerk (m/s^3)
+// };
+
 struct Kinematic_Constraints {
-    double v_max = 0;       // max linear velocity (m/s)
-    double v_min = 0;       // min linear velocity (m/s)
-    double omega_max = 0;   // max angular velocity (rad/s)
-    double omega_min = 0;   // min angular velocity (rad/s)
-    double a_max = 0;       // max linear acceleration (m/s^2)
-    double a_min = 0;       // max linear deceleration (m/s^2), possibly negative
-    double alpha_max = 0;   // max angular acceleration
-    double j_max = 0;       // max Linear jerk (m/s^3)
-    double j_omega_max = 0; // max Angular jerk (m/s^3)
+    double velocity_forward_max = 0;       // max linear velocity (m/s)
+    double velocity_backward_max = 0;      // min linear velocity (m/s)
+    double velocity_turning_left_max = 0;  // max angular velocity (rad/s)
+    double velocity_turning_right_max = 0; // min angular velocity (rad/s)
+    double acceleration_max = 0;           // max linear acceleration (m/s^2)
+    double deceleration_max = 0;           // max linear deceleration (m/s^2), possibly negative
+    double alpha_max = 0;                  // max angular acceleration
+    double jerk_max = 0;                   // max Linear jerk (m/s^3)
+    double jerk_omega_max = 0;             // max Angular jerk (m/s^3)
 };
 
 struct Robot_Config {
     int control_loop_hz;
     double goal_tolerance_in_meters;
     Kinematic_Constraints kinematic_constraints;
+    PIDGains linear_gains;
+    PIDGains angular_gains;
 };
 
 struct Navigation_State {

@@ -1,0 +1,37 @@
+{
+    "version" : 1,
+    "control_loop_hz": 15,
+    "goal_tolerance_in_meters" : 0.35,
+    "kinematic_constraints" : {
+        "velocity_forward_max" : 0.4,
+        "velocity_backward_max" : 0.0,
+        "velocity_turning_left_max" : 1.25,
+        "velocity_turning_right_max" : -1.25,
+        "acceleration_max" : 0.3,
+        "deceleration_max" : -0.8,
+        "jerk_max" : 0.0,
+        "alpha_max" : 0.0,
+        "jerk_omega_max" : 0.0
+    },
+    "PID" : {
+        "linear_gains" : {
+            "k_p" : 0.6,
+            "k_i" : 0.00,
+            "k_d" : 0.00,
+            "output_min" : 0.0,
+            "output_max" : 0.4,
+            "integral_min" : -100,
+            "integral_max" : 100
+        },
+
+        "angular_gains" : {
+            "k_p" : 0.37,
+            "k_i" : 0.00,
+            "k_d" : 0.00,
+            "output_min" : -1.25,
+            "output_max" : 1.25,
+            "integral_min" : -100,
+            "integral_max" : 100
+        }
+    }
+}

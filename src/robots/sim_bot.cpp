@@ -2,6 +2,7 @@
 #include "linear_controller.hpp"
 #include "path_planner.hpp"
 #include "pid.hpp"
+#include "robot_config.hpp"
 #include "sim.hpp"
 #include "transformations.hpp"
 #include "ublox.hpp"
@@ -24,38 +25,6 @@ class Sim_Quadruped : public Robot
         pose_state.orientation = Eigen::Affine3d::Identity();
         pose_state.velocity.linear_vel = Vector3d::Zero();
         pose_state.velocity.angular_vel = Vector3d::Zero();
-
-        config.control_loop_hz = 15;
-        config.goal_tolerance_in_meters = 0.75;
-        config.kinematic_constraints = {
-            .v_max = 2.5,
-            .v_min = 0.0,
-            .omega_max = 2.5,
-            .omega_min = -2.5,
-            .a_max = 1.0,
-            .a_min = -1.0,
-            .j_max = 0.0,
-
-        };
-        config.linear_gains = {
-            .k_p = 1.01,
-            .k_i = 0.05,
-            .k_d = 0.15,
-            .output_min = config.kinematic_constraints.v_min,
-            .output_max = config.kinematic_constraints.v_max,
-            .integral_min = -100,
-            .integral_max = 100,
-        };
-
-        config.angular_gains = {
-            .k_p = 1.0,
-            .k_i = 0.01,
-            .k_d = 0.25,
-            .output_min = config.kinematic_constraints.omega_min,
-            .output_max = config.kinematic_constraints.omega_max,
-            .integral_min = -100,
-            .integral_max = 100,
-        };
     }
 
     void
@@ -84,7 +53,6 @@ class Sim_Quadruped : public Robot
     };
 
     // Ublox ublox = {};
-    Config config = {};
 };
 
 void
@@ -178,6 +146,7 @@ main()
 {
 
     Sim_Quadruped robot;
+    load_config(robot, "src/robots/sim_bot.json");
 
     { // Find out how to extract this.
 

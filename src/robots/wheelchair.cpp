@@ -200,6 +200,7 @@ main(void)
 {
 
     Wheelchair robot;
+    load_config(robot, "src/robots/wheelchair.json");
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
         robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,

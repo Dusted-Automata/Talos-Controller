@@ -15,6 +15,7 @@ class Robot
     Pose_State pose_state;
     Frames frames = {};
     Logger logger = {};
+    Robot_Config config = {};
     Ublox ublox = {};
     // Robot_Path path = {};
     Path_Planner path = {};
