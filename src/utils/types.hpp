@@ -419,6 +419,13 @@ struct Pose {
     Affine3d transformation_matrix; // Change this to Quaternion maybe
 };
 
+struct PVAT {
+    Pose pose;
+    Velocity2d velocity;
+    // Acceleration2d acceleration;
+    double time;
+};
+
 // struct Kinematic_Constraints {
 //     double v_max = 0;       // max linear velocity (m/s)
 //     double v_min = 0;       // min linear velocity (m/s)

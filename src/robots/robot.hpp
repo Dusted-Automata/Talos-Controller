@@ -21,6 +21,11 @@ class Robot
     Path_Planner path = {};
     Heading heading;
 
+    TCP_Socket in = TCP_Socket("127.0.0.1", 55555);
+    TCP_Socket out = TCP_Socket("127.0.0.1", 55555);
+
+    bool init();
+
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual Pose_State read_state() = 0;
 };
