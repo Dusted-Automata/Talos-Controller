@@ -2,6 +2,7 @@
 #include "linear_controller.hpp"
 #include "motion_profile.hpp"
 #include "pid.hpp"
+#include "robot_config.hpp"
 #include "sim.hpp"
 #include "types.hpp"
 
@@ -137,7 +138,7 @@ main(void)
 {
 
     Wheelchair robot;
-    load_config(robot, "src/robots/wheelchair.json");
+    load_config(robot, "src/robots/wheelchair_profile_1_bar_3.json");
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
         robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
