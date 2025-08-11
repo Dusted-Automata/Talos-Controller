@@ -1,5 +1,6 @@
 #pragma once
 #include "frames.hpp"
+#include "linear_controller.hpp"
 #include "logger.hpp"
 #include "path_planner.hpp"
 #include "robot_path.hpp"
@@ -17,10 +18,11 @@ class Robot
     Logger logger = {};
     Robot_Config config = {};
     Ublox ublox = {};
-    // Robot_Path path = {};
     Path_Planner path = {};
     Heading heading;
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual Pose_State read_state() = 0;
 };
+
+template<typename T> void control_loop(T &robot, Linear_Controller &controller);

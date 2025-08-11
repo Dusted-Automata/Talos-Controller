@@ -14,12 +14,12 @@ struct Config : public Robot_Config {
     Heading heading;
 };
 
-class Sim_Quadruped : public Robot
+class Sim_Bot : public Robot
 {
     Pose_State sim_pose = {};
 
   public:
-    Sim_Quadruped()
+    Sim_Bot()
     {
         pose_state.position = Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
         pose_state.orientation = Eigen::Affine3d::Identity();
@@ -51,12 +51,10 @@ class Sim_Quadruped : public Robot
     {
         return sim_pose;
     };
-
-    // Ublox ublox = {};
 };
 
 void
-init_bot(Sim_Quadruped &robot)
+init_bot(Sim_Bot &robot)
 {
     std::cout << "ROBOT INIT!" << std::endl;
     bool ublox_start = robot.ublox.start();
@@ -78,76 +76,12 @@ init_bot(Sim_Quadruped &robot)
     robot.running = true;
 }
 
-void
-control_loop(Sim_Quadruped &robot, Linear_Controller &controller)
-{
-
-    using clock = std::chrono::steady_clock;
-    auto next = clock::now();
-    auto previous_time = clock::now();
-    auto motion_time_start = clock::now();
-    std::chrono::milliseconds period(1000 / robot.config.control_loop_hz);
-
-    while (robot.running) {               // Control loop
-        auto current_time = clock::now(); // Current iteration time
-        std::chrono::duration<double> elapsed = current_time - previous_time;
-        double dt = elapsed.count(); // `dt` in seconds
-        previous_time = current_time;
-
-        if (!robot.pause) {
-            robot.pose_state = robot.read_state();
-            bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
-            // std::cout << "ublox_update_speed: " << update_speed << std::endl;
-            frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
-            update_position(robot.ublox, robot.frames);
-            update_heading(robot.ublox, robot.frames, robot.heading);
-            robot.logger.savePosesToFile(robot.frames);
-            robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
-
-            // Pose target_waypoint = robot.path.global_path.next();
-            Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
-
-            Vector3d global_dif = frames_diff(robot.frames, robot.path.global_path.next().local_point);
-            Vector3d local_dif = frames_diff(robot.frames, robot.path.path.next().local_point);
-            if (eucledean_xy_norm(global_dif) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pose_state, global_dif, local_dif, dt);
-                // std::cout << "cmd: " << cmd.linear.transpose() << std::endl;
-            } else {
-                robot.path.global_path.progress();
-            }
-
-            // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
-            if (eucledean_xy_norm(local_dif) < robot.config.goal_tolerance_in_meters) {
-                controller.motion_profile.reset();
-                controller.aligned_to_goal_waypoint = false;
-                if (robot.path.path.progress()) {
-                    // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-                    controller.motion_profile.set_setpoint(eucledean_xy_norm(local_dif));
-                } else {
-                    // break;
-                }
-            }
-            robot.send_velocity_command(cmd);
-        }
-
-        next += period;
-        std::this_thread::sleep_until(next);
-
-        if (clock::now() > next + period) {
-            std::cerr << "control-loop overrun" << std::endl;
-            next = clock::now();
-            previous_time = next;
-        }
-    }
-}
-
 int
 main()
 {
 
-    Sim_Quadruped robot;
+    Sim_Bot robot;
     load_config(robot, "src/robots/sim_bot.json");
-    printf("config: %i\n", robot.config.control_loop_hz);
 
     { // Find out how to extract this.
 
@@ -172,7 +106,7 @@ main()
         // robot.path.path.print();
         // robot.path.global_path.print();
         // robot.frames.init(robot.path.global_path);
-        std::jthread sim_thread(control_loop, std::ref(robot), std::ref(traj_controller));
+        std::jthread sim_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
 
         // Sim_Display sim = Sim_Display(robot, robot.path);
         Sim_Display sim = Sim_Display(robot, robot.path);
