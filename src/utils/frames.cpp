@@ -74,8 +74,7 @@ frames_diff(const Frames &frames, const ENU &goal) // fine with running every fr
 {
 
     Vector3d position_diff = goal.raw() - frames.local_frame.pos.raw();
-    position_diff = frames.local_frame.orientation.rotation().transpose()
-                    * position_diff; // TODO: CHECK correctness of transpose.
+    position_diff = frames.local_frame.orientation.rotation().transpose() * position_diff;
     return position_diff;
 }
 
