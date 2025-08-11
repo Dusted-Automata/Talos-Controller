@@ -102,6 +102,7 @@ Ublox::start()
 void
 Ublox::consume(Msg_Type msg)
 {
+    std::unique_lock<std::mutex> lock(sensor_mutex);
     switch (msg) {
     case Msg_Type::NAV_PVAT: nav_att.reset(); return;
     case Msg_Type::NAV_ATT: nav_att.reset(); return;
@@ -191,28 +192,15 @@ update_heading(Ublox &ublox, Frames &frames, Heading &h)
     auto ublox_simple = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
     if (ublox_simple.has_value()) {
         Nav_Pvat nav_pvat = ublox_simple.value();
-        // double heading_difference = min_angle_difference(nav_pvat.veh_heading, h.initial_heading_in_radians);
-        // std::cout << "initial_heading: " << h.initial_heading_in_radians
-        //           << " | heading_difference: " << heading_difference << " | veh_heading: " << nav_pvat.veh_heading
-        //           << std::endl;
-
         std::cout << "heading_in_radians: " << h.initial_heading_in_radians << " | accuracy: " << nav_pvat.accHeading
                   << " | veh_heading: " << nav_pvat.veh_heading << std::endl;
-        // double heading = convert_to_positive_radians(heading_difference);
         double heading = convert_to_positive_radians(nav_pvat.veh_heading);
         h.heading_accuracy = nav_pvat.accHeading;
         if (nav_pvat.accHeading < 30.0) { // NOTE: TBD
-            double old_local_orientation = convert_to_positive_radians(atan2(
-                frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
             Eigen::Affine3d rotationMatrix;
 
             rotationMatrix = Eigen::AngleAxisd(heading, Eigen::Vector3d::UnitZ());
             frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
-            double new_local_orientation = convert_to_positive_radians(atan2(
-                frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
-
-            // std::cout << "old_orientation: " << old_local_orientation << " | nav_heading: " << heading
-            //           << " | local_frame heading " << new_local_orientation << std::endl;
         }
         ublox.consume(Msg_Type::NAV_PVAT);
     }
