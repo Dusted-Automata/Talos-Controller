@@ -4,6 +4,7 @@
 class Path_Planner
 {
   public:
+    Path_Direction path_direction = Path_Direction::NORMAL;
     Robot_Path path;
     Robot_Path global_path;
     Robot_Path local_path;

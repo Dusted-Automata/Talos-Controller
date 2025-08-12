@@ -92,8 +92,7 @@ main()
             robot.config.kinematic_constraints.deceleration_max);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-        robot.path.path.path_looping = true;
-        robot.path.global_path.path_looping = true;
+        robot.path.path_direction = Path_Direction::REVERSE;
         // robot.path.path.read_json_latlon("waypoints/_Parkinglot_Loop_short.json");
         // robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
         // robot.path.path.read_json_latlon("waypoints/_basketball_loop.json");

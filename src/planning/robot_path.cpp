@@ -37,32 +37,53 @@ Robot_Path::next()
 }
 
 bool
-Robot_Path::progress()
+Robot_Path::progress(const Path_Direction &dir)
 {
     if (path.empty()) {
         return false;
     }
-    if (!path_looping && current_index >= path.size() && goal_index >= path.size()) {
-        return false;
-    }
-
-    if (path_looping) {
-        current_index = (++current_index) % path.size();
-        goal_index = (++goal_index) % path.size();
-        if (current_index == 0) {
-            std::cout << "LOOPING!" << std::endl;
+    switch (dir) {
+    case Path_Direction::NORMAL:
+        if (current_index >= path.size() && goal_index >= path.size()) {
+            return false;
         }
-
-    } else {
         if (current_index < path.size() - 1) {
             ++current_index;
         }
         if (goal_index < path.size() - 1) {
             ++goal_index;
         }
+        return true;
+    case Path_Direction::LOOP:
+        current_index = (++current_index) % path.size();
+        goal_index = (++goal_index) % path.size();
+        if (current_index == 0) {
+            std::cout << "LOOPING!" << std::endl;
+        }
+        return true;
+    case Path_Direction::REVERSE:
+        if (!reverse_forward) {
+            if (current_index < path.size() - 1) {
+                ++current_index;
+            } else {
+                reverse_forward = true; // Switch to backward
+            }
+            if (goal_index < path.size() - 1) {
+                ++goal_index;
+            }
+        } else {
+            if (current_index > 0) {
+                --current_index;
+            } else {
+                reverse_forward = false; // Switch to forward
+            }
+            if (goal_index > 0) {
+                --goal_index;
+            }
+        }
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 void
