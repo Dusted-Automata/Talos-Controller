@@ -113,19 +113,19 @@ Sim_Display::display()
         float gridStep = 5.0f;
         draw_absolute_grid(camera, gridStep);
 
-        for (size_t i = 0; i < path.path.size(); i++) {
-            // ENU waypoint = cppmap3d::ecef2enu(path[i].point, robot.frames.local_frame.origin);
-            ENU waypoint = path.path[i].local_point;
-            DrawCircleV({ (float)waypoint.east(), (float)-waypoint.north() }, 0.5f, GREEN);
-        }
-
         for (size_t i = 0; i < path.global_path.size(); i++) {
             // ENU waypoint = cppmap3d::ecef2enu(path[i].point, robot.frames.local_frame.origin);
             ENU waypoint = path.global_path[i].local_point;
+            DrawCircleV({ (float)waypoint.east(), (float)-waypoint.north() }, 0.5f, GREEN);
+        }
+
+        for (size_t i = 0; i < path.local_path.size(); i++) {
+            // ENU waypoint = cppmap3d::ecef2enu(path[i].point, robot.frames.local_frame.origin);
+            ENU waypoint = path.local_path[i].local_point;
             DrawCircleV({ (float)waypoint.east(), (float)-waypoint.north() }, 0.1f, BLUE);
         }
 
-        ENU waypoint = path.global_path.next().local_point;
+        ENU waypoint = path.local_path.next().local_point;
         DrawCircleV({ (float)waypoint.east(), (float)-waypoint.north() }, 0.25f, ORANGE);
 
         draw_robot();

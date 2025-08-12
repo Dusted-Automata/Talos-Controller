@@ -84,8 +84,8 @@ main()
     Sim_Bot robot;
     load_config(robot, "src/robots/sim_bot.json");
     robot.path.path_direction = robot.config.path_config.direction;
-    robot.path.path.read_json_latlon(robot.config.path_config.filepath);
-    robot.path.gen_global_path(robot.config.path_config.interpolation_distances_in_meters);
+    robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
+    robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
 
     { // Find out how to extract this.
 
@@ -94,7 +94,7 @@ main()
             robot.config.kinematic_constraints.velocity_backward_max,
             robot.config.kinematic_constraints.deceleration_max);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
-        frames_init(robot.frames, robot.path.global_path);
+        frames_init(robot.frames, robot.path.local_path);
         init_bot(robot);
         std::jthread sim_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
 

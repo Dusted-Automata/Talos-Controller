@@ -76,22 +76,22 @@ control_loop(T &robot, Linear_Controller &controller)
             // Pose target_waypoint = robot.path.global_path.next();
             Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 
+            Vector3d local_difference = frames_diff(robot.frames, robot.path.local_path.next().local_point);
             Vector3d global_difference = frames_diff(robot.frames, robot.path.global_path.next().local_point);
-            Vector3d local_difference = frames_diff(robot.frames, robot.path.path.next().local_point);
-            if (eucledean_xy_norm(global_difference) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pose_state, global_difference, local_difference, dt);
+            if (eucledean_xy_norm(local_difference) > robot.config.goal_tolerance_in_meters) {
+                cmd = controller.get_cmd(robot.pose_state, local_difference, global_difference, dt);
                 // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
             } else {
-                robot.path.global_path.progress(robot.path.path_direction);
+                robot.path.local_path.progress(robot.path.path_direction);
             }
 
             // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
-            if (eucledean_xy_norm(local_difference) < robot.config.goal_tolerance_in_meters) {
+            if (eucledean_xy_norm(global_difference) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
                 controller.aligned_to_goal_waypoint = false;
-                if (robot.path.path.progress(robot.path.path_direction)) {
+                if (robot.path.global_path.progress(robot.path.path_direction)) {
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-                    controller.motion_profile.set_setpoint(eucledean_xy_norm(local_difference));
+                    controller.motion_profile.set_setpoint(eucledean_xy_norm(global_difference));
 
                 } else {
                     break;

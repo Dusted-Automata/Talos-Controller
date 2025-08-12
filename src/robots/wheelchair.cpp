@@ -140,15 +140,15 @@ main(void)
     Wheelchair robot;
     load_config(robot, "src/robots/wheelchair_profile_1_bar_3.json");
     robot.path.path_direction = robot.config.path_config.direction;
-    robot.path.path.read_json_latlon(robot.config.path_config.filepath);
-    robot.path.gen_global_path(robot.config.path_config.interpolation_distances_in_meters);
+    robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
+    robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
         robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
         robot.config.kinematic_constraints.deceleration_max);
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-    frames_init(robot.frames, robot.path.global_path);
+    frames_init(robot.frames, robot.path.local_path);
     robot.init();
 
     std::jthread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));

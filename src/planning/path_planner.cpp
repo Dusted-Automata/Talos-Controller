@@ -10,38 +10,39 @@ dist(const Pose &a, const Pose &b)
     double val = std::sqrt(x + y + z);
     return val;
 };
+
 void
-Path_Planner::gen_global_path(double meters_per_point)
+Path_Planner::gen_local_path(double meters_per_point)
 {
-    if (path.size() == 0) {
+    if (global_path.size() == 0) {
         return;
     }
 
-    Pose prev_point = path[0];
-    for (size_t i = 0; i < path.size(); i++) {
-        double d = dist(prev_point, path[i]);
+    Pose prev_point = global_path[0];
+    for (size_t i = 0; i < global_path.size(); i++) {
+        double d = dist(prev_point, global_path[i]);
         int d_count = (int)(d / meters_per_point);
-        Vector3d normalized = (path[i].local_point - prev_point.local_point) * (1.0 / d);
+        Vector3d normalized = (global_path[i].local_point - prev_point.local_point) * (1.0 / d);
         for (int i = 1; i <= d_count; i++) {
             Pose i_point = { .local_point = prev_point.local_point + (normalized * i * meters_per_point) };
-            global_path.add_waypoint(i_point);
+            local_path.add_waypoint(i_point);
         }
-        global_path.add_waypoint(path[i]);
-        prev_point = path[i];
+        local_path.add_waypoint(global_path[i]);
+        prev_point = global_path[i];
     }
 
-    if (path.path_looping) {
-        double d = dist(prev_point, path[0]);
+    if (global_path.path_looping) {
+        double d = dist(prev_point, global_path[0]);
         int d_count = (int)(d / meters_per_point);
-        Vector3d normalized = (path[0].local_point - prev_point.local_point) * (1.0 / d);
+        Vector3d normalized = (global_path[0].local_point - prev_point.local_point) * (1.0 / d);
         for (int i = 1; i <= d_count; i++) {
             Pose i_point = { .local_point = prev_point.local_point + (normalized * i * meters_per_point) };
-            global_path.add_waypoint(i_point);
+            local_path.add_waypoint(i_point);
         }
-        global_path.add_waypoint(path[0]);
+        local_path.add_waypoint(global_path[0]);
     }
 
-    path.reset();
+    global_path.reset();
     // path.print();
     // global_path.print();
 }

@@ -4,7 +4,7 @@
     "goal_tolerance_in_meters" : 0.75,
     "path_config": {
         "direction" : "reverse",
-        "filepath" : "waypoints/Parking_lots_loop.json",
+        "filepath" : "waypoints/PT_ping_pong.json",
         "interpolation_distances_in_meters" : 2.5
     },
     "kinematic_constraints" : {
