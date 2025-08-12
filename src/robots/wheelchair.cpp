@@ -138,7 +138,7 @@ main(void)
 {
 
     Wheelchair robot;
-    load_config(robot, "src/robots/wheelchair_profile_1_bar_3.json");
+    load_config(robot, "robot_configs//wheelchair_profile_1_bar_3.json");
     robot.path.path_direction = robot.config.path_config.direction;
     robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
     robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);

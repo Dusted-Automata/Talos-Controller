@@ -82,7 +82,7 @@ main()
 {
 
     Sim_Bot robot;
-    load_config(robot, "src/robots/sim_bot.json");
+    load_config(robot, "robot_configs/sim_bot.json");
     robot.path.path_direction = robot.config.path_config.direction;
     robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
     robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
