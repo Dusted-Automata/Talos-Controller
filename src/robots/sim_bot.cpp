@@ -73,6 +73,7 @@ init_bot(Sim_Bot &robot)
     //     }
     // }
 
+    robot.TCP_reader.init(robot);
     robot.running = true;
 }
 

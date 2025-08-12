@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 bool
-TCP_Socket::connect()
+TCP_Client::connect()
 {
     disconnect();
     fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -29,14 +29,140 @@ TCP_Socket::connect()
     return true;
 }
 
+bool
+tcp_server_setup(TCP_Server &server)
+{
+    // Create socket file descriptor
+    if ((server.fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        return false;
+    }
+
+    // Forcefully attaching socket to the port
+    if (setsockopt(server.fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &server.opt, sizeof(server.opt))) {
+        perror("setsockopt");
+        return false;
+    }
+
+    server.address.sin_family = AF_INET;
+    server.address.sin_addr.s_addr = INADDR_ANY;
+    server.address.sin_port = htons(server.port);
+
+    // Bind the socket to the network address and port
+    if (bind(server.fd, (struct sockaddr *)&server.address, sizeof(server.address)) < 0) {
+        perror("bind failed");
+        return false;
+    }
+
+    std::cout << "Server initialized on port " << server.port << std::endl;
+
+    if (listen(server.fd, 3) < 0) {
+        perror("listen");
+        return false;
+    }
+
+    std::cout << "Server listening for connections..." << std::endl;
+
+    // Accept a connection
+    if ((server.client_socket = accept(server.fd, (struct sockaddr *)&server.address, (socklen_t *)&server.addrlen))
+        < 0) {
+        perror("accept");
+        return false;
+    }
+
+    std::cout << "Connection accepted from " << inet_ntoa(server.address.sin_addr) << std::endl;
+    return true;
+}
+
+void
+tcp_server_handle_client(TCP_Server &server)
+{
+
+    char buffer[1024] = { 0 };
+    const char *response = "Hello from server!";
+
+    // Read message from client
+    int valread = read(server.client_socket, buffer, 1024);
+    if (valread > 0) {
+        std::cout << "Message from client: " << buffer << std::endl;
+
+        // Echo the message back to client
+        send(server.client_socket, buffer, strlen(buffer), 0);
+        std::cout << "Echo message sent" << std::endl;
+    }
+
+    // Send a response
+    send(server.client_socket, response, strlen(response), 0);
+    std::cout << "Response sent to client" << std::endl;
+}
+
+void
+tcp_server_start(TCP_Server &server)
+{
+    // Put the server socket in a passive mode, where it waits for client connections
+    if (listen(server.fd, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "Server listening for connections..." << std::endl;
+
+    while (true) {
+        // Accept a connection
+        if ((server.client_socket = accept(server.fd, (struct sockaddr *)&server.address, (socklen_t *)&server.addrlen))
+            < 0) {
+            perror("accept");
+            exit(EXIT_FAILURE);
+        }
+
+        std::cout << "Connection accepted from " << inet_ntoa(server.address.sin_addr) << std::endl;
+
+        // Handle the client in a separate function
+        tcp_server_handle_client(server);
+
+        // Close the client socket
+        close(server.client_socket);
+    }
+}
+
+bool
+socket_recv(int fd, std::array<char, TCP_BUFFER_LENGTH> recv_buf, Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring)
+
+{
+
+    if (fd == -1) {
+        std::cerr << "Socket is closed" << std::endl;
+        return false;
+    }
+
+    ssize_t bytes_received;
+
+    bytes_received = ::recv(fd, recv_buf.data(), recv_buf.size(), 0);
+    // bytes_received = read(fd, recv_buf.data(), recv_buf.size());
+    ring.write(std::span(recv_buf.data(), bytes_received));
+
+    if (bytes_received == 0) {
+        std::cerr << "socket closed" << std::endl;
+        ::close(fd);
+        return false;
+    }
+    if (bytes_received < 0) {
+        std::cerr << "recv failed" << std::endl;
+        ::close(fd);
+        return false;
+    }
+
+    return true;
+}
+
 int
-TCP_Socket::get_fd()
+TCP_Client::get_fd()
 {
     return fd;
 }
 
 void
-TCP_Socket::disconnect()
+TCP_Client::disconnect()
 {
     if (fd != -1) {
         ::close(fd);
@@ -45,7 +171,7 @@ TCP_Socket::disconnect()
 }
 
 bool
-TCP_Socket::recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring)
+TCP_Client::recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring)
 {
 
     if (fd == -1) {
@@ -73,7 +199,7 @@ TCP_Socket::recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring)
 }
 
 bool
-TCP_Socket::send(const char *buf, size_t length)
+TCP_Client::send(const char *buf, size_t length)
 {
     size_t total_sent = 0;
     while (total_sent < length) {
