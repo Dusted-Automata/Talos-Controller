@@ -1,66 +1,67 @@
 #include "robot.hpp"
 #include "linear_controller.hpp"
-template<typename T>
-void
-control_loop(T &robot, Linear_Controller &controller)
+
+bool
+Reader::init(Robot &r)
 {
 
-    using clock = std::chrono::steady_clock;
-    auto next = clock::now();
-    auto previous_time = clock::now();
-    auto motion_time_start = clock::now();
-    std::chrono::milliseconds period(1000 / robot.config.control_loop_hz);
+    std::cerr << "Starting Reader" << std::endl;
+    socket.port = 55555;
+    socket.fd = -1;
+    robot = &r;
+    if (running) return true;
+    if (!tcp_server_setup(socket)) {
+        std::cerr << "Reader couldn't connect to socket" << std::endl;
+        return false;
+    };
 
-    while (robot.running) {               // Control loop
-        auto current_time = clock::now(); // Current iteration time
-        std::chrono::duration<double> elapsed = current_time - previous_time;
-        double dt = elapsed.count(); // `dt` in seconds
-        previous_time = current_time;
+    if (socket.fd < 0) {
+        return false;
+    }
 
-        if (!robot.pause) {
-            robot.pose_state = robot.read_state();
-            // bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
-            // std::cout << "ublox_update_speed: " << update_speed << std::endl;
-            frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
-            update_position(robot.ublox, robot.frames);
-            update_heading(robot.ublox, robot.frames, robot.heading);
-            robot.logger.savePosesToFile(robot.frames);
-            robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
+    if (sensor_thread.joinable()) {
+        sensor_thread.join();
+    }
 
-            // Pose target_waypoint = robot.path.global_path.next();
-            Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
+    sensor_thread = std::thread(&Reader::loop, this);
+    running = true;
+    return true;
+}
 
-            Vector3d global_difference = frames_diff(robot.frames, robot.path.global_path.next().local_point);
-            Vector3d local_difference = frames_diff(robot.frames, robot.path.path.next().local_point);
-            if (eucledean_xy_norm(global_difference) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pose_state, global_difference, local_difference, dt);
-                // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
-            } else {
-                robot.path.global_path.progress();
-            }
-
-            // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
-            if (eucledean_xy_norm(local_difference) < robot.config.goal_tolerance_in_meters) {
-                controller.motion_profile.reset();
-                controller.aligned_to_goal_waypoint = false;
-                if (robot.path.path.progress()) {
-                    // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-                    controller.motion_profile.set_setpoint(eucledean_xy_norm(local_difference));
-
-                } else {
+void
+Reader::loop()
+{
+    // tcp_server_start(socket);
+    while (!(socket.client_socket < 0) && running) {
+        if (!socket_recv(socket.client_socket, recv_buf, buf)) {
+            running = false;
+            // socket.disconnect();
+        }
+        for (size_t i = 0; i < buf.count(); i++) {
+            if (buf[i] == '\n') {
+                int len = i + 1; // i + 1 to include the newline
+                std::string msg(len, '\0');
+                buf.read(std::span(msg.data(), len));
+                i = 0;
+                json j;
+                try {
+                    j = json::parse(msg);
+                } catch (nlohmann::json::parse_error &e) {
+                    std::cerr << "Parse error at byte " << e.byte << ": " << e.what() << std::endl;
+                    std::cout << msg.size() << " | " << msg.substr((e.byte - 10), 20) << std::endl;
+                    std::cout << msg << std::endl;
+                    break;
+                } catch (nlohmann::json::exception &e) {
+                    std::cerr << "Other JSON error: " << e.what() << std::endl;
                     break;
                 }
+                std::cout << j.dump() << std::endl;
+                auto pause = j["pause"];
+                if (pause) {
+                    robot->pause = true;
+                    std::cout << "robot.pause : " << robot->pause << std::endl;
+                }
             }
-            robot.send_velocity_command(cmd);
-        }
-
-        next += period;
-        std::this_thread::sleep_until(next);
-
-        if (clock::now() > next + period) {
-            std::cerr << "control-loop overrun" << std::endl;
-            next = clock::now();
-            previous_time = next;
         }
     }
 }
