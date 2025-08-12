@@ -6,6 +6,22 @@
 #include "types.hpp"
 #include "ublox.hpp"
 
+class Robot;
+
+class Reader
+{
+  public:
+    TCP_Server socket;
+    std::thread sensor_thread;
+    std::atomic_bool running = false;
+    std::array<char, TCP_BUFFER_LENGTH> recv_buf;
+    Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> buf;
+    Robot *robot;
+
+    bool init(Robot &robot);
+    void loop();
+};
+
 class Robot
 {
 
@@ -21,8 +37,8 @@ class Robot
     Path_Planner path = {};
     Heading heading;
 
-    TCP_Socket in = TCP_Socket("127.0.0.1", 55555);
-    TCP_Socket out = TCP_Socket("127.0.0.1", 55555);
+    Reader TCP_reader;
+    // TCP_Socket out = TCP_Socket("127.0.0.1", 55555);
 
     bool init();
 
