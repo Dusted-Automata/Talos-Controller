@@ -102,7 +102,7 @@ Ublox::start()
 void
 Ublox::consume(Msg_Type msg)
 {
-    std::unique_lock<std::mutex> lock(sensor_mutex);
+    // std::unique_lock<std::mutex> lock(sensor_mutex);
     switch (msg) {
     case Msg_Type::NAV_PVAT: nav_att.reset(); return;
     case Msg_Type::NAV_ATT: nav_att.reset(); return;
