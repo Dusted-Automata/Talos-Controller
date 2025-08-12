@@ -2,6 +2,11 @@
     "version" : 1,
     "control_loop_hz": 15,
     "goal_tolerance_in_meters" : 0.35,
+    "path_config": {
+        "direction" : "reverse",
+        "filepath" : "waypoints/Table_Grab_full.json",
+        "interpolation_distances_in_meters" : 3.0
+    },
     "kinematic_constraints" : {
         "velocity_forward_max" : 0.8,
         "velocity_backward_max" : 0.0,

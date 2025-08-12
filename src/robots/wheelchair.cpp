@@ -139,21 +139,15 @@ main(void)
 
     Wheelchair robot;
     load_config(robot, "src/robots/wheelchair_profile_1_bar_3.json");
+    robot.path.path_direction = robot.config.path_config.direction;
+    robot.path.path.read_json_latlon(robot.config.path_config.filepath);
+    robot.path.gen_global_path(robot.config.path_config.interpolation_distances_in_meters);
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
         robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
         robot.config.kinematic_constraints.deceleration_max);
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-    robot.path.path.path_looping = true;
-    robot.path.global_path.path_looping = true;
-    // robot.path.path.read_json_latlon("waypoints/Table_Grab_full.json");
-    // robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
-    // robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
-    // robot.path.path.read_json_latlon("waypoints/T_Long_Straight_Path.json");
-    // robot.path.path.read_json_latlon("waypoints/Parking_lots_loop.json");
-    robot.path.path.read_json_latlon("waypoints/From_O_whole_campus_round.json");
-    robot.path.gen_global_path(3.0);
     frames_init(robot.frames, robot.path.global_path);
     robot.init();
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pid.hpp"
+#include <filesystem>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
 #pragma GCC diagnostic ignored "-Wextra"
@@ -438,6 +439,18 @@ struct PVAT {
 //     double j_omega_max = 0; // max Angular jerk (m/s^3)
 // };
 
+enum class Path_Direction {
+    NORMAL,
+    REVERSE,
+    LOOP,
+};
+
+struct Path_Config {
+    Path_Direction direction;
+    std::filesystem::path filepath;
+    double interpolation_distances_in_meters;
+};
+
 struct Kinematic_Constraints {
     double velocity_forward_max = 0;       // max linear velocity (m/s)
     double velocity_backward_max = 0;      // min linear velocity (m/s)
@@ -451,11 +464,12 @@ struct Kinematic_Constraints {
 };
 
 struct Robot_Config {
-    int control_loop_hz;
-    double goal_tolerance_in_meters;
     Kinematic_Constraints kinematic_constraints;
     PIDGains linear_gains;
     PIDGains angular_gains;
+    Path_Config path_config;
+    double goal_tolerance_in_meters;
+    int control_loop_hz;
 };
 
 struct Navigation_State {

@@ -1,12 +1,6 @@
 #pragma once
 #include "types.hpp"
 
-enum class Path_Direction {
-    NORMAL,
-    REVERSE,
-    LOOP,
-};
-
 class Robot_Path
 {
 
@@ -26,7 +20,7 @@ class Robot_Path
     Pose current();
     Pose next();
     bool progress(const Path_Direction &dir);
-    bool read_json_latlon(std::string file_path);
+    bool read_json_latlon(std::filesystem::path file_path);
     size_t size();
     void reset();
     void print();

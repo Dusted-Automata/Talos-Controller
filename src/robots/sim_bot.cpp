@@ -73,7 +73,7 @@ init_bot(Sim_Bot &robot)
     //     }
     // }
 
-    robot.TCP_reader.init(robot);
+    // robot.TCP_reader.init(robot);
     robot.running = true;
 }
 
@@ -83,6 +83,9 @@ main()
 
     Sim_Bot robot;
     load_config(robot, "src/robots/sim_bot.json");
+    robot.path.path_direction = robot.config.path_config.direction;
+    robot.path.path.read_json_latlon(robot.config.path_config.filepath);
+    robot.path.gen_global_path(robot.config.path_config.interpolation_distances_in_meters);
 
     { // Find out how to extract this.
 
@@ -91,21 +94,8 @@ main()
             robot.config.kinematic_constraints.velocity_backward_max,
             robot.config.kinematic_constraints.deceleration_max);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
-
-        robot.path.path_direction = Path_Direction::REVERSE;
-        // robot.path.path.read_json_latlon("waypoints/_Parkinglot_Loop_short.json");
-        // robot.path.path.read_json_latlon("waypoints/_Parkinglot_ping_pong.json");
-        // robot.path.path.read_json_latlon("waypoints/_basketball_loop.json");
-        // robot.path.path.read_json_latlon("waypoints/_shotter_weg_loop.json");
-        // robot.path.path.read_json_latlon("waypoints/Table_Grab_full.json");
-        // robot.path.path.read_json_latlon("waypoints/T_Long_Straight_Path.json");
-        robot.path.path.read_json_latlon("waypoints/From_O_whole_campus_round.json");
-        robot.path.gen_global_path(2.5);
         frames_init(robot.frames, robot.path.global_path);
         init_bot(robot);
-        // robot.path.path.print();
-        // robot.path.global_path.print();
-        // robot.frames.init(robot.path.global_path);
         std::jthread sim_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
 
         // Sim_Display sim = Sim_Display(robot, robot.path);

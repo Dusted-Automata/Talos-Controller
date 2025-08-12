@@ -125,7 +125,7 @@ Robot_Path::print()
 
 using json = nlohmann::json;
 bool
-Robot_Path::read_json_latlon(std::string file_path)
+Robot_Path::read_json_latlon(std::filesystem::path file_path)
 {
     std::ifstream file(file_path);
 

@@ -92,6 +92,31 @@ from_json(const json &j, Kinematic_Constraints &obj)
 }
 
 void
+from_json(const json &j, Path_Config &obj)
+{
+
+    VALIDATE_FIELDS(j, "Path_Config", "direction", "filepath", "interpolation_distances_in_meters");
+
+    auto direction = j.at("direction").get<std::string>();
+    if (direction == "normal") {
+        obj.direction = Path_Direction::NORMAL;
+    } else if (direction == "loop") {
+        obj.direction = Path_Direction::LOOP;
+    } else if (direction == "reverse") {
+        obj.direction = Path_Direction::REVERSE;
+    } else {
+        throw std::invalid_argument("direction needs to be of type Path_Direction: normal, loop, reverse");
+    }
+
+    auto filepath = j.at("filepath").get<std::filesystem::path>();
+    if (!std::filesystem::exists(filepath)) {
+        throw std::invalid_argument("file does not exist");
+    }
+    obj.filepath = filepath;
+    obj.interpolation_distances_in_meters = j.at("interpolation_distances_in_meters").get<double>();
+}
+
+void
 from_json(const json &j, PIDGains &obj)
 {
     VALIDATE_FIELDS(j, "PIDGains", "k_p", "k_i", "k_d", "output_min", "output_max", "integral_min", "integral_max");
@@ -115,7 +140,7 @@ from_json(const json &j, PIDGains &obj)
 void
 from_json(const json &j, Robot_Config &obj)
 {
-    VALIDATE_FIELDS(j, "Robot_Config", "version", "control_loop_hz", "goal_tolerance_in_meters",
+    VALIDATE_FIELDS(j, "Robot_Config", "version", "control_loop_hz", "goal_tolerance_in_meters", "path_config",
         "kinematic_constraints", "PID");
 
     obj.control_loop_hz = j.at("control_loop_hz").get<int>();
@@ -127,6 +152,16 @@ from_json(const json &j, Robot_Config &obj)
 
     if (obj.goal_tolerance_in_meters <= 0) {
         throw std::invalid_argument("goal_tolerance_in_meters must be positive");
+    }
+
+    if (obj.goal_tolerance_in_meters <= 0) {
+        throw std::invalid_argument("goal_tolerance_in_meters must be positive");
+    }
+
+    try {
+        obj.path_config = j.at("path_config").get<Path_Config>();
+    } catch (const std::exception &e) {
+        throw std::runtime_error("Error in path_config: " + std::string(e.what()));
     }
 
     try {
