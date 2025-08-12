@@ -137,7 +137,7 @@ Sim_Display::display()
             // Ecef ecef = cppmap3d::enu2ecef(fake_measurement, robot.frames.local_frame.origin);
             // LLH llh = cppmap3d::ecef2geodetic(ecef);
             // robot.frames.update_based_on_measurement(llh);
-            robot.pause = !robot.pause;
+            robot.paused = !robot.paused;
         }
         if (IsKeyPressed(KEY_P)) {
 

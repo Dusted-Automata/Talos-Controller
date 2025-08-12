@@ -28,7 +28,7 @@ class Robot
 
   public:
     std::atomic<bool> running = false;
-    std::atomic<bool> pause = false;
+    std::atomic<bool> paused = false;
     Pose_State pose_state;
     Frames frames = {};
     Logger logger = {};
@@ -40,7 +40,11 @@ class Robot
     Reader TCP_reader;
     // TCP_Socket out = TCP_Socket("127.0.0.1", 55555);
 
-    bool init();
+    bool stop();
+    bool toggle_pause();
+    bool start();
+    Ecef get_PVAT();
+    void set_target();
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
     virtual Pose_State read_state() = 0;
@@ -63,7 +67,7 @@ control_loop(T &robot, Linear_Controller &controller)
         double dt = elapsed.count(); // `dt` in seconds
         previous_time = current_time;
 
-        if (!robot.pause) {
+        if (!robot.paused) {
             robot.pose_state = robot.read_state();
             // bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             // std::cout << "ublox_update_speed: " << update_speed << std::endl;
