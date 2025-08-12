@@ -56,8 +56,8 @@ Reader::loop()
                     break;
                 }
                 std::cout << j.dump() << std::endl;
-                auto pause = j["pause"];
-                if (pause) {
+                auto command = j["command"];
+                if (command == "pause") {
                     robot->pause = true;
                     std::cout << "robot.pause : " << robot->pause << std::endl;
                 }
