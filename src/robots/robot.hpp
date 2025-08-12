@@ -82,14 +82,14 @@ control_loop(T &robot, Linear_Controller &controller)
                 cmd = controller.get_cmd(robot.pose_state, global_difference, local_difference, dt);
                 // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
             } else {
-                robot.path.global_path.progress();
+                robot.path.global_path.progress(robot.path.path_direction);
             }
 
             // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
             if (eucledean_xy_norm(local_difference) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
                 controller.aligned_to_goal_waypoint = false;
-                if (robot.path.path.progress()) {
+                if (robot.path.path.progress(robot.path.path_direction)) {
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
                     controller.motion_profile.set_setpoint(eucledean_xy_norm(local_difference));
 
