@@ -82,6 +82,9 @@ Reader::loop()
                     robot->toggle_pause();
                     std::cout << "robot.pause : " << robot->paused << std::endl;
                 }
+                if (command == "stop") {
+                    robot->stop();
+                }
             }
         }
     }

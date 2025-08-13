@@ -1,8 +1,8 @@
 #include "wheelchair.hpp"
 #include "linear_controller.hpp"
+#include "load_config.hpp"
 #include "motion_profile.hpp"
 #include "pid.hpp"
-#include "robot_config.hpp"
 #include "sim.hpp"
 #include "types.hpp"
 

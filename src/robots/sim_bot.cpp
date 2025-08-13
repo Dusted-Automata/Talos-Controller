@@ -1,12 +1,10 @@
 #include "frames.hpp"
 #include "linear_controller.hpp"
+#include "load_config.hpp"
 #include "path_planner.hpp"
 #include "pid.hpp"
-#include "robot_config.hpp"
 #include "sim.hpp"
 #include "transformations.hpp"
-#include "ublox.hpp"
-#include <chrono>
 
 struct Config : public Robot_Config {
     PIDGains linear_gains;
@@ -73,7 +71,7 @@ init_bot(Sim_Bot &robot)
     //     }
     // }
 
-    // robot.TCP_reader.init(robot);
+    robot.TCP_reader.init(robot);
     robot.running = true;
 }
 
@@ -96,7 +94,7 @@ main()
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
         frames_init(robot.frames, robot.path.local_path);
         init_bot(robot);
-        std::jthread sim_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
+        std::jthread control_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
 
         // Sim_Display sim = Sim_Display(robot, robot.path);
         Sim_Display sim = Sim_Display(robot, robot.path);

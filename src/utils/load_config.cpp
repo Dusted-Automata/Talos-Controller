@@ -1,13 +1,9 @@
-#pragma once
-
-#include "json.hpp"
-#include "pid.hpp"
-#include "robot.hpp"
-#include "types.hpp"
+#include "load_config.hpp"
 #include <stdexcept>
-#include <string>
 
 using nlohmann::json;
+
+#define VALIDATE_FIELDS(json, struct_name, ...) validate_fields(json, { __VA_ARGS__ }, struct_name)
 
 void from_json(const json &j, Robot_Config &obj);
 
@@ -56,8 +52,6 @@ validate_fields(const json &j, const std::vector<std::string> &fields, const std
         }
     }
 }
-
-#define VALIDATE_FIELDS(json, struct_name, ...) validate_fields(json, { __VA_ARGS__ }, struct_name)
 
 void
 from_json(const json &j, Kinematic_Constraints &obj)

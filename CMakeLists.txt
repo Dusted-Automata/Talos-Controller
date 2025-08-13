@@ -63,6 +63,7 @@ set(COMMON_SOURCES
     src/utils/socket.cpp
     src/utils/sim.cpp
     src/utils/EGM96.cpp
+    src/utils/load_config.cpp
 )
 
 add_library(controller_core STATIC ${COMMON_SOURCES})
