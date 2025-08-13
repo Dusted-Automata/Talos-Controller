@@ -1,6 +1,7 @@
 #include "go1.hpp"
 #include "frames.hpp"
 #include "linear_controller.hpp"
+#include "load_config.hpp"
 #include "raylib.h"
 #include "utils/sim.hpp"
 #include <iostream>
@@ -23,8 +24,8 @@ UT::HighCmd
 Go1::moveCmd(const Velocity2d &velocity)
 {
     uint8_t *cmdBytes = reinterpret_cast<uint8_t *>(&cmd);
-    float vel_x = static_cast<float>(velocity.linear.x());
-    float vel_yaw = static_cast<float>(velocity.angular.z());
+    float vel_x = static_cast<float>(velocity.linear_vel.x());
+    float vel_yaw = static_cast<float>(velocity.angular_vel.z());
     writeToStruct<Go1_mode>(cmdBytes, HighCmdOffset::Mode, Go1_mode::Target_velocity_walking);
     writeToStruct<GaitType>(cmdBytes, HighCmdOffset::GaitType, GaitType::Trot);
     writeToStruct<float>(cmdBytes, HighCmdOffset::VelocityX, vel_x);
@@ -46,9 +47,9 @@ Go1::read_state()
     udp.GetRecv(state);
     Pose_State ps;
 
-    ps.velocity.linear.x() = readFromStruct<float>(stateBytes, HighStateOffset::VelocityX);
+    ps.velocity.linear_vel.x() = readFromStruct<float>(stateBytes, HighStateOffset::VelocityX);
     // ps.velocity.linear.y() = readFromStruct<float>(stateBytes, HighStateOffset::VelocityY);
-    ps.velocity.angular.z() = readFromStruct<float>(stateBytes, HighStateOffset::YawSpeed);
+    ps.velocity.angular_vel.z() = readFromStruct<float>(stateBytes, HighStateOffset::YawSpeed);
     // UT::IMU imu = readFromStruct<UT::IMU>(stateBytes, HighStateOffset::IMU);
     // UT::MotorState ms = readFromStruct<UT::MotorState>(stateBytes, HighStateOffset::MotorState);
     // std::array<int16_t, 4> footForce = readFromStruct<std::array<int16_t, 4>>(stateBytes,
@@ -72,64 +73,6 @@ Go1::read_state()
     return ps;
 }
 
-void
-control_loop(Go1 &robot, Linear_Controller &controller)
-{
-    using clock = std::chrono::steady_clock;
-    auto next = clock::now();
-    auto previous_time = clock::now();
-    auto motion_time_start = clock::now();
-    std::chrono::milliseconds period(1000 / robot.config.control_loop_hz);
-
-    while (robot.running) {               // Control loop
-        auto current_time = clock::now(); // Current iteration time
-        std::chrono::duration<double> elapsed = current_time - previous_time;
-        double dt = elapsed.count(); // `dt` in seconds
-        previous_time = current_time;
-
-        update_position(robot.ublox, robot.frames);
-        update_heading(robot.ublox, robot.frames);
-        if (!robot.pause) {
-            std::cout << dt << std::endl;
-            robot.pose_state = robot.read_state();
-            robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
-            robot.frames.move_in_local_frame(robot.pose_state.velocity, dt);
-            robot.logger.savePosesToFile(robot.frames);
-            robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
-            Pose target_waypoint = robot.path.next();
-            // std::cout << target_waypoint.local_point.raw().transpose() << " | "
-            //           << target_waypoint.point.raw().transpose() << std::endl;
-            Velocity2d cmd = { .linear = Linear_Velocity().setZero(), .angular = Angular_Velocity().setZero() };
-
-            Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-            if (frames_dist(dif) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pose_state, dif, dt);
-            } else {
-                controller.motion_profile.reset();
-                controller.linear_pid.reset();
-                controller.angular_pid.reset();
-                if (robot.path.progress()) {
-                    Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-                    controller.motion_profile.set_setpoint(frames_dist(dif));
-                } else {
-                    break;
-                }
-            }
-            robot.send_velocity_command(cmd);
-        } else {
-        }
-
-        next += period;
-        std::this_thread::sleep_until(next);
-
-        if (clock::now() > next + period) {
-            std::cerr << "control-loop overrun" << std::endl;
-            next = clock::now();
-            previous_time = next;
-        }
-    }
-}
-
 int
 main(void)
 {
@@ -139,28 +82,32 @@ main(void)
     std::cin.ignore();
 
     Go1 robot;
+    load_config(robot, "robot_configs/sim_bot.json");
+    robot.path.path_direction = robot.config.path_config.direction;
+    robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
+    robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
+
     UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.config.control_loop_hz), 3,
         boost::bind(&Go1::UDPRecv, &robot));
     UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot.config.control_loop_hz), 3,
         boost::bind(&Go1::UDPSend, &robot));
 
     {
-        Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.v_max,
-            robot.config.kinematic_constraints.a_max, robot.config.kinematic_constraints.v_min,
-            robot.config.kinematic_constraints.a_min);
+        Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
+            robot.config.kinematic_constraints.acceleration_max,
+            robot.config.kinematic_constraints.velocity_backward_max,
+            robot.config.kinematic_constraints.deceleration_max);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-        robot.path.path_looping = true;
-        robot.path.read_json_latlon("ecef_points.json");
-        robot.frames.init(robot.path);
+        frames_init(robot.frames, robot.path.local_path);
 
         loop_udpSend.start();
         loop_udpRecv.start();
 
-        Sim_Display sim = Sim_Display(robot, robot.path);
-        std::jthread sim_thread(&Sim_Display::display, sim);
-
         control_loop(robot, traj_controller);
+        std::jthread control_thread(control_loop<Go1>, std::ref(robot), std::ref(traj_controller));
+        Sim_Display sim = Sim_Display(robot, robot.path);
+        sim.display();
     }
 
     CloseWindow();
