@@ -138,6 +138,8 @@ socket_recv(int fd, std::array<char, TCP_BUFFER_LENGTH> recv_buf, Ring_Buffer<ch
     ssize_t bytes_received;
 
     bytes_received = ::recv(fd, recv_buf.data(), recv_buf.size(), 0);
+    std::cout << "bytes received: " << bytes_received << std::endl;
+    std::cout << recv_buf.data() << std::endl;
     // bytes_received = read(fd, recv_buf.data(), recv_buf.size());
     ring.write(std::span(recv_buf.data(), bytes_received));
 
@@ -200,6 +202,22 @@ TCP_Client::recv(Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring)
 
 bool
 TCP_Client::send(const char *buf, size_t length)
+{
+    size_t total_sent = 0;
+    while (total_sent < length) {
+        ssize_t bytes_sent = ::send(fd, buf + total_sent, length - total_sent, 0);
+        if (bytes_sent <= 0) {
+            if (errno == EINTR) continue; // Retry if interrupted
+            std::cerr << "Send error: " << strerror(errno) << std::endl;
+            return false;
+        }
+        total_sent += bytes_sent;
+    }
+    return false;
+}
+
+bool
+tcp_send(const int fd, const char *buf, size_t length)
 {
     size_t total_sent = 0;
     while (total_sent < length) {

@@ -2,9 +2,9 @@
 #include "linear_controller.hpp"
 
 bool
-Robot::toggle_pause()
+Robot::pause()
 {
-    paused = !paused;
+    paused = true;
     return true;
 }
 
@@ -16,9 +16,9 @@ Robot::stop()
 }
 
 bool
-Robot::start()
+Robot::resume()
 {
-    running = true;
+    paused = false;
     return true;
 }
 
@@ -79,11 +79,15 @@ Reader::loop()
                 std::cout << j.dump() << std::endl;
                 auto command = j["command"];
                 if (command == "pause") {
-                    robot->toggle_pause();
+                    robot->pause();
                     std::cout << "robot.pause : " << robot->paused << std::endl;
                 }
                 if (command == "stop") {
                     robot->stop();
+                }
+
+                if (command == "continue") {
+                    robot->resume();
                 }
             }
         }

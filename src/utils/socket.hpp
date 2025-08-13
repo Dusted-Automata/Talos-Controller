@@ -47,3 +47,4 @@ bool tcp_server_setup(TCP_Server &server);
 void tcp_server_handle_client(TCP_Server &server);
 void tcp_server_start(TCP_Server &server);
 bool socket_recv(int fd, std::array<char, TCP_BUFFER_LENGTH> recv_buf, Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> &ring);
+bool tcp_send(const int fd, const char *buf, size_t length);

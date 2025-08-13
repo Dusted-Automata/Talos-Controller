@@ -151,12 +151,15 @@ main(void)
     frames_init(robot.frames, robot.path.local_path);
     robot.init();
 
-    std::jthread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
+    // while (robot.running) {
+    //     // std::jthread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
+    //     control_loop<Wheelchair>(robot, traj_controller);
+    // }
 
-    Sim_Display sim = Sim_Display(robot, robot.path);
-    sim.display();
-
-    CloseWindow();
+    // Sim_Display sim = Sim_Display(robot, robot.path);
+    // sim.display();
+    //
+    // CloseWindow();
 
     return 0;
 }

@@ -28,7 +28,7 @@ class Robot
 
   public:
     std::atomic<bool> running = false;
-    std::atomic<bool> paused = false;
+    std::atomic<bool> paused = true;
     Pose_State pose_state;
     Frames frames = {};
     Logger logger = {};
@@ -41,8 +41,8 @@ class Robot
     // TCP_Socket out = TCP_Socket("127.0.0.1", 55555);
 
     bool stop();
-    bool toggle_pause();
-    bool start();
+    bool pause();
+    bool resume();
     Ecef get_PVAT();
     void set_target();
 
@@ -93,6 +93,9 @@ control_loop(T &robot, Linear_Controller &controller)
             if (eucledean_xy_norm(global_difference) < robot.config.goal_tolerance_in_meters) {
                 controller.motion_profile.reset();
                 controller.aligned_to_goal_waypoint = false;
+                robot.pause();
+                std::string success = "success\n";
+                tcp_send(robot.TCP_reader.socket.client_socket, success.data(), success.length());
                 if (robot.path.global_path.progress(robot.path.path_direction)) {
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
                     controller.motion_profile.set_setpoint(eucledean_xy_norm(global_difference));
