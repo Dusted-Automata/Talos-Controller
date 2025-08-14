@@ -11,7 +11,7 @@ Linear_Controller::get_cmd(Pose_State pose_state, Vector3d diff, Vector3d motion
     Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 
     double yaw_error = atan2(diff.y(), diff.x());
-    if (fabs(yaw_error) < to_radian(1)) {
+    if (fabs(yaw_error) < to_radian(5.5)) {
         aligned_to_goal_waypoint = true;
     }
     // double yaw_error = atan2(diff.y(), diff.x());
