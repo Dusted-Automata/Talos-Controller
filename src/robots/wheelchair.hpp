@@ -40,29 +40,7 @@ target_to_char(Command_Target target)
     }
 }
 
-struct Command {
-    Command_Action action;
-    Command_Target target;
-    std::optional<std::string> value;
-
-    Command(Command_Action action, Command_Target target, std::string val)
-        : action(action), target(target), value(std::move(val))
-    {
-    }
-    Command(Command_Action action, Command_Target target) : action(action), target(target), value(std::nullopt) {}
-
-    std::string
-    to_string() const
-    {
-        char action_char = action_to_char(action);
-        char target_char = target_to_char(target);
-        if (value.has_value()) {
-            return std::format("{}{},{}\n", action_char, target_char, value.value());
-        } else {
-            return std::format("{}{},\n", action_char, target_char);
-        }
-    }
-};
+std::string create_command_string(Command_Action a, Command_Target t, std::optional<std::string> value);
 
 struct Joystick {
     uint8_t x;
@@ -74,7 +52,7 @@ class Wheelchair : public Robot
   private:
     int tty_acm_fd = -1;
     Joystick scale_to_joystick(const Velocity2d &vel);
-    std::string joystick_to_hex(Joystick stick_pos);
+    bool joystick_to_hex(std::array<char, 10> &buffer, Joystick stick_pos);
     std::array<char, 128> tty_read_buf;
 
   public:
@@ -86,16 +64,13 @@ class Wheelchair : public Robot
         pose_state.velocity.angular_vel = Vector3d::Zero();
     }
 
-    Ublox ublox = {};
-    std::atomic<bool> running = false;
-    std::atomic<bool> pause = false;
     ~Wheelchair()
     {
-        Command set_cmd(Command_Action::SET, Command_Target::INPUT, "0");
-        ::write(tty_acm_fd, set_cmd.to_string().data(), set_cmd.to_string().size());
+        std::string cmd = create_command_string(Command_Action::SET, Command_Target::JOYSTICK, "0");
+        ::write(tty_acm_fd, cmd.data(), cmd.size());
     };
 
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;
-    void init();
+    void init(Wheelchair &robot);
 };

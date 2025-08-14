@@ -2,7 +2,6 @@
 #include "EGM96.hpp"
 #include "cppmap3d.hh"
 #include "json.hpp"
-#include <format>
 #include <fstream>
 #include <iostream>
 
@@ -115,8 +114,8 @@ void
 Robot_Path::print()
 {
     std::cout << "------------" << std::endl;
-    std::string msg = std::format("Index: C{} | G{} - Path_Looping : ", current_index, goal_index, path_looping);
-    std::cout << msg << std::endl;
+    // std::string msg = std::format("Index: C{} | G{} - Path_Looping : ", current_index, goal_index, path_looping);
+    // std::cout << msg << std::endl;
     for (size_t i = 0; i < path.size(); i++) {
         std::cout << path[i].point.raw().transpose() << " | " << path[i].local_point.raw().transpose() << std::endl;
     }

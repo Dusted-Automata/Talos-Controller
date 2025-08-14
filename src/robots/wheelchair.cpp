@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 void
-Wheelchair::init()
+Wheelchair::init(Wheelchair &robot)
 {
 
 #define BAUDRATE B115200
@@ -43,8 +43,9 @@ Wheelchair::init()
     while (!setup) {
         int n = read(tty_acm_fd, buf.data(), sizeof(buf));
         if (n > 0) {
-            std::string msg = std::format("got a message! Size: {} | msg: {}", n, buf.data());
-            std::cout << msg << std::endl;
+            // std::string msg = std::format("got a message! Size: {} | msg: {}", n, buf.data());
+            printf("got a message! Size: %i | msg: %s", n, buf.data());
+            // std::cout << msg << std::endl;
             for (int i = 0; i < n; i++) {
                 incomingMessage += buf[i];
                 if (incomingMessage.find("IN,Setup") != std::string::npos) {
@@ -75,8 +76,22 @@ Wheelchair::init()
         running = true;
     }
 
-    Command set_cmd(Command_Action::SET, Command_Target::INPUT, "1");
-    ::write(tty_acm_fd, set_cmd.to_string().data(), set_cmd.to_string().size());
+    std::string cmd = create_command_string(Command_Action::SET, Command_Target::INPUT, "1");
+    ::write(tty_acm_fd, cmd.data(), cmd.size());
+}
+
+std::string
+create_command_string(Command_Action a, Command_Target t, std::optional<std::string> value)
+{
+    char action_char = action_to_char(a);
+    char target_char = target_to_char(t);
+    char buffer[256];
+    if (value.has_value()) {
+        std::snprintf(buffer, sizeof(buffer), "%c%c,%s\n", action_char, target_char, value.value().data());
+    } else {
+        std::snprintf(buffer, sizeof(buffer), "%c%c,\n", action_char, target_char);
+    }
+    return std::string(buffer);
 }
 
 Joystick
@@ -108,11 +123,15 @@ Wheelchair::scale_to_joystick(const Velocity2d &vel)
     return stick;
 }
 
-std::string
-Wheelchair::joystick_to_hex(Joystick stick_pos)
+bool
+Wheelchair::joystick_to_hex(std::array<char, 10> &buffer, Joystick stick_pos)
 {
-    std::string hex = std::format("{:02X},{:02X}", stick_pos.x, stick_pos.y);
-    return hex;
+
+    size_t written = std::snprintf(buffer.data(), sizeof(buffer), "%02X,%02X", stick_pos.x, stick_pos.y);
+    if (written >= buffer.size()) {
+        return false;
+    }
+    return true;
 }
 
 void
@@ -120,9 +139,15 @@ Wheelchair::send_velocity_command(Velocity2d &velocity)
 {
     pose_state.velocity = velocity; // FOR DEADRECKONING
     Joystick stick = scale_to_joystick(velocity);
-    std::string js_hex = joystick_to_hex(stick);
-    Command cmd(Command_Action::SET, Command_Target::JOYSTICK, js_hex);
-    ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
+    std::array<char, 10> js_hex;
+    if (joystick_to_hex(js_hex, stick)) {
+        std::string hex = std::string(js_hex.data());
+        std::printf("joystick hex: %s\n", hex.c_str());
+        std::string cmd = create_command_string(Command_Action::SET, Command_Target::JOYSTICK, hex);
+        ::write(tty_acm_fd, cmd.data(), cmd.size());
+    } else {
+        std::printf("Could not convert joystick to hex!\n");
+    }
     // int written = ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
     // std::cout << written << std::endl;
 }
@@ -138,7 +163,7 @@ main(void)
 {
 
     Wheelchair robot;
-    load_config(robot, "robot_configs//wheelchair_profile_1_bar_3.json");
+    load_config(robot, "robot_configs/wheelchair_profile_3_bar_3.json");
     robot.path.path_direction = robot.config.path_config.direction;
     robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
     robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
@@ -149,17 +174,14 @@ main(void)
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
     frames_init(robot.frames, robot.path.local_path);
-    robot.init();
+    robot.init(robot);
 
-    // while (robot.running) {
-    //     // std::jthread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
-    //     control_loop<Wheelchair>(robot, traj_controller);
-    // }
+    std::jthread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
 
-    // Sim_Display sim = Sim_Display(robot, robot.path);
-    // sim.display();
-    //
-    // CloseWindow();
+    Sim_Display sim = Sim_Display(robot, robot.path);
+    sim.display();
+
+    CloseWindow();
 
     return 0;
 }
