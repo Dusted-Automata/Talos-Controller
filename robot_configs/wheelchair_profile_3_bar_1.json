@@ -8,10 +8,10 @@
     "interpolation_distances_in_meters" : 3.0
 },
 "kinematic_constraints" : {
-    "velocity_forward_max" : 1.51,
+    "velocity_forward_max" : 0.61,
     "velocity_backward_max" : 0.0,
-    "velocity_turning_left_max" : 1.35,
-    "velocity_turning_right_max" : -1.35,
+    "velocity_turning_left_max" : 1.05,
+    "velocity_turning_right_max" : -1.05,
     "acceleration_max" : 1.0,
     "deceleration_max" : -1.6,
     "jerk_max" : 0.0,
@@ -24,7 +24,7 @@
         "k_i" : 0.00,
         "k_d" : 0.00,
         "output_min" : 0.0,
-        "output_max" : 1.51,
+        "output_max" : 0.61,
         "integral_min" : -100,
         "integral_max" : 100
     },
@@ -33,8 +33,8 @@
         "k_p" : 1.22,
         "k_i" : 0.000,
         "k_d" : 0.80,
-        "output_min" : -1.35,
-        "output_max" : 1.35,
+        "output_min" : -1.05,
+        "output_max" : 1.05,
         "integral_min" : -100,
         "integral_max" : 100
     }

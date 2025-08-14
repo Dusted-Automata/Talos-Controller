@@ -4,7 +4,7 @@
     "goal_tolerance_in_meters" : 0.35,
     "path_config": {
         "direction" : "reverse",
-        "filepath" : "waypoints/Table_Grab_full.json",
+        "filepath" : "waypoints/T_Table_Grab_to_O.json",
         "interpolation_distances_in_meters" : 3.0
     },
     "kinematic_constraints" : {
