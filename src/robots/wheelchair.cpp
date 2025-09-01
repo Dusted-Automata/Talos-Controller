@@ -35,12 +35,14 @@ Wheelchair::init(Wheelchair &robot)
 
     std::array<char, 256> buf;
 
-    std::cout << "Waiting for 'IN,Setup' message..." << std::endl;
+    std::cout << "Waiting for Setup..." << std::endl;
 
     bool setup = false;
     std::string incomingMessage = "";
 
     while (!setup) {
+        std::string cmd = "GI,\n";
+        ::write(tty_acm_fd, cmd.data(), cmd.size());
         int n = read(tty_acm_fd, buf.data(), sizeof(buf));
         if (n > 0) {
             // std::string msg = std::format("got a message! Size: {} | msg: {}", n, buf.data());
@@ -48,11 +50,13 @@ Wheelchair::init(Wheelchair &robot)
             // std::cout << msg << std::endl;
             for (int i = 0; i < n; i++) {
                 incomingMessage += buf[i];
-                if (incomingMessage.find("IN,Setup") != std::string::npos) {
+                if (incomingMessage.find("GI,") != std::string::npos) {
                     setup = true;
                 }
             }
         }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        printf("----\n");
     }
 
     {
