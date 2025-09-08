@@ -5,7 +5,132 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <netinet/in.h>
+#include <thread>
 #include <unistd.h>
+
+
+static std::string
+fixToString(gnss_fix fix)
+{
+    switch (fix) {
+    case gnss_fix::NONE: return "NONE";
+    case gnss_fix::GPS: return "GPS";
+    case gnss_fix::DGPS: return "DGPS";
+    case gnss_fix::PPS: return "PPS";
+    case gnss_fix::RTK: return "RTK";
+    case gnss_fix::RTK_FLOAT: return "RTK_FLOAT";
+    case gnss_fix::ESTIMATED: return "ESTIMATED";
+    case gnss_fix::MANUAL: return "MANUAL";
+    case gnss_fix::SIMULATION: return "SIMULATION";
+    default: return "Unknown";
+    }
+}
+
+void
+print_GGA(gnss_msg msg)
+{
+    std::cout << "time: " << (int)msg.time.hh << ":" << (int)msg.time.mm << ":" << (int)msg.time.ss << ":" << (int)msg.time.ms
+              << std::endl;
+    std::cout << "LLH: " << msg.llh.lat() << " , " << msg.llh.lon() << " , " << msg.llh.alt() << std::endl;
+    std::cout << "fix: " << fixToString(msg.fix) << std::endl;
+    std::cout << "num_satellites: " << static_cast<int>(msg.num_satalites) << std::endl;
+    std::cout << "hdop: " << msg.hdop << std::endl;
+    std::cout << "altitude: " << msg.alt << " meters" << std::endl;
+    std::cout << "geoid_separation: " << msg.geoid_seperation << " meters" << std::endl;
+    std::cout << "differential_age: " << msg.diff_age << " seconds" << std::endl;
+    std::cout << "differential_station: " << msg.diff_station << std::endl;
+}
+
+
+gnss_msg
+parse_GGA(json j){
+    gnss_msg msg = {};
+
+    msg.hdop = j["HDOP"];
+    std::string lat_dir = j["NS"];
+    std::string lon_dir = j["EW"];
+    msg.alt = j["alt"];
+    // diff_age = j["diffAge"];
+    if (!(j["diffStation"] == "")) {
+        msg.diff_station = j["diffStation"];
+    }
+    double lat = j["lat"];
+    double lon = j["lon"];
+    if (!(lat == 0.0 || lat_dir == "")) {
+        if (lat_dir == "S") {
+            lat *= -1.0;
+        }
+        lat = to_radian(lat);
+        msg.llh.lat() = lat;
+    }
+
+    if (!(lon == 0.0) && !(lon_dir == "")) {
+        if (lon_dir == "W") {
+            lon *= -1.0;
+        }
+
+        lon = to_radian(lon);
+        msg.llh.lon() = lon;
+    }
+
+    msg.num_satalites = j["numSV"];
+    // msg.fix = static_cast<gnss_fix>(j["quality"]);
+    msg.alt = j["alt"];
+    msg.geoid_seperation = j["sep"];
+    msg.llh.alt() = msg.alt + msg.geoid_seperation;
+
+    return msg;
+}
+
+imu_msg
+parse_Nav_PVAT(json j){
+    imu_msg msg = {};
+
+    msg.accHeading = j["accHeading"];
+    msg.accPitch = j["accPitch"];
+    msg.accRoll = j["accRoll"];
+    double angle_heading = j["vehHeading"];
+    double radian_heading = to_radian(angle_heading);
+    double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
+    // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
+    msg.veh_heading = positive_radian;
+    std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
+              << " | positive_radian: " << positive_radian << std::endl;
+    msg.mot_heading = j["motHeading"];
+    msg.mot_heading = convert_to_positive_radians(to_radian(msg.mot_heading));
+    msg.pitch = j["vehPitch"];
+    msg.roll = j["vehRoll"];
+
+    msg.time.hh = j["hour"];
+    msg.time.mm = j["min"];
+    msg.time.ss = j["sec"];
+    msg.time.ms = j["iTOW"];
+    // llh.lat() = j["lat"];
+    // llh.lat() = to_radian(llh.lat());
+    // llh.lon() = j["lon"];
+    // llh.lon() = to_radian(llh.lon());
+    // llh.alt() = j["height"];      // in mm
+    // llh.alt() = llh.alt() / 1000; // in M
+    
+    return msg;
+}
+
+void
+parse_janik_msg(json j, std::optional<gnss_msg>& gnss, std::optional<imu_msg>& imu){
+    imu.emplace();
+    imu->accHeading = j["accHeading"];
+    double angle_heading = j["vehHeading"];
+    double radian_heading = to_radian(angle_heading);
+    double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
+    imu->heading = positive_radian;
+
+    gnss.emplace();
+    gnss->llh.lat() = to_radian(j["lat"]);
+    gnss->llh.lon() =to_radian(j["lon"]);
+    gnss->llh.alt() = j["height"];
+    // gnss->llh.alt() = gnss->llh.alt();
+}
+
 void
 Ublox::loop()
 {
@@ -36,42 +161,20 @@ Ublox::loop()
 
                 std::string id = j["identity"];
                 if (id == "GPGGA") {
-                    // std::cout << j.dump(4) << std::endl;
-                    gga = GGA(j);
-                    // LatLng latlng = gga.value().latlng;
-                    // LLH llh = LLH(latlng.lat, latlng.lng, 241);
-                    // Ecef ecef = cppmap3d::geodetic2ecef(llh);
+                    std::unique_lock<std::mutex> lock(mutex);
+                    gnss = parse_GGA(j);
                 }
-                if (id == "NAV-ATT") {
-                    // std::cout << j.dump(4) << std::endl;
-                    nav_att = Nav_Att(j);
-                }
-
                 if (id == "NAV-PVAT") {
                     // std::cout << j.dump(4) << std::endl;
-                    nav_pvat = Nav_Pvat(j);
-                    // LLH llh = nav_pvat->llh;
-                    // Ecef ecef = cppmap3d::geodetic2ecef(llh);
-                    // std::cout << "ECEF: " << ecef.raw().transpose() << " | " << llh.raw().transpose() << std::endl;
-                    if (nav_pvat.has_value()) {
-                        // std::cout << nav_pvat->veh_heading << " | " << nav_pvat->mot_heading << " | "
-                        //           << nav_pvat->accHeading << std::endl;
-                    }
+                    std::unique_lock<std::mutex> lock(mutex);
+                    imu = parse_Nav_PVAT(j);
+                }
+                if (id == "JANIK_SENSOR") {
+                    std::unique_lock<std::mutex> lock(mutex);
+                    parse_janik_msg(j, gnss, imu);
                 }
             }
         }
-
-        // std::optional<json> j = socket.recv();
-        // if (j.has_value()) {
-        //     if (j.value()["identity"] == "GPGGA") {
-        //         std::cout << j.value().dump(4) << std::endl;
-        //         gga = GGA(j.value());
-        //     }
-        //     if (j.value()["identity"] == "NAV-ATT") {
-        //         std::cout << j.value().dump(4) << std::endl;
-        //         nav_att = Nav_Att(j.value());
-        //     }
-        // }
     }
 }
 
@@ -94,53 +197,9 @@ Ublox::start()
         sensor_thread.join();
     }
 
-    sensor_thread = std::thread(&Sensor::loop, this);
+    sensor_thread = std::thread(&Ublox::loop, this);
     running = true;
     return true;
-}
-
-void
-Ublox::consume(Msg_Type msg)
-{
-    // std::unique_lock<std::mutex> lock(sensor_mutex);
-    switch (msg) {
-    case Msg_Type::NAV_PVAT: nav_att.reset(); return;
-    case Msg_Type::NAV_ATT: nav_att.reset(); return;
-    case Msg_Type::GP_GGA: gga.reset(); return;
-    }
-}
-
-template<>
-std::optional<Nav_Att>
-Ublox::get_latest(Msg_Type msg)
-{
-    // std::unique_lock<std::mutex> lock(sensor_mutex);
-    if (msg == NAV_ATT) {
-        return nav_att;
-    }
-    return std::nullopt;
-}
-
-template<>
-std::optional<GGA>
-Ublox::get_latest(Msg_Type msg)
-{
-    // std::unique_lock<std::mutex> lock(sensor_mutex);
-    if (msg == GP_GGA) {
-        return gga;
-    }
-    return std::nullopt;
-}
-
-template<>
-std::optional<Nav_Pvat>
-Ublox::get_latest(Msg_Type msg)
-{
-    // std::unique_lock<std::mutex> lock(sensor_mutex);
-    if (msg == NAV_PVAT) {
-        return nav_pvat;
-    }
-    return std::nullopt;
 }
 
 inline bool
@@ -152,20 +211,6 @@ above_epsilon(double lat, double lng, double alt)
     return false;
 }
 
-void
-update_position(Ublox &ublox, Frames &frames)
-{
-    auto ublox_gga = ublox.get_latest<GGA>(Msg_Type::GP_GGA);
-    if (ublox_gga.has_value()) {
-        GGA val = ublox_gga.value();
-
-        if (above_epsilon(val.llh.lat(), val.llh.lon(), val.llh.alt())) {
-            // Vector3d error_vec = robot->frames.get_error_vector_in_NED(lat, lng, alt);
-            frames_update_based_on_measurement(frames, val.llh);
-        }
-        ublox.consume(Msg_Type::GP_GGA);
-    }
-}
 
 double
 convert_to_positive_radians(double angle)
@@ -186,23 +231,28 @@ min_angle_difference(double angle1, double angle2)
 }
 
 void
-update_heading(Ublox &ublox, Frames &frames, Heading &h)
+update_position(Ublox &ublox, Frames &frames)
 {
-
-    auto ublox_simple = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
-    if (ublox_simple.has_value()) {
-        Nav_Pvat nav_pvat = ublox_simple.value();
-        std::cout << "heading_in_radians: " << h.initial_heading_in_radians << " | accuracy: " << nav_pvat.accHeading
-                  << " | veh_heading: " << nav_pvat.veh_heading << std::endl;
-        double heading = convert_to_positive_radians(nav_pvat.veh_heading);
-        h.heading_accuracy = nav_pvat.accHeading;
-        if (nav_pvat.accHeading < 30.0) { // NOTE: TBD
-            Eigen::Affine3d rotationMatrix;
-
-            rotationMatrix = Eigen::AngleAxisd(heading, Eigen::Vector3d::UnitZ());
-            frames.local_frame.orientation = rotationMatrix; // NOTE: To be checked!
+    std::unique_lock<std::mutex> lock(ublox.mutex);
+    if (ublox.gnss.has_value()) {
+        if (above_epsilon(ublox.gnss->llh.lat(), ublox.gnss->llh.lon(), ublox.gnss->llh.alt())) {
+            frames_update_based_on_measurement(frames, ublox.gnss->llh);
         }
-        ublox.consume(Msg_Type::NAV_PVAT);
+        ublox.gnss.reset();
+    }
+}
+
+void
+update_heading(Ublox &ublox, Frames &frames)
+{
+    std::unique_lock<std::mutex> lock(ublox.mutex);
+    if (ublox.imu.has_value()) {
+        if (ublox.imu->accHeading < 30.0) { 
+            Eigen::Affine3d rotationMatrix;
+            rotationMatrix = Eigen::AngleAxisd(ublox.imu->heading, Eigen::Vector3d::UnitZ());
+            frames.local_frame.orientation = rotationMatrix; 
+        }
+        ublox.imu.reset();
     }
 }
 
