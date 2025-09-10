@@ -16,6 +16,8 @@ struct ENU_Frame : public Frame {
 
 struct Ecef_Frame : public Frame {
     Ecef pos{ 0, 0, 0 };
+    Eigen::Matrix3d set_rotation;
+    Ecef start_pos;
 };
 
 struct Frames {

@@ -21,12 +21,9 @@ frames_move_in_local_frame(Frames &frames, Velocity2d velocity, const double dt)
     }
 
     Ecef new_local_position = cppmap3d::enu2ecef(frames.local_frame.pos, frames.local_frame.origin);
-    frames.global_frame.orientation.rotate(Eigen::AngleAxisd(angle_update.z(), Vector3d::UnitZ()));
+    // frames.global_frame.orientation.rotate(Eigen::AngleAxisd(angle_update.z(), Vector3d::UnitZ()));
     frames.global_frame.pos = new_local_position;
-
-    std::cout << "===" << std::endl;
-    std::cout << frames.global_frame.orientation.rotation() << std::endl;
-    std::cout << "===" << std::endl;
+    frames.global_frame.orientation = frames.global_frame.set_rotation * frames.local_frame.orientation.rotation();
 }
 
 void
@@ -56,15 +53,20 @@ frames_init(Frames &frames, Robot_Path &path)
     LLH llh = cppmap3d::ecef2geodetic(path.current().point);
     frames.local_frame.origin = llh;
     frames.global_frame.pos = path.current().point;
-    // Eigen::Matrix3d R;
-    // R << -sin(llh.lon()), (-cos(llh.lon()) * sin(llh.lat())), (cos(llh.lon()) * cos(llh.lat())),
-    //     cos(llh.lon()), (-sin(llh.lon()) * sin(llh.lat())), (sin(llh.lon()) * cos(llh.lat())),
-    //     0, cos(llh.lat()), sin(llh.lon());
-    //
-    // frames.global_frame.orientation = R;
-    //
-    // Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
-    // frames.global_frame.orientation = M;
+    frames.global_frame.start_pos = path.current().point;
+
+    const double sL = std::sin(llh.lon());
+    const double cL = std::cos(llh.lon());
+    const double sB = std::sin(llh.lat());
+    const double cB = std::cos(llh.lat());
+
+    // ENU -> ECEF
+    Eigen::Matrix3d R;
+    R << -sL,       -cL*sB,    cL*cB,
+          cL,       -sL*sB,    sL*cB,
+          0,            cB,       sB;
+
+    frames.global_frame.set_rotation = R;
 
     // double theta = atan2(frames.local_frame.origin.lon(), frames.local_frame.origin.lat());
     // Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
