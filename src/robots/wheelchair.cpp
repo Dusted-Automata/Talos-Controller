@@ -146,7 +146,6 @@ Wheelchair::send_velocity_command(Velocity2d &velocity)
     std::array<char, 10> js_hex;
     if (joystick_to_hex(js_hex, stick)) {
         std::string hex = std::string(js_hex.data());
-        std::printf("joystick hex: %s\n", hex.c_str());
         std::string cmd = create_command_string(Command_Action::SET, Command_Target::JOYSTICK, hex);
         ::write(tty_acm_fd, cmd.data(), cmd.size());
     } else {
