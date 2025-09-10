@@ -73,7 +73,7 @@ control_loop(T &robot, Linear_Controller &controller)
             // std::cout << "ublox_update_speed: " << update_speed << std::endl;
             frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
             update_position(robot.ublox, robot.frames);
-            update_heading(robot.ublox, robot.frames, robot.heading);
+            update_heading(robot.ublox, robot.frames);
             robot.logger.savePosesToFile(robot.frames);
             robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 
