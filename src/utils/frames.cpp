@@ -20,9 +20,13 @@ frames_move_in_local_frame(Frames &frames, Velocity2d velocity, const double dt)
         // std::cout << "move_in_local_frame: " << new_local_orientation << std::endl;
     }
 
-    // Ecef new_local_position = cppmap3d::enu2ecef(frames.local_frame.pos, frames.local_frame.origin);
-    // frames.global_frame.orientation.rotate(Eigen::AngleAxisd(angle_update.z(), Vector3d::UnitZ()));
-    // frames.global_frame.pos = new_local_position;
+    Ecef new_local_position = cppmap3d::enu2ecef(frames.local_frame.pos, frames.local_frame.origin);
+    frames.global_frame.orientation.rotate(Eigen::AngleAxisd(angle_update.z(), Vector3d::UnitZ()));
+    frames.global_frame.pos = new_local_position;
+
+    std::cout << "===" << std::endl;
+    std::cout << frames.global_frame.orientation.rotation() << std::endl;
+    std::cout << "===" << std::endl;
 }
 
 void
@@ -40,6 +44,7 @@ frames_update_based_on_measurement(Frames &frames, const LLH &llh)
     // std::cout << "GLOB : " << global_frame.pos.transpose() << std::endl;
     ENU enu = cppmap3d::ecef2enu(measured_ecef, frames.local_frame.origin);
     frames.local_frame.pos = enu;
+    frames.global_frame.pos = measured_ecef;
 }
 void
 frames_init(Frames &frames, Robot_Path &path)
@@ -48,9 +53,16 @@ frames_init(Frames &frames, Robot_Path &path)
         return;
     }
 
-    frames.local_frame.origin = cppmap3d::ecef2geodetic(path.current().point);
+    LLH llh = cppmap3d::ecef2geodetic(path.current().point);
+    frames.local_frame.origin = llh;
     frames.global_frame.pos = path.current().point;
-
+    // Eigen::Matrix3d R;
+    // R << -sin(llh.lon()), (-cos(llh.lon()) * sin(llh.lat())), (cos(llh.lon()) * cos(llh.lat())),
+    //     cos(llh.lon()), (-sin(llh.lon()) * sin(llh.lat())), (sin(llh.lon()) * cos(llh.lat())),
+    //     0, cos(llh.lat()), sin(llh.lon());
+    //
+    // frames.global_frame.orientation = R;
+    //
     // Eigen::Matrix3d M = wgs_ecef2ned_matrix(llh);
     // frames.global_frame.orientation = M;
 
