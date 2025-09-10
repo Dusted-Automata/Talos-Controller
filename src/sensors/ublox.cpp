@@ -169,7 +169,7 @@ Ublox::loop()
                     std::unique_lock<std::mutex> lock(mutex);
                     imu = parse_Nav_PVAT(j);
                 }
-                if (id == "JANIK_SENSOR") {
+                if (id == "refinePose") {
                     std::unique_lock<std::mutex> lock(mutex);
                     parse_janik_msg(j, gnss, imu);
                 }
