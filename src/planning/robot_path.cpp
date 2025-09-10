@@ -142,8 +142,8 @@ Robot_Path::read_json_latlon(std::filesystem::path file_path)
         llh_origin.lat() = to_radian(point["lat"]);
         llh_origin.lon() = to_radian(point["lon"]);
         llh_origin.alt() = point["alt"];
-        double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
-        llh_origin.alt() += offset;
+        // double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
+        // llh_origin.alt() += offset;
 
         std::vector<Pose> waypoints;
         for (auto point : data["points"]) {
@@ -151,8 +151,8 @@ Robot_Path::read_json_latlon(std::filesystem::path file_path)
             llh.lat() = to_radian(point["lat"]);
             llh.lon() = to_radian(point["lon"]);
             llh.alt() = point["alt"];
-            double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
-            llh.alt() += offset;
+            // double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
+            // llh.alt() += offset;
             std::cout << "lat: " << llh.lat() << " long: " << llh.lon() << " alt: " << llh.alt() << std::endl;
 
             Ecef ecef = cppmap3d::geodetic2ecef(llh);
