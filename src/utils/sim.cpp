@@ -88,17 +88,22 @@ void
 Sim_Display::display()
 {
     while (!WindowShouldClose()) {
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-            Vector2 delta = GetMouseDelta();
-            delta = Vector2Scale(delta, -1.0f / camera.zoom);
-            camera.target = Vector2Add(camera.target, delta);
-        }
+
+        Vector2 pos = { static_cast<float>(robot.frames.local_frame.pos.east()),
+            static_cast<float>(-robot.frames.local_frame.pos.north()) };
+        camera.target = pos;
+
+        // if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        //     Vector2 delta = GetMouseDelta();
+        //     delta = Vector2Scale(delta, -1.0f / camera.zoom);
+        //     camera.target = Vector2Add(camera.target, delta);
+        // }
 
         float wheel = GetMouseWheelMove();
         if (wheel != 0) {
             Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
-            camera.offset = GetMousePosition();
-            camera.target = mouseWorldPos;
+            // camera.offset = GetMousePosition();
+            // camera.target = mouseWorldPos;
 
             float scaleFactor = 1.0f + (0.25f * fabsf(wheel));
             camera.zoom *= (wheel > 0) ? scaleFactor : 1.0f / scaleFactor;

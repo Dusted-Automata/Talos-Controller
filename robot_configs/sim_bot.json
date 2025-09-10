@@ -1,11 +1,11 @@
 {
     "version" : 1,
     "control_loop_hz": 100,
-    "goal_tolerance_in_meters" : 0.75,
+    "goal_tolerance_in_meters" : 0.30,
     "path_config": {
         "direction" : "reverse",
         "filepath" : "waypoints/PT_ping_pong.json",
-        "interpolation_distances_in_meters" : 2.5
+        "interpolation_distances_in_meters" : 0.05
     },
     "kinematic_constraints" : {
         "velocity_forward_max" : 25.5,
@@ -20,9 +20,9 @@
     },
     "PID" : {
         "linear_gains" : {
-            "k_p" : 1.01,
+            "k_p" : 0.01,
             "k_i" : 0.05,
-            "k_d" : 0.15,
+            "k_d" : 0.00,
             "output_min" : 0.0,
             "output_max" : 2.5,
             "integral_min" : -100,
@@ -30,9 +30,9 @@
         },
 
         "angular_gains" : {
-            "k_p" : 1.0,
-            "k_i" : 0.01,
-            "k_d" : 0.25,
+            "k_p" : 2.00,
+            "k_i" : 0.05,
+            "k_d" : 0.20,
             "output_min" : -2.5,
             "output_max" : 2.5,
             "integral_min" : -100,

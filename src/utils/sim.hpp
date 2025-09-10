@@ -10,8 +10,8 @@ class Sim_Display
     Robot &robot;
     Path_Planner &path;
 
-    static constexpr int SCREEN_WIDTH = 2000;
-    static constexpr int SCREEN_HEIGHT = 2000;
+    static constexpr int SCREEN_WIDTH = 1000;
+    static constexpr int SCREEN_HEIGHT = 800;
     static constexpr float ROBOT_SIZE = 20.0;
     static constexpr int TARGET_FPS = 500;
 
