@@ -14,6 +14,11 @@ struct Config : public Robot_Config {
 
 class Sim_Bot : public Robot
 {
+
+    double inertia = 0.02;
+    double damping = 0.05;    
+    double angular_velocity = 0.0;    // ω
+
     Pose_State sim_pose = {};
 
   public:
@@ -37,9 +42,8 @@ class Sim_Bot : public Robot
     void
     send_velocity_command(Velocity2d &velocity) override
     {
-
-        sim_pose.velocity = velocity;
         sim_pose.dt = GetFrameTime();
+        sim_pose.velocity = velocity;
         velocity.linear_vel *= sim_pose.dt;
         velocity.angular_vel *= sim_pose.dt;
     };
@@ -47,6 +51,12 @@ class Sim_Bot : public Robot
     Pose_State
     read_state() override
     {
+        sim_pose.dt = GetFrameTime();
+        double angular_acceleration = (sim_pose.velocity.angular_vel.z() - damping * angular_velocity) / inertia;
+        angular_velocity += angular_acceleration * sim_pose.dt;
+        angular_velocity = std::clamp(angular_velocity, config.kinematic_constraints.velocity_turning_right_max, config.kinematic_constraints.velocity_turning_left_max);
+        sim_pose.velocity.angular_vel.z()  = angular_velocity;
+
         return sim_pose;
     };
 };
@@ -71,7 +81,8 @@ init_bot(Sim_Bot &robot)
     //     }
     // }
 
-    robot.TCP_reader.init(robot);
+    // robot.TCP_reader.init(robot);
+    robot.paused = false;
     robot.running = true;
 }
 
