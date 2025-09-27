@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 
-class Frames;
+struct Frames;
 
 class Logger
 {

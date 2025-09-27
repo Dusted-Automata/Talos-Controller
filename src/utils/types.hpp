@@ -6,7 +6,7 @@
 #pragma GCC diagnostic ignored "-Wall"
 #pragma GCC diagnostic ignored "-Wextra"
 #pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wclass-memaccess"
+// #pragma GCC diagnostic ignored "-Wclass-memaccess"
 #include <Eigen/Dense>
 #pragma GCC diagnostic pop
 #include <array>
@@ -20,6 +20,201 @@ using Eigen::Matrix4d;
 using Eigen::Vector3d;
 typedef Vector3d Linear_Velocity;
 typedef Vector3d Angular_Velocity;
+
+#include <float.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+
+typedef int8_t int8;
+typedef int16_t int16;
+typedef int32_t int32;
+typedef int64_t int64;
+typedef int32 bool32;
+
+typedef uint8_t uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
+typedef uint64_t uint64;
+
+typedef intptr_t intptr;
+typedef uintptr_t uintptr;
+
+typedef size_t memory_index;
+
+typedef float real32;
+typedef double real64;
+
+typedef int8 i8;
+typedef int8 s08;
+typedef int8 b8;
+
+typedef int16 i16;
+typedef int32 i32;
+typedef int64 i64;
+
+typedef uint8 u8;
+typedef uint8 u08;
+typedef uint16 u16;
+typedef uint32 u32;
+typedef uint64 u64;
+
+typedef real32 f32;
+typedef real32 r32;
+typedef real64 f64;
+typedef real64 r64;
+
+
+typedef uintptr_t umm;
+typedef intptr_t smm;
+
+#define U8Max 255
+#define U16Max 65535
+#define S32Min ((s32)0x80000000)
+#define S32Max ((s32)0x7fffffff)
+#define U32Min 0
+#define U32Max ((u32) - 1)
+#define U64Max ((u64) - 1)
+#define F32Max FLT_MAX
+#define F32Min -FLT_MAX
+
+#define OffsetOf(type, Member) (umm) & (((type *)0)->Member)
+
+#define FILE_AND_LINE__(A, B) A "|" #B
+#define FILE_AND_LINE_(A, B) FILE_AND_LINE__(A, B)
+#define FILE_AND_LINE FILE_AND_LINE_(__FILE__, __LINE__)
+
+struct buffer {
+    umm Count;
+    u8 *Data;
+};
+
+typedef struct buffer string;
+
+// typedef union v2 {
+//     struct {
+//         f32 x, y;
+//     };
+//     struct {
+//         f32 u, v;
+//     };
+//     struct {
+//         f32 Width, Height;
+//     };
+//     f32 E[2];
+// } v2;
+//
+// union v2u {
+//     struct {
+//         u32 x, y;
+//     };
+//     struct {
+//         u32 Width, Height;
+//     };
+//     u32 E[2];
+// };
+//
+// union v2s {
+//     struct {
+//         s32 x, y;
+//     };
+//     s32 E[2];
+// };
+//
+// typedef union v3 {
+//     struct {
+//         f32 x, y, z;
+//     };
+//     struct {
+//         f32 u, v, __;
+//     };
+//     struct {
+//         f32 r, g, b;
+//     };
+//     struct {
+//         v2 xy;
+//         f32 Ignored0_;
+//     };
+//     struct {
+//         f32 Ignored1_;
+//         v2 yz;
+//     };
+//     struct {
+//         v2 uv;
+//         f32 Ignored2_;
+//     };
+//     struct {
+//         f32 Ignored3_;
+//         v2 v__;
+//     };
+//     f32 E[3];
+// } v3;
+//
+// union v3s {
+//     struct {
+//         s32 x;
+//         s32 y;
+//         s32 z;
+//     };
+//     s32 E[3];
+// };
+//
+// union v4 {
+//     struct {
+//         union {
+//             v3 xyz;
+//             struct {
+//                 f32 x, y, z;
+//             };
+//         };
+//
+//         f32 w;
+//     };
+//     struct {
+//         union {
+//             v3 rgb;
+//             struct {
+//                 f32 r, g, b;
+//             };
+//         };
+//
+//         f32 a;
+//     };
+//     struct {
+//         v2 xy;
+//         f32 Ignored0_;
+//         f32 Ignored1_;
+//     };
+//     struct {
+//         f32 Ignored2_;
+//         v2 yz;
+//         f32 Ignored3_;
+//     };
+//     struct {
+//         f32 Ignored4_;
+//         f32 Ignored5_;
+//         v2 zw;
+//     };
+//     f32 E[4];
+// };
+
+#define function static
+
+#if !defined(internal)
+#define internal static
+#endif
+#define local_persist static
+#define global static
+#define TEMPORARY 
+
+
+#define Pi32 3.14159265359f
+#define Tau32 6.28318530717958647692f
+
+#define Kilobytes(Value) ((Value) * 1024LL)
+#define Megabytes(Value) (Kilobytes(Value) * 1024LL)
+#define Gigabytes(Value) (Megabytes(Value) * 1024LL)
+#define Terabytes(Value) (Gigabytes(Value) * 1024LL)
 
 struct Robot_State {
     std::array<float, 3> position; // (unit: m), from own odometry in inertial frame, usually drift

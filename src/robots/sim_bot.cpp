@@ -3,7 +3,6 @@
 #include "load_config.hpp"
 #include "path_planner.hpp"
 #include "pid.hpp"
-#include "sim.hpp"
 #include "transformations.hpp"
 
 struct Config : public Robot_Config {
@@ -42,7 +41,7 @@ class Sim_Bot : public Robot
     void
     send_velocity_command(Velocity2d &velocity) override
     {
-        sim_pose.dt = GetFrameTime();
+        // sim_pose.dt = GetFrameTime(); // TODO: Figure out a way to get frame time
         sim_pose.velocity = velocity;
         velocity.linear_vel *= sim_pose.dt;
         velocity.angular_vel *= sim_pose.dt;
@@ -51,7 +50,7 @@ class Sim_Bot : public Robot
     Pose_State
     read_state() override
     {
-        sim_pose.dt = GetFrameTime();
+        // sim_pose.dt = GetFrameTime(); // TODO: Figure out a way to get frame time
         double angular_acceleration = (sim_pose.velocity.angular_vel.z() - damping * angular_velocity) / inertia;
         angular_velocity += angular_acceleration * sim_pose.dt;
         angular_velocity = std::clamp(angular_velocity, config.kinematic_constraints.velocity_turning_right_max, config.kinematic_constraints.velocity_turning_left_max);
@@ -107,9 +106,10 @@ main()
         init_bot(robot);
         std::jthread control_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
 
+        control_loop<Sim_Bot>(robot, traj_controller);
+
         // Sim_Display sim = Sim_Display(robot, robot.path);
-        Sim_Display sim = Sim_Display(robot, robot.path);
-        sim.display();
+        // sim.display();
         robot.running = false;
     }
 

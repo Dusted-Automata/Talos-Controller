@@ -1,6 +1,5 @@
 #pragma once
 #include "robot.hpp"
-#include "ublox.hpp"
 
 enum class Command_Action {
     SET,
@@ -53,7 +52,7 @@ class Wheelchair : public Robot
     int tty_acm_fd = -1;
     Joystick scale_to_joystick(const Velocity2d &vel);
     bool joystick_to_hex(std::array<char, 10> &buffer, Joystick stick_pos);
-    std::array<char, 128> tty_read_buf;
+    // std::array<char, 128> tty_read_buf;
 
   public:
     Wheelchair()
@@ -72,5 +71,5 @@ class Wheelchair : public Robot
 
     void send_velocity_command(Velocity2d &velocity) override;
     Pose_State read_state() override;
-    void init(Wheelchair &robot);
+    void init();
 };

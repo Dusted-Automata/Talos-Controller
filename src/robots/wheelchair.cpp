@@ -3,7 +3,6 @@
 #include "load_config.hpp"
 #include "motion_profile.hpp"
 #include "pid.hpp"
-#include "sim.hpp"
 #include "types.hpp"
 
 #include <errno.h>
@@ -13,7 +12,7 @@
 #include <unistd.h>
 
 void
-Wheelchair::init(Wheelchair &robot)
+Wheelchair::init()
 {
 
 #define BAUDRATE B115200
@@ -177,14 +176,18 @@ main(void)
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
     frames_init(robot.frames, robot.path.local_path);
-    robot.init(robot);
+    robot.init();
 
     std::jthread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
 
-    Sim_Display sim = Sim_Display(robot, robot.path);
-    sim.display();
+    control_loop<Wheelchair>(robot, traj_controller);
 
-    CloseWindow();
+
+
+    // Sim_Display sim = Sim_Display(robot, robot.path);
+    // sim.display();
+    //
+    // CloseWindow();
 
     return 0;
 }

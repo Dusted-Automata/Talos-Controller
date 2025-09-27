@@ -1,5 +1,8 @@
 build:
-	cmake --build ./build --parallel
+	cmake --build ./build/clang --parallel
+
+# build:
+# 	cmake --build ./build --parallel
 	# make -C ./build
 .PHONY : build
 
