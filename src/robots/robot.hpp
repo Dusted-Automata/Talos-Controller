@@ -29,13 +29,12 @@ class Robot
   public:
     std::atomic<bool> running = false;
     std::atomic<bool> paused = true;
-    Pose_State pose_state;
+    PVA pva;
     Frames frames = {};
     Logger logger = {};
     Robot_Config config = {};
     Ublox ublox = {};
     Path_Planner path = {};
-    Heading heading;
 
     Reader TCP_reader;
     // TCP_Socket out = TCP_Socket("127.0.0.1", 55555);
@@ -43,11 +42,10 @@ class Robot
     bool stop();
     bool pause();
     bool resume();
-    Ecef get_PVAT();
+    PVA get_PVA();
     void set_target();
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
-    virtual Pose_State read_state() = 0;
 };
 
 template<typename T>
@@ -68,12 +66,17 @@ control_loop(T &robot, Linear_Controller &controller)
         previous_time = current_time;
 
         if (!robot.paused) {
-            robot.pose_state = robot.read_state();
             // bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
-            // std::cout << "ublox_update_speed: " << update_speed << std::endl;
-            frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
-            update_position(robot.ublox, robot.frames);
-            update_heading(robot.ublox, robot.frames);
+            {
+                {
+                    // robot.pvat = robot.read_state();
+                    // update_pv(robot.frames);
+                    frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
+                }
+                update_position(robot.ublox, robot.frames);
+                update_heading(robot.ublox, robot.frames);
+            }
+
             robot.logger.savePosesToFile(robot.frames);
             robot.logger.saveTimesToFile(std::chrono::duration<double>(clock::now() - motion_time_start).count());
 

@@ -1,5 +1,5 @@
 build:
-	cmake --build ./build/clang --parallel
+	cmake --build ./build --parallel
 
 # build:
 # 	cmake --build ./build --parallel

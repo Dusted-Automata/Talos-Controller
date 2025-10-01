@@ -13,7 +13,7 @@ class Linear_Controller
     {
     }
 
-    Velocity2d get_cmd(Pose_State pose_state, Vector3d diff, Vector3d motion_profile_diff, double dt);
+    Velocity2d get_cmd(PVAT robot_pvat, Vector3d diff, Vector3d motion_profile_diff, double dt);
     double goal_tolerance_in_meters;
     PID linear_pid;
     PID angular_pid;

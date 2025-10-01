@@ -1,5 +1,6 @@
 #pragma once
 #include "robot.hpp"
+#include <unistd.h>
 
 enum class Command_Action {
     SET,
@@ -57,10 +58,12 @@ class Wheelchair : public Robot
   public:
     Wheelchair()
     {
-        pose_state.position = Eigen::Vector3d(0, 0, 0); // Starting position with z=0.5 (standing)
-        pose_state.orientation = Eigen::Affine3d::Identity();
-        pose_state.velocity.linear_vel = Vector3d::Zero();
-        pose_state.velocity.angular_vel = Vector3d::Zero();
+        pva.pose.local_point = Eigen::Vector3d(0, 0, 0);
+        pva.pose.transformation_matrix = Eigen::Affine3d::Identity();
+        pva.linear.velocity = Vector3d::Zero();
+        pva.linear.acceleration = Vector3d::Zero();
+        pva.angular.velocity = Vector3d::Zero();
+        pva.angular.acceleration = Vector3d::Zero();
     }
 
     ~Wheelchair()
@@ -70,6 +73,5 @@ class Wheelchair : public Robot
     };
 
     void send_velocity_command(Velocity2d &velocity) override;
-    Pose_State read_state() override;
     void init();
 };

@@ -2,8 +2,6 @@
 #include "frames.hpp"
 #include "linear_controller.hpp"
 #include "load_config.hpp"
-#include "raylib.h"
-#include "utils/sim.hpp"
 #include <iostream>
 #include <math.h>
 #include <stdint.h>
@@ -105,12 +103,12 @@ main(void)
         loop_udpRecv.start();
 
         control_loop(robot, traj_controller);
-        std::jthread control_thread(control_loop<Go1>, std::ref(robot), std::ref(traj_controller));
-        Sim_Display sim = Sim_Display(robot, robot.path);
-        sim.display();
+        std::thread control_thread(control_loop<Go1>, std::ref(robot), std::ref(traj_controller));
+        // Sim_Display sim = Sim_Display(robot, robot.path);
+        // sim.display();
     }
 
-    CloseWindow();
+    // CloseWindow();
 
     return 0;
 }

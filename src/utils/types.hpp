@@ -20,6 +20,8 @@ using Eigen::Matrix4d;
 using Eigen::Vector3d;
 typedef Vector3d Linear_Velocity;
 typedef Vector3d Angular_Velocity;
+typedef Vector3d Velocity;
+typedef Vector3d Acceleration;
 
 #include <float.h>
 #include <limits.h>
@@ -198,11 +200,11 @@ typedef struct buffer string;
 //     f32 E[4];
 // };
 
-#define function static
+// #define function static
 
-#if !defined(internal)
-#define internal static
-#endif
+// #if !defined(internal)
+// #define internal static
+// #endif
 #define local_persist static
 #define global static
 #define TEMPORARY 
@@ -223,13 +225,6 @@ struct Robot_State {
     float yawSpeed;                // (unit: rad/s), rotateSpeed in body frame
                                    // std::array<MotorState, 20> motorState;
                                    // IMU imu;
-};
-
-struct Heading {
-    double heading_in_radians;
-    double initial_heading_in_radians;
-    double heading_from_ublox;
-    double heading_accuracy;
 };
 
 struct LLH {
@@ -582,6 +577,18 @@ struct Velocity2d {
     Angular_Velocity angular_vel; // roll, pitch, yaw rates (rad/s)
 };
 
+struct Linear {
+    // high-level representation
+    Velocity velocity; // (m/s)
+    Acceleration acceleration; // (m/s^2)
+};
+
+struct Angular {
+    // high-level representation
+    Velocity velocity; // (rad/s)
+    Acceleration acceleration; // (rad/s^2)
+};
+
 static inline double
 to_radian(double degrees)
 {
@@ -606,6 +613,8 @@ struct Pose_State {
     // Eigen::Quaterniond orientation; // quaternion
     Velocity2d velocity = { .linear_vel = Vector3d::Zero(),
         .angular_vel = Vector3d::Zero() }; // vx, vy, vz \  wx, wy, wz
+    Linear linear = { .velocity = Vector3d::Zero(), .acceleration = Vector3d::Zero()};
+    Angular angular = { .velocity = Vector3d::Zero(), .acceleration = Vector3d::Zero()};
     double dt;
 };
 
@@ -615,11 +624,16 @@ struct Pose {
     Affine3d transformation_matrix; // Change this to Quaternion maybe
 };
 
-struct PVAT {
+struct PV {
+    Linear linear;
+    Angular angular;
+};
+
+struct PVA {
     Pose pose;
-    Velocity2d velocity;
-    // Acceleration2d acceleration;
-    double time;
+    // Velocity2d velocity;
+    Linear linear;
+    Angular angular;
 };
 
 // struct Kinematic_Constraints {
@@ -671,19 +685,6 @@ struct Navigation_State {
     Velocity2d velocity;
 };
 
-struct Motion_Step {
-    Ecef &current;
-    Ecef &next;
-    Ecef &difference;
-    Affine3d &robot_frame;
-    double &dt;
-};
-
-struct Trajectory_Point {
-    Pose pose;
-    double dt;
-    Velocity2d velocity;
-};
 
 template<typename T, std::size_t Capacity> class Ring_Buffer
 {

@@ -23,10 +23,12 @@ class Sim_Bot : public Robot
   public:
     Sim_Bot()
     {
-        pose_state.position = Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
-        pose_state.orientation = Eigen::Affine3d::Identity();
-        pose_state.velocity.linear_vel = Vector3d::Zero();
-        pose_state.velocity.angular_vel = Vector3d::Zero();
+        pva.pose.local_point = Eigen::Vector3d(0, 0, 0.5);
+        pva.pose.transformation_matrix = Eigen::Affine3d::Identity();
+        pva.linear.velocity = Vector3d::Zero();
+        pva.linear.acceleration = Vector3d::Zero();
+        pva.angular.velocity = Vector3d::Zero();
+        pva.angular.acceleration = Vector3d::Zero();
     }
 
     void
@@ -35,8 +37,8 @@ class Sim_Bot : public Robot
         std::cout << "Applying disturbance: force=" << force.transpose() << ", torque=" << torque.transpose()
                   << std::endl;
 
-        pose_state.velocity.linear_vel += force * 0.1;
-        pose_state.velocity.angular_vel += torque * 0.1;
+        pva.linear.velocity += force * 0.1;
+        pva.angular.velocity += torque * 0.1;
     }
     void
     send_velocity_command(Velocity2d &velocity) override
@@ -47,17 +49,17 @@ class Sim_Bot : public Robot
         velocity.angular_vel *= sim_pose.dt;
     };
 
-    Pose_State
-    read_state() override
-    {
-        // sim_pose.dt = GetFrameTime(); // TODO: Figure out a way to get frame time
-        double angular_acceleration = (sim_pose.velocity.angular_vel.z() - damping * angular_velocity) / inertia;
-        angular_velocity += angular_acceleration * sim_pose.dt;
-        angular_velocity = std::clamp(angular_velocity, config.kinematic_constraints.velocity_turning_right_max, config.kinematic_constraints.velocity_turning_left_max);
-        sim_pose.velocity.angular_vel.z()  = angular_velocity;
-
-        return sim_pose;
-    };
+    // PVA
+    // read_state() override
+    // {
+    //     // sim_pose.dt = GetFrameTime(); // TODO: Figure out a way to get frame time
+    //     double angular_acceleration = (sim_pose.velocity.angular_vel.z() - damping * angular_velocity) / inertia;
+    //     angular_velocity += angular_acceleration * sim_pose.dt;
+    //     angular_velocity = std::clamp(angular_velocity, config.kinematic_constraints.velocity_turning_right_max, config.kinematic_constraints.velocity_turning_left_max);
+    //     sim_pose.velocity.angular_vel.z()  = angular_velocity;
+    //
+    //     return sim_pose;
+    // };
 };
 
 void
@@ -104,7 +106,7 @@ main()
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
         frames_init(robot.frames, robot.path.local_path);
         init_bot(robot);
-        std::jthread control_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
+        std::thread control_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
 
         control_loop<Sim_Bot>(robot, traj_controller);
 

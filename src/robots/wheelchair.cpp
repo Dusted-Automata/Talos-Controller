@@ -9,7 +9,6 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <thread>
-#include <unistd.h>
 
 void
 Wheelchair::init()
@@ -140,7 +139,8 @@ Wheelchair::joystick_to_hex(std::array<char, 10> &buffer, Joystick stick_pos)
 void
 Wheelchair::send_velocity_command(Velocity2d &velocity)
 {
-    pose_state.velocity = velocity; // FOR DEADRECKONING
+    pva.linear.velocity = velocity.linear_vel; // FOR DEADRECKONING
+    pva.angular.velocity = velocity.angular_vel; // FOR DEADRECKONING
     Joystick stick = scale_to_joystick(velocity);
     std::array<char, 10> js_hex;
     if (joystick_to_hex(js_hex, stick)) {
@@ -152,12 +152,6 @@ Wheelchair::send_velocity_command(Velocity2d &velocity)
     }
     // int written = ::write(tty_acm_fd, cmd.to_string().data(), cmd.to_string().size());
     // std::cout << written << std::endl;
-}
-
-Pose_State
-Wheelchair::read_state()
-{
-    return pose_state;
 }
 
 int
@@ -178,7 +172,7 @@ main(void)
     frames_init(robot.frames, robot.path.local_path);
     robot.init();
 
-    std::jthread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
+    std::thread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
 
     control_loop<Wheelchair>(robot, traj_controller);
 
