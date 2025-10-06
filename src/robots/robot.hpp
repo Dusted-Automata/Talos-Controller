@@ -42,8 +42,11 @@ class Robot
     bool stop();
     bool pause();
     bool resume();
-    PVA get_PVA();
     void set_target();
+
+    PVA get_PVA();
+    void get_path();
+    LA (*read_pv)() = nullptr;
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
 };
@@ -69,9 +72,14 @@ control_loop(T &robot, Linear_Controller &controller)
             // bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             {
                 {
-                    // robot.pvat = robot.read_state();
+                    // robot.pva = robot.read_state();
+                    LA la = robot.read_pv();
+                    robot.pva.linear = la.linear;
+                    robot.pva.angular = la.angular;
                     // update_pv(robot.frames);
-                    frames_move_in_local_frame(robot.frames, robot.pose_state.velocity, dt);
+                    frames_move_in_local_frame(robot.frames, robot.pva.linear, robot.pva.angular, dt);
+                    robot.pva.pose.local_point = robot.frames.local_frame.pos;
+                    robot.pva.pose.point = robot.frames.global_frame.pos;
                 }
                 update_position(robot.ublox, robot.frames);
                 update_heading(robot.ublox, robot.frames);
@@ -86,7 +94,7 @@ control_loop(T &robot, Linear_Controller &controller)
             Vector3d local_difference = frames_diff(robot.frames, robot.path.local_path.next().local_point);
             Vector3d global_difference = frames_diff(robot.frames, robot.path.global_path.next().local_point);
             if (eucledean_xy_norm(local_difference) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pose_state, local_difference, global_difference, dt);
+                cmd = controller.get_cmd(robot.pva, local_difference, global_difference, dt);
                 // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
             } else {
                 robot.path.local_path.progress(robot.path.path_direction);

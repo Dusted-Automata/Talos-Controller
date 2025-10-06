@@ -8,17 +8,21 @@
 struct Config : public Robot_Config {
     PIDGains linear_gains;
     PIDGains angular_gains;
-    Heading heading;
 };
+
+
+double inertia = 0.02;
+double damping = 0.05;    
+double angular_velocity = 0.0;    // ω
+double dt = 0.01;
+double turn_left_constraint = -0.1;
+double turn_right_constraint = 0.1;
+
+LA sim_velocity = {};
 
 class Sim_Bot : public Robot
 {
 
-    double inertia = 0.02;
-    double damping = 0.05;    
-    double angular_velocity = 0.0;    // ω
-
-    Pose_State sim_pose = {};
 
   public:
     Sim_Bot()
@@ -44,22 +48,28 @@ class Sim_Bot : public Robot
     send_velocity_command(Velocity2d &velocity) override
     {
         // sim_pose.dt = GetFrameTime(); // TODO: Figure out a way to get frame time
-        sim_pose.velocity = velocity;
-        velocity.linear_vel *= sim_pose.dt;
-        velocity.angular_vel *= sim_pose.dt;
+        sim_velocity.linear.velocity = velocity.linear_vel;
+        sim_velocity.angular.velocity = velocity.angular_vel;
+        // velocity.linear_vel *= sim_pose.dt;
+        // velocity.angular_vel *= sim_pose.dt;
+
+        velocity.linear_vel *= dt;
+        velocity.angular_vel *= dt;
     };
 
-    // PVA
-    // read_state() override
-    // {
-    //     // sim_pose.dt = GetFrameTime(); // TODO: Figure out a way to get frame time
-    //     double angular_acceleration = (sim_pose.velocity.angular_vel.z() - damping * angular_velocity) / inertia;
-    //     angular_velocity += angular_acceleration * sim_pose.dt;
-    //     angular_velocity = std::clamp(angular_velocity, config.kinematic_constraints.velocity_turning_right_max, config.kinematic_constraints.velocity_turning_left_max);
-    //     sim_pose.velocity.angular_vel.z()  = angular_velocity;
-    //
-    //     return sim_pose;
-    // };
+};
+
+LA
+read_state() 
+{
+    // sim_pose.dt = GetFrameTime(); // TODO: Figure out a way to get frame time
+    double angular_acceleration = (sim_velocity.angular.velocity.z() - damping * angular_velocity) / inertia;
+    angular_velocity += angular_acceleration * dt;
+    // angular_velocity = std::clamp(angular_velocity, config.kinematic_constraints.velocity_turning_right_max, config.kinematic_constraints.velocity_turning_left_max);
+    angular_velocity = std::clamp(angular_velocity, turn_right_constraint, turn_left_constraint );
+    sim_velocity.angular.velocity.z()  = angular_velocity;
+
+    return sim_velocity;
 };
 
 void
@@ -82,7 +92,7 @@ init_bot(Sim_Bot &robot)
     //     }
     // }
 
-    // robot.TCP_reader.init(robot);
+    robot.TCP_reader.init(robot);
     robot.paused = false;
     robot.running = true;
 }
@@ -93,9 +103,12 @@ main()
 
     Sim_Bot robot;
     load_config(robot, "robot_configs/sim_bot.json");
+    turn_left_constraint = robot.config.kinematic_constraints.velocity_turning_right_max;
+     turn_left_constraint =    robot.config.kinematic_constraints.velocity_turning_left_max;
     robot.path.path_direction = robot.config.path_config.direction;
     robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
     robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
+    robot.read_pv = *read_state;
 
     { // Find out how to extract this.
 

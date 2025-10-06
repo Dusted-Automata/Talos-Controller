@@ -624,7 +624,7 @@ struct Pose {
     Affine3d transformation_matrix; // Change this to Quaternion maybe
 };
 
-struct PV {
+struct LA {
     Linear linear;
     Angular angular;
 };

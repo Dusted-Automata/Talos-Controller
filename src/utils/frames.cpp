@@ -6,11 +6,11 @@
 #include <iostream>
 
 void
-frames_move_in_local_frame(Frames &frames, Velocity2d velocity, const double dt)
+frames_move_in_local_frame(Frames &frames, Linear linear_movement, Angular angular_movement,  const double dt)
 {
 
-    auto position_update = velocity.linear_vel * dt;
-    auto angle_update = velocity.angular_vel * dt;
+    auto position_update = linear_movement.velocity * dt;
+    auto angle_update = angular_movement.velocity * dt;
     frames.local_frame.orientation.rotate(Eigen::AngleAxisd((angle_update.z()), Vector3d::UnitZ()));
     frames.local_frame.pos += frames.local_frame.orientation.rotation() * position_update;
 

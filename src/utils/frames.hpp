@@ -26,7 +26,7 @@ struct Frames {
 };
 
 void frames_init(Frames &frames, Robot_Path &path);
-void frames_move_in_local_frame(Frames &frames, Velocity2d velocity, const double dt);
+void frames_move_in_local_frame(Frames &frames, Linear linear_movement, Angular angular_movement, const double dt);
 // void frames_move_in_global_frame(Velocity2d velocity, const double dt);
 
 void frames_update_based_on_measurement(Frames &frames, const LLH &llh);

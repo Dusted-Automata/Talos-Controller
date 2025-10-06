@@ -22,6 +22,12 @@ Robot::resume()
     return true;
 }
 
+
+PVA 
+Robot::get_PVA(){
+    return pva;
+}
+
 bool
 Reader::init(Robot &r)
 {
@@ -88,6 +94,51 @@ Reader::loop()
 
                 if (command == "continue") {
                     robot->resume();
+                }
+
+                if (command == "pva") {
+                    PVA pva = robot->get_PVA();
+                    json pva_j = {
+                        {"position", {"x", pva.pose.point.x(), "y", pva.pose.point.y(), "z", pva.pose.point.z()}},
+                        {"velocity", 
+                            {
+                                "linear", 
+                                {
+                                    "x", pva.linear.velocity.x(),
+                                    "y", pva.linear.velocity.y(),
+                                    "z", pva.linear.velocity.z()
+                                },
+                                "angular", 
+                                {
+                                    "x", pva.angular.velocity.x(),
+                                    "y", pva.angular.velocity.y(),
+                                    "z", pva.angular.velocity.z()
+                                },
+
+                            },
+                        },
+                        {"acceleration", 
+                            {
+                                "linear", 
+                                {
+                                    "x", pva.linear.acceleration.x(),
+                                    "y", pva.linear.acceleration.y(),
+                                    "z", pva.linear.acceleration.z()
+                                },
+                                "angular", 
+                                {
+                                    "x", pva.angular.acceleration.x(),
+                                    "y", pva.angular.acceleration.y(),
+                                    "z", pva.angular.acceleration.z()
+                                },
+
+                            },
+                        },
+                    };
+
+                    std::string send_pva = pva_j.dump(4);
+
+                    tcp_send(robot->TCP_reader.socket.client_socket, send_pva.data(), send_pva.length());
                 }
             }
         }
