@@ -9,15 +9,14 @@
 
 class Robot;
 
-class Reader
+class Server
 {
   public:
+    std::thread socket_thread;
+    std::thread msg_parse_thread;
     TCP_Server socket;
-    std::thread sensor_thread;
-    std::atomic_bool running = false;
-    std::array<char, TCP_BUFFER_LENGTH> recv_buf;
-    Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> buf;
     Robot *robot;
+    std::vector<int> subscribers;
 
     bool init(Robot &robot);
     void loop();
@@ -36,7 +35,7 @@ class Robot
     Ublox ublox = {};
     Path_Planner path = {};
 
-    Reader TCP_reader;
+    Server server;
     // TCP_Socket out = TCP_Socket("127.0.0.1", 55555);
 
     bool stop();
@@ -105,8 +104,12 @@ control_loop(T &robot, Linear_Controller &controller)
                 controller.motion_profile.reset();
                 controller.aligned_to_goal_waypoint = false;
                 robot.pause();
-                std::string success = "success\n";
-                tcp_send(robot.TCP_reader.socket.client_socket, success.data(), success.length());
+
+                for (u32 i = 1; i < (u32)robot.server.socket.nfds; ++i){
+                    Client client = robot.server.socket.clients[i];
+                    std::string success = "success\n";
+                    tcp_send(client.fd, success.data(), success.length());
+                }
                 if (robot.path.global_path.progress(robot.path.path_direction)) {
                     // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
                     controller.motion_profile.set_setpoint(eucledean_xy_norm(global_difference));
@@ -128,3 +131,5 @@ control_loop(T &robot, Linear_Controller &controller)
         }
     }
 }
+
+bool server_init(Server &server, Robot &r);

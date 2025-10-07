@@ -92,7 +92,8 @@ init_bot(Sim_Bot &robot)
     //     }
     // }
 
-    robot.TCP_reader.init(robot);
+    // robot.server.init(robot);
+    server_init(robot.server, robot);
     robot.paused = false;
     robot.running = true;
 }
