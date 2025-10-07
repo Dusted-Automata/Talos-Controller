@@ -69,7 +69,8 @@ socket_recv_non_blocking(int fd, std::array<char, TCP_BUFFER_LENGTH> &recv_buf, 
     for (;;) {
         ssize_t bytes_received = ::recv(fd, recv_buf.data(), recv_buf.size(), 0);
         if (bytes_received > 0) {
-            std::cout.write(recv_buf.data(), bytes_received);
+            printf("bytes_received: %zd\n", bytes_received);
+            // std::cout.write(recv_buf.data(), bytes_received);
             size_t wrote = ring.write(std::span(recv_buf.data(), bytes_received));
             if (wrote != static_cast<size_t>(bytes_received)) {
                 // policy: drop oldest, signal backpressure, or mark Error
@@ -86,6 +87,7 @@ socket_recv_non_blocking(int fd, std::array<char, TCP_BUFFER_LENGTH> &recv_buf, 
         }
 
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            printf("in EAGAIN OR EWOULDBLOCK\n");
             return true;
         }
         if (errno == EINTR) {
@@ -221,9 +223,9 @@ tcp_server_loop(TCP_Server &server) {
                        client_fd, ip, ntohs(client.sin_port));
 
                 add_fd(client_fd, server);
-                server.clients[server.nfds].fd = client_fd;
-                server.clients[server.nfds].peer = client;
-                server.clients[server.nfds].peer_len = len;
+                server.clients[server.nfds-1].fd = client_fd;
+                server.clients[server.nfds-1].peer = client;
+                server.clients[server.nfds-1].peer_len = len;
             }
         }
 
