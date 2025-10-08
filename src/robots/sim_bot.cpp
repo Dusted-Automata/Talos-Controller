@@ -4,6 +4,7 @@
 #include "path_planner.hpp"
 #include "pid.hpp"
 #include "transformations.hpp"
+#include "sim.hpp"
 
 struct Config : public Robot_Config {
     PIDGains linear_gains;
@@ -15,8 +16,8 @@ double inertia = 0.02;
 double damping = 0.05;    
 double angular_velocity = 0.0;    // ω
 double dt = 0.01;
-double turn_left_constraint = -0.1;
-double turn_right_constraint = 0.1;
+double turn_left_constraint = 0.1;
+double turn_right_constraint = -0.1;
 
 LA sim_velocity = {};
 
@@ -104,8 +105,8 @@ main()
 
     Sim_Bot robot;
     load_config(robot, "robot_configs/sim_bot.json");
-    turn_left_constraint = robot.config.kinematic_constraints.velocity_turning_right_max;
-     turn_left_constraint =    robot.config.kinematic_constraints.velocity_turning_left_max;
+    turn_right_constraint = robot.config.kinematic_constraints.velocity_turning_right_max;
+    turn_left_constraint = robot.config.kinematic_constraints.velocity_turning_left_max;
     robot.path.path_direction = robot.config.path_config.direction;
     robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
     robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
@@ -122,10 +123,10 @@ main()
         init_bot(robot);
         std::thread control_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
 
-        control_loop<Sim_Bot>(robot, traj_controller);
+        // control_loop<Sim_Bot>(robot, traj_controller);
 
-        // Sim_Display sim = Sim_Display(robot, robot.path);
-        // sim.display();
+        Sim_Display sim = Sim_Display(robot, robot.path);
+        sim.display();
         robot.running = false;
     }
 
