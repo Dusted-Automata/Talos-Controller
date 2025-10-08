@@ -79,6 +79,53 @@ control_loop(T &robot, Linear_Controller &controller)
                     frames_move_in_local_frame(robot.frames, robot.pva.linear, robot.pva.angular, dt);
                     robot.pva.pose.local_point = robot.frames.local_frame.pos;
                     robot.pva.pose.point = robot.frames.global_frame.pos;
+
+
+                    PVA pva = robot.get_PVA();
+                    json pva_j = {
+                        {"position", {"x", pva.pose.point.x(), "y", pva.pose.point.y(), "z", pva.pose.point.z()}},
+                        {"velocity", 
+                            {
+                                "linear", 
+                                {
+                                    "x", pva.linear.velocity.x(),
+                                    "y", pva.linear.velocity.y(),
+                                    "z", pva.linear.velocity.z()
+                                },
+                                "angular", 
+                                {
+                                    "x", pva.angular.velocity.x(),
+                                    "y", pva.angular.velocity.y(),
+                                    "z", pva.angular.velocity.z()
+                                },
+
+                            },
+                        },
+                        {"acceleration", 
+                            {
+                                "linear", 
+                                {
+                                    "x", pva.linear.acceleration.x(),
+                                    "y", pva.linear.acceleration.y(),
+                                    "z", pva.linear.acceleration.z()
+                                },
+                                "angular", 
+                                {
+                                    "x", pva.angular.acceleration.x(),
+                                    "y", pva.angular.acceleration.y(),
+                                    "z", pva.angular.acceleration.z()
+                                },
+
+                            },
+                        },
+                    };
+
+                    std::string send_pva = pva_j.dump(4);
+
+                    for (u32 i = 1; i < (u32)robot.server.socket.nfds; ++i){
+                        Client client = robot.server.socket.clients[i];
+                        tcp_send(client.fd, send_pva.data(), send_pva.length());
+                    }
                 }
                 update_position(robot.ublox, robot.frames);
                 update_heading(robot.ublox, robot.frames);
