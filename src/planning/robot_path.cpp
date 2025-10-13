@@ -35,6 +35,23 @@ Robot_Path::next()
     return path[goal_index];
 }
 
+Pose
+Robot_Path::next_stop()
+{
+    return path[stop_index]; // TODO: Might not have a stop in the vector
+}
+
+
+f64 Robot_Path::calculate_distance(int waypoint_index, int stop_index) {
+    f64 distance = 0;
+    printf("waypoint_index: %d | stop_index: %d\n",waypoint_index, stoppings[stop_index]);
+    for (int i = waypoint_index; i < stoppings[stop_index]; ++i) {
+        distance += distance_to_next_waypoint[i];
+    }
+    return distance;
+
+}
+
 bool
 Robot_Path::progress(const Path_Direction &dir)
 {
@@ -146,7 +163,9 @@ Robot_Path::read_json_latlon(std::filesystem::path file_path)
         // llh_origin.alt() += offset;
 
         std::vector<Pose> waypoints;
-        for (auto point : data["points"]) {
+        // for (auto point : data["points"]) {
+        for (size_t i = 0; i < data["points"].size(); i++){
+            point = data["points"][i];
             Pose pose;
             llh.lat() = to_radian(point["lat"]);
             llh.lon() = to_radian(point["lon"]);
@@ -162,6 +181,10 @@ Robot_Path::read_json_latlon(std::filesystem::path file_path)
             pose.local_point = local;
 
             waypoints.push_back(pose);
+            if (point["stop"] == true) {
+                printf("stop at index: %zu\n", i);
+                stoppings.push_back(i);
+            }
         }
         add_waypoints(waypoints);
     } else {
@@ -186,6 +209,12 @@ Robot_Path::read_json_latlon(std::filesystem::path file_path)
             waypoints.push_back(pose);
         }
         add_waypoints(waypoints);
+    }
+
+    for (size_t i = 0; i < path.size()-1; i++) {
+        f64 distance = (path[i].local_point - path[i+1].local_point).norm();
+        distance_to_next_waypoint.push_back(distance);
+        printf("calced distance %f\n",distance);
     }
     return 0;
 }

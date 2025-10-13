@@ -4,11 +4,11 @@
     "goal_tolerance_in_meters" : 0.30,
     "path_config": {
         "direction" : "reverse",
-        "filepath" : "waypoints/PT_ping_pong.json",
-        "interpolation_distances_in_meters" : 0.05
+        "filepath" : "waypoints/O_whole_campus_round.json",
+        "interpolation_distances_in_meters" : 3.0
     },
     "kinematic_constraints" : {
-        "velocity_forward_max" : 25.5,
+        "velocity_forward_max" : 2.5,
         "velocity_backward_max" : 0.0,
         "velocity_turning_left_max" : 2.5,
         "velocity_turning_right_max" : -2.5,

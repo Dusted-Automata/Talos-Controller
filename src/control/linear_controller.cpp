@@ -27,7 +27,7 @@ void log_data(double sp, double heading_error, double control_output) {
 }
 
 Velocity2d
-Linear_Controller::get_cmd(PVA robot_pva, Vector3d diff, Vector3d motion_profile_diff, double dt)
+Linear_Controller::get_cmd(PVA robot_pva, Vector3d diff, f64 motion_profile_diff, double dt)
 {
     Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 
@@ -38,7 +38,7 @@ Linear_Controller::get_cmd(PVA robot_pva, Vector3d diff, Vector3d motion_profile
     // double yaw_error = atan2(diff.y(), diff.x());
     // std::cout << "yaw_error: " << yaw_error << std::endl;
     // motion_profile.update(frames_dist(diff) - goal_tolerance_in_meters, dt);
-    motion_profile.update(eucledean_xy_norm(motion_profile_diff) - goal_tolerance_in_meters, dt);
+    motion_profile.update(motion_profile_diff - goal_tolerance_in_meters, dt);
 
     if (aligned_to_goal_waypoint) {
         cmd.linear_vel.x() = motion_profile.velocity;

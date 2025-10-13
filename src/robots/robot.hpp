@@ -137,33 +137,36 @@ control_loop(T &robot, Linear_Controller &controller)
             // Pose target_waypoint = robot.path.global_path.next();
             Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 
-            Vector3d local_difference = frames_diff(robot.frames, robot.path.local_path.next().local_point);
-            Vector3d global_difference = frames_diff(robot.frames, robot.path.global_path.next().local_point);
+            Vector3d local_difference = frames_diff(robot.frames, robot.path.local_path.next().local_point);   //TODO: different function scheme for this.
+            Vector3d to_next_waypoint = frames_diff(robot.frames, robot.path.global_path.next().local_point); //TODO: different function scheme for this.
+            f64 test = robot.path.global_path.calculate_distance(robot.path.global_path.current_index, robot.path.global_path.stop_index);
+            f64 to_next_waypoint_distance = to_next_waypoint.norm() + test;
+            printf("calc_distance: %f | waypoint_distance: %f\n",test, to_next_waypoint.norm());
             if (eucledean_xy_norm(local_difference) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pva, local_difference, global_difference, dt);
+                cmd = controller.get_cmd(robot.pva, local_difference, to_next_waypoint_distance, dt);
                 // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
             } else {
                 robot.path.local_path.progress(robot.path.path_direction);
             }
 
-            // std::cout << "local_dif: " << local_dif.transpose() << std::endl;
-            if (eucledean_xy_norm(global_difference) < robot.config.goal_tolerance_in_meters) {
-                controller.motion_profile.reset();
-                controller.aligned_to_goal_waypoint = false;
-                robot.pause();
 
+            if (eucledean_xy_norm(to_next_waypoint) < robot.config.goal_tolerance_in_meters) {
                 for (u32 i = 1; i < (u32)robot.server.socket.nfds; ++i){
                     Client client = robot.server.socket.clients[i];
                     std::string success = "success\n";
                     tcp_send(client.fd, success.data(), success.length());
                 }
-                if (robot.path.global_path.progress(robot.path.path_direction)) {
-                    // Vector3d dif = frames_diff(target_waypoint.local_point, robot.frames);
-                    controller.motion_profile.set_setpoint(eucledean_xy_norm(global_difference));
 
+                if (robot.path.global_path.progress(robot.path.path_direction)) {
+                    controller.aligned_to_goal_waypoint = true; //TODO: remove the aligned part
+                    if (to_next_waypoint_distance < robot.config.goal_tolerance_in_meters) {
+                        controller.motion_profile.reset();
+                        controller.motion_profile.set_setpoint(eucledean_xy_norm(to_next_waypoint));
+                    }
                 } else {
                     break;
                 }
+
             }
             robot.send_velocity_command(cmd);
         }
