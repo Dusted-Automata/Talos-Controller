@@ -44,7 +44,6 @@ Robot_Path::next_stop()
 
 f64 Robot_Path::calculate_distance(int waypoint_index, int stop_index) {
     f64 distance = 0;
-    printf("waypoint_index: %d | stop_index: %d\n",waypoint_index, stoppings[stop_index]);
     for (int i = waypoint_index; i < stoppings[stop_index]; ++i) {
         distance += distance_to_next_waypoint[i];
     }
@@ -217,4 +216,54 @@ Robot_Path::read_json_latlon(std::filesystem::path file_path)
         printf("calced distance %f\n",distance);
     }
     return 0;
+}
+
+Path
+read_json_latlon(std::filesystem::path file_path)
+{
+    Path path;
+    std::ifstream file(file_path);
+
+    if (!file) {
+        std::cerr << "Error opening file: " << file_path << std::endl;
+        return path;
+    }
+    json data = json::parse(file);
+    LLH llh, llh_origin;
+
+    // Get origin LLH, to be able to compute ENU differences
+    auto point = data["points"].front();
+    if (point.contains("lat")) {
+
+        llh_origin.lat() = to_radian(point["lat"]);
+        llh_origin.lon() = to_radian(point["lon"]);
+        llh_origin.alt() = point["alt"];
+        // double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
+        // llh_origin.alt() += offset;
+
+        for (size_t i = 0; i < data["points"].size(); i++){
+            point = data["points"][i];
+            Pose pose;
+            llh.lat() = to_radian(point["lat"]);
+            llh.lon() = to_radian(point["lon"]);
+            llh.alt() = point["alt"];
+            // double offset = egm96_compute_altitude_offset(llh.lat(), llh.lon());
+            // llh.alt() += offset;
+            std::cout << "lat: " << llh.lat() << " long: " << llh.lon() << " alt: " << llh.alt() << std::endl;
+
+            Ecef ecef = cppmap3d::geodetic2ecef(llh);
+            pose.point = ecef;
+
+            ENU local = cppmap3d::ecef2enu(ecef, llh_origin);
+            pose.local_point = local;
+
+            if (point["stop"] == true) {
+                printf("stop at index: %zu\n", i);
+                path.add_waypoint(pose, true);
+            } else {
+                path.add_waypoint(pose, false);
+            }
+        }
+    } 
+    return path;
 }

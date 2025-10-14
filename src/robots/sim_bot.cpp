@@ -107,9 +107,15 @@ main()
     load_config(robot, "robot_configs/sim_bot.json");
     turn_right_constraint = robot.config.kinematic_constraints.velocity_turning_right_max;
     turn_left_constraint = robot.config.kinematic_constraints.velocity_turning_left_max;
+    Path path = read_json_latlon(robot.config.path_config.filepath); // NEW
+    Path_Cursor p_cursor; // NEW
+    p_cursor.initialize(&path);
     robot.path.path_direction = robot.config.path_config.direction;
     robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
     robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
+
+    robot.path.global_cursor = &p_cursor; // NEW
+
     robot.read_pv = *read_state;
 
     { // Find out how to extract this.

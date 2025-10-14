@@ -681,10 +681,6 @@ struct Robot_Config {
     int control_loop_hz;
 };
 
-struct Navigation_State {
-    Velocity2d velocity;
-};
-
 
 template<typename T, std::size_t Capacity> class Ring_Buffer
 {

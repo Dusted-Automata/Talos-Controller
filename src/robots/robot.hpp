@@ -141,7 +141,10 @@ control_loop(T &robot, Linear_Controller &controller)
             Vector3d to_next_waypoint = frames_diff(robot.frames, robot.path.global_path.next().local_point); //TODO: different function scheme for this.
             f64 test = robot.path.global_path.calculate_distance(robot.path.global_path.current_index, robot.path.global_path.stop_index);
             f64 to_next_waypoint_distance = to_next_waypoint.norm() + test;
-            printf("calc_distance: %f | waypoint_distance: %f\n",test, to_next_waypoint.norm());
+            // f64 new_distance = robot.path.global_cursor->distance_to_next_waypoint(robot.frames.local_frame.local_difference); // TODO: Figure something out
+            robot.path.global_cursor->advance(to_next_waypoint.norm());
+            printf("calc_distance: %f | waypoint_distance: %f | new_path_distance: %f\n", test, to_next_waypoint.norm(),
+                robot.path.global_cursor->distance_to_next_waypoint());
             if (eucledean_xy_norm(local_difference) > robot.config.goal_tolerance_in_meters) {
                 cmd = controller.get_cmd(robot.pva, local_difference, to_next_waypoint_distance, dt);
                 // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
