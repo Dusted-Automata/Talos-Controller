@@ -174,20 +174,15 @@ control_loop(T &robot, Linear_Controller &controller)
             local_difference.z() = 0.0;
             to_next_waypoint.z() = 0.0;
 
-            if (local_difference.norm() > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pva, local_difference, robot.path.global_cursor->distance_to_target_stop(), dt);
-            } else {
-                robot.path.local_path.progress(robot.path.path_direction);
-            }
+            cmd = controller.get_cmd(robot.pva, to_next_waypoint, robot.path.global_cursor->distance_to_target_stop(), dt);
+            // if (local_difference.norm() > robot.config.goal_tolerance_in_meters) {
+            //     cmd = controller.get_cmd(robot.pva, local_difference, robot.path.global_cursor->distance_to_target_stop(), dt);
+            // } else {
+            //     robot.path.local_path.progress(robot.path.path_direction);
+            // }
 
             robot.path.global_cursor->advance(to_next_waypoint.norm());
-            // WARN:
-            // distance_to_target_stop requires the current waypoint to be calculated, which gets
-            // updated in the advance as soon as we are under the tolerance. 
-            // if you update the target_idx first then that causes the robot to ask for the next
-            // stop target by using the current waypoint, which then shows this as the next one
-            // since the waypoint is not driven to yet.
-            if (robot.path.global_cursor->distance_to_target_stop() < robot.config.goal_tolerance_in_meters + 0.1) {
+            if (robot.path.global_cursor->at_target_stop(robot.config.goal_tolerance_in_meters)) {
                 printf("distance_to_target_stop is below goal_tolerance_in_meters");
                 for (u32 i = 1; i < (u32)robot.server.socket.nfds; ++i){
                     Client client = robot.server.socket.clients[i];
@@ -195,7 +190,7 @@ control_loop(T &robot, Linear_Controller &controller)
                     tcp_send(client.fd, success.data(), success.length());
                 }
                 robot.path.global_cursor->update_target_stop();
-                controller.aligned_to_goal_waypoint = true; //TODO: remove the aligned part
+                controller.aligned_to_goal_waypoint = false; 
                 controller.motion_profile.reset();
                 controller.motion_profile.set_setpoint(robot.path.global_cursor->distance_to_target_stop());
 

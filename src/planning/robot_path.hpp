@@ -353,16 +353,13 @@ struct Path_Cursor {
         return dist;
     }
 
-    // { // TODO Are these useful?
-    //     bool at_waypoint() const { return progress == 0.0; }
-    //
-    //     // Check if we've reached the target stop
-    //     bool at_target_stop(const Path &path) const
-    //     {
-    //         if (!target_stop_number) return false;
-    //         return at_waypoint() && current_waypoint == target_stop_waypoint;
-    //     }
-    // }
+
+        // Check if we've reached the target stop
+    bool at_target_stop(f64 goal_tolerance) const
+    {
+        f64 distance = path->distance_between(current_waypoint, target_stop_waypoint, dir);
+        return distance < goal_tolerance ;
+    }
 
     Advance_Result
     advance(f64 ds) 
