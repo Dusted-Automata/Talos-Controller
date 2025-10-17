@@ -4,7 +4,7 @@
 "goal_tolerance_in_meters" : 0.35,
 "path_config": {
     "direction" : "loop",
-    "filepath" : "waypoints/PT_ping_pong.json",
+    "filepath" : "waypoints/O_whole_campus_round.json",
     "interpolation_distances_in_meters" : 3.0
 },
 "kinematic_constraints" : {
@@ -30,9 +30,9 @@
     },
 
     "angular_gains" : {
-        "k_p" : 1.22,
-        "k_i" : 0.000,
-        "k_d" : 0.80,
+        "k_p" : 4.84,
+        "k_i" : 0.010,
+        "k_d" : 3.20,
         "output_min" : -1.35,
         "output_max" : 1.35,
         "integral_min" : -100,

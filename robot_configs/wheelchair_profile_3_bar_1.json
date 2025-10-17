@@ -30,9 +30,9 @@
     },
 
     "angular_gains" : {
-        "k_p" : 1.22,
-        "k_i" : 0.000,
-        "k_d" : 0.80,
+        "k_p" : 480.52,
+        "k_i" : 300.15,
+        "k_d" : 568.80,
         "output_min" : -1.05,
         "output_max" : 1.05,
         "integral_min" : -100,
