@@ -68,6 +68,31 @@ control_loop(T &robot, Linear_Controller &controller)
         previous_time = current_time;
 
         if (!robot.paused) {
+            Path_Cursor gc = *robot.path.global_cursor;
+
+
+            // if (!gc.target_stop_idx.has_value()) {
+            //     printf("target_@top_number is NULLOPT\n");
+            //     break;
+            // }
+            // if (!gc.path->next_stop_index(gc.target_stop_idx.value(), gc.dir).has_value()) {
+            //     printf("next_stop_index GONNA RETURN NULLOPT\n");
+            //     break;
+            // };
+            //
+            // // printf("next_stop_index: %zu\n",
+            // //        gc.path->next_stop_index(gc.target_stop_idx.value(), gc.dir).value()
+            // //        );
+            // if (!gc.path->next_stop_waypoint(gc.current_waypoint, gc.dir).has_value()) {
+            //     printf("next_stop_waypoint GONNA RETURN NULLOPT\n");
+            //     break;
+            // }
+            // printf("num_stops: %zu | next_stop_index: %zu | next_stop_waypoint: %zu\n",
+            //        gc.path->num_stops(),
+            //        gc.path->next_stop_index(gc.target_stop_idx.value(), gc.dir).value(),
+            //        gc.path->next_stop_waypoint(gc.target_stop_waypoint, gc.dir).value()
+            //        // gc.path->next_stop_number(gc.target_stop_waypoint, gc.dir).value()
+            //     );
             // bool update_speed = robot.ublox.update_speed(robot.pose_state.velocity); // Currently blocking!!
             {
                 {
@@ -138,37 +163,41 @@ control_loop(T &robot, Linear_Controller &controller)
             Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 
             Vector3d local_difference = frames_diff(robot.frames, robot.path.local_path.next().local_point);   //TODO: different function scheme for this.
-            Vector3d to_next_waypoint = frames_diff(robot.frames, robot.path.global_path.next().local_point); //TODO: different function scheme for this.
-            f64 test = robot.path.global_path.calculate_distance(robot.path.global_path.current_index, robot.path.global_path.stop_index);
-            f64 to_next_waypoint_distance = to_next_waypoint.norm() + test;
-            // f64 new_distance = robot.path.global_cursor->distance_to_next_waypoint(robot.frames.local_frame.local_difference); // TODO: Figure something out
-            robot.path.global_cursor->advance(to_next_waypoint.norm());
-            printf("calc_distance: %f | waypoint_distance: %f | new_path_distance: %f\n", test, to_next_waypoint.norm(),
-                robot.path.global_cursor->distance_to_next_waypoint());
-            if (eucledean_xy_norm(local_difference) > robot.config.goal_tolerance_in_meters) {
-                cmd = controller.get_cmd(robot.pva, local_difference, to_next_waypoint_distance, dt);
-                // std::cout << "cmd: " << cmd.angular.transpose() << std::endl;
+            Vector3d to_next_waypoint = frames_diff(robot.frames, robot.path.global_cursor->get_next_waypoint().local_point); //TODO: different function scheme for this.
+
+            printf("waypoint: %d | target_stop: %d | distance_to_next_waypoint: %f | distance_to_target_stop: %f\n",
+                   gc.next_waypoint,
+                   gc.target_stop_waypoint,
+                   gc.distance_to_next_waypoint(), 
+                   gc.distance_to_target_stop()
+               );
+            local_difference.z() = 0.0;
+            to_next_waypoint.z() = 0.0;
+
+            if (local_difference.norm() > robot.config.goal_tolerance_in_meters) {
+                cmd = controller.get_cmd(robot.pva, local_difference, robot.path.global_cursor->distance_to_target_stop(), dt);
             } else {
                 robot.path.local_path.progress(robot.path.path_direction);
             }
 
-
-            if (eucledean_xy_norm(to_next_waypoint) < robot.config.goal_tolerance_in_meters) {
+            robot.path.global_cursor->advance(to_next_waypoint.norm());
+            // WARN:
+            // distance_to_target_stop requires the current waypoint to be calculated, which gets
+            // updated in the advance as soon as we are under the tolerance. 
+            // if you update the target_idx first then that causes the robot to ask for the next
+            // stop target by using the current waypoint, which then shows this as the next one
+            // since the waypoint is not driven to yet.
+            if (robot.path.global_cursor->distance_to_target_stop() < robot.config.goal_tolerance_in_meters + 0.1) {
+                printf("distance_to_target_stop is below goal_tolerance_in_meters");
                 for (u32 i = 1; i < (u32)robot.server.socket.nfds; ++i){
                     Client client = robot.server.socket.clients[i];
                     std::string success = "success\n";
                     tcp_send(client.fd, success.data(), success.length());
                 }
-
-                if (robot.path.global_path.progress(robot.path.path_direction)) {
-                    controller.aligned_to_goal_waypoint = true; //TODO: remove the aligned part
-                    if (to_next_waypoint_distance < robot.config.goal_tolerance_in_meters) {
-                        controller.motion_profile.reset();
-                        controller.motion_profile.set_setpoint(eucledean_xy_norm(to_next_waypoint));
-                    }
-                } else {
-                    break;
-                }
+                robot.path.global_cursor->update_target_stop();
+                controller.aligned_to_goal_waypoint = true; //TODO: remove the aligned part
+                controller.motion_profile.reset();
+                controller.motion_profile.set_setpoint(robot.path.global_cursor->distance_to_target_stop());
 
             }
             robot.send_velocity_command(cmd);

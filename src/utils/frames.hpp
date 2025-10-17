@@ -34,3 +34,4 @@ void frames_update_based_on_measurement(Frames &frames, const LLH &llh);
 Vector3d frames_diff(const Frames &frames, const ENU &goal);
 
 double eucledean_xy_norm(const Vector3d &diff);
+double eucledean_xyz_norm(const Vector3d &diff); // fine with running every frame

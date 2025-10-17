@@ -97,3 +97,10 @@ eucledean_xy_norm(const Vector3d &diff) // fine with running every frame
 {
     return sqrt(diff.x() * diff.x() + diff.y() * diff.y());
 }
+
+
+double
+eucledean_xyz_norm(const Vector3d &diff) // fine with running every frame
+{
+    return sqrt(diff.x() * diff.x() + diff.y() * diff.y() + diff.z() * diff.z());
+}

@@ -28,7 +28,7 @@ class Sim_Bot : public Robot
   public:
     Sim_Bot()
     {
-        pva.pose.local_point = Eigen::Vector3d(0, 0, 0.5);
+        pva.pose.local_point = Eigen::Vector3d(0, 0, 0.0);
         pva.pose.transformation_matrix = Eigen::Affine3d::Identity();
         pva.linear.velocity = Vector3d::Zero();
         pva.linear.acceleration = Vector3d::Zero();
@@ -99,6 +99,27 @@ init_bot(Sim_Bot &robot)
     robot.running = true;
 }
 
+void print_cursor(Path_Cursor p_cursor) {
+        if (!p_cursor.target_stop_idx.has_value()) {
+            printf("waypoint: %zu | next_waypoint: %zu | target_stop_waypoint: %zu | target_stop_idx: NULL | distance_to_next_waypoint: %f | distance_to_target_stop: %f\n",
+                   p_cursor.current_waypoint,
+                   p_cursor.next_waypoint,
+                   p_cursor.target_stop_waypoint,
+                   p_cursor.distance_to_next_waypoint(),
+                   p_cursor.distance_to_target_stop()
+               );
+        } else {
+            printf("waypoint: %zu | next_waypoint: %zu | target_stop_waypoint: %zu | target_stop_idx: %zu | distance_to_next_waypoint: %f | distance_to_target_stop: %f\n",
+                   p_cursor.current_waypoint,
+                   p_cursor.next_waypoint,
+                   p_cursor.target_stop_waypoint,
+                   p_cursor.target_stop_idx.value(),
+                   p_cursor.distance_to_next_waypoint(),
+                   p_cursor.distance_to_target_stop()
+               );
+        }
+}
+
 int
 main()
 {
@@ -108,8 +129,49 @@ main()
     turn_right_constraint = robot.config.kinematic_constraints.velocity_turning_right_max;
     turn_left_constraint = robot.config.kinematic_constraints.velocity_turning_left_max;
     Path path = read_json_latlon(robot.config.path_config.filepath); // NEW
+    path.set_looping(true);
     Path_Cursor p_cursor; // NEW
     p_cursor.initialize(&path);
+
+    {
+        printf("---\n");
+        for (size_t i = 0; i < path.cumulative_distance.size(); ++i) {
+            printf("cumulative_distance i %zu: %f\n", i, path.segment_length(i));
+        }
+        printf("---\n");
+
+        printf("==================================\n");
+        print_cursor(p_cursor);
+        p_cursor.advance(4.0);
+        print_cursor(p_cursor);
+        p_cursor.advance(2.0);
+        print_cursor(p_cursor);
+        p_cursor.advance(1.2);
+        print_cursor(p_cursor);
+        p_cursor.advance(0.2);
+        print_cursor(p_cursor);
+        p_cursor.advance(4.0);
+        print_cursor(p_cursor);
+        p_cursor.advance(3.0);
+        print_cursor(p_cursor);
+        p_cursor.update_target_stop();
+        print_cursor(p_cursor);
+        p_cursor.update_target_stop();
+        print_cursor(p_cursor);
+        p_cursor.initialize(&path);
+        printf("==================================\n");
+
+
+            // if (robot.path.global_cursor->distance_to_target_stop() < robot.config.goal_tolerance_in_meters) {
+            //     robot.path.global_cursor->update_target_stop();
+
+
+                // cmd = controller.get_cmd(robot.pva, local_difference, robot.path.global_cursor->distance_to_target_stop(), dt);
+                        // controller.motion_profile.set_setpoint(
+                        //     robot.path.global_cursor->distance_to_target_stop());
+
+    }
+
     robot.path.path_direction = robot.config.path_config.direction;
     robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
     robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
