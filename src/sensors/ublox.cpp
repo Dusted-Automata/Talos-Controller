@@ -94,6 +94,7 @@ parse_Nav_PVAT(json j){
     double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
     // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
     msg.veh_heading = positive_radian;
+    msg.heading = positive_radian;
     std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
               << " | positive_radian: " << positive_radian << std::endl;
     msg.mot_heading = j["motHeading"];
