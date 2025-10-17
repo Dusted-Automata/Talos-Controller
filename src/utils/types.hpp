@@ -1,6 +1,5 @@
 #pragma once
 
-#include "pid.hpp"
 #include <filesystem>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
@@ -670,6 +669,21 @@ struct Kinematic_Constraints {
     double alpha_max = 0;                  // max angular acceleration
     double jerk_max = 0;                   // max Linear jerk (m/s^3)
     double jerk_omega_max = 0;             // max Angular jerk (m/s^3)
+};
+
+struct PIDGains {
+    double k_p, k_i, k_d;
+    double output_min;
+    double output_max;
+    double integral_min;
+    double integral_max;
+};
+
+struct PID_Terms {
+    f64 p;
+    f64 i;
+    f64 d;
+
 };
 
 struct Robot_Config {

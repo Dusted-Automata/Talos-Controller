@@ -1,12 +1,6 @@
 #pragma once
 
-struct PIDGains {
-    double k_p, k_i, k_d;
-    double output_min;
-    double output_max;
-    double integral_min;
-    double integral_max;
-};
+#include "types.hpp"
 
 class PID
 {
@@ -20,6 +14,8 @@ class PID
     double prev_error;
 
     float time = 0;
+
+    PID_Terms terms = {};
 
   private:
     PIDGains gains;

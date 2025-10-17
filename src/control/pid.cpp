@@ -6,12 +6,12 @@ PID::update(double setpoint, double measured_value, double dt)
 {
 
     double error = setpoint - measured_value;
-    double p_term = gains.k_p * error;
+    terms.p = gains.k_p * error;
 
     integral += error * dt;
     // Apply integral limits (anti-windup)
     integral = std::max(gains.integral_min, std::min(gains.integral_max, integral));
-    double i_term = gains.k_i * integral;
+    terms.i = gains.k_i * integral;
 
     double derivative;
     if (dt > 0.0) {
@@ -19,9 +19,9 @@ PID::update(double setpoint, double measured_value, double dt)
     } else {
         derivative = 0.0;
     }
-    double d_term = gains.k_d * derivative;
+    terms.d = gains.k_d * derivative;
 
-    double output = p_term + i_term + d_term;
+    double output = terms.p + terms.i + terms.d;
 
     output = std::max(gains.output_min, std::min(gains.output_max, output));
 

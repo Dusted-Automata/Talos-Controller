@@ -6,11 +6,12 @@
 #include <cmath>
 
 
-void log_data_plot(double sp, double heading_error, double control_output) {
+void log_data_plot(double sp, double heading_error, double control_output, PID_Terms terms) {
     FILE* file = fopen("../python/log.csv", "a"); // Open in append mode
     if (!file) return;
 
-    fprintf(file, "%f,%f,%f\n", sp, heading_error, control_output);
+    fprintf(file, "%f,%f,%f,%f,%f,%f\n", sp, heading_error, control_output, terms.p, terms.i, terms.d);
+    // fprintf(file, "%f,%f,%f,%f,%f,%f\n", sp, heading_error, control_output, 0.5, 1.2, 2.3);
 
     fflush(file);   // ✅ flush buffer to disk
     fclose(file);   // ✅ or just keep open and flush each time if speed matters
@@ -61,7 +62,7 @@ Linear_Controller::get_cmd(PVA robot_pva, Vector3d diff, f64 motion_profile_diff
     //     header_file << yaw_error << ",";
     //     header_file << cmd.angular_vel.z() << std::endl;
     // }
-    log_data_plot(0, yaw_error, cmd.angular_vel.z());
+    log_data_plot(0, yaw_error, cmd.angular_vel.z(), angular_pid.terms);
     log_data(0, yaw_error, cmd.angular_vel.z());
     
 
