@@ -4,6 +4,7 @@
 #include "motion_profile.hpp"
 #include "pid.hpp"
 #include "types.hpp"
+#include "sim.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -15,7 +16,7 @@ Wheelchair::init()
 {
 
 #define BAUDRATE B115200
-#define TTY "/dev/ttyACM1"
+#define TTY "/dev/wheelchair"
 
     tty_acm_fd = open(TTY, O_RDWR | O_NOCTTY | O_SYNC);
 
@@ -75,6 +76,8 @@ Wheelchair::init()
         //     }
         // }
 
+        server_init(server, *this);
+        paused = false;
         running = true;
     }
 
@@ -160,9 +163,15 @@ main(void)
 
     Wheelchair robot;
     load_config(robot, "robot_configs/wheelchair_profile_3_bar_3.json");
+    Path path = read_json_latlon(robot.config.path_config.filepath); // NEW
+    path.set_looping(true);
+    Path_Cursor p_cursor; // NEW
+    p_cursor.initialize(&path);
     robot.path.path_direction = robot.config.path_config.direction;
     robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
     robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
+
+    robot.path.global_cursor = &p_cursor; // NEW
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
         robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
@@ -172,14 +181,14 @@ main(void)
     frames_init(robot.frames, robot.path.local_path);
     robot.init();
 
-    std::thread sim_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
+    std::thread control_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
 
-    control_loop<Wheelchair>(robot, traj_controller);
+    // control_loop<Wheelchair>(robot, traj_controller);
 
 
 
-    // Sim_Display sim = Sim_Display(robot, robot.path);
-    // sim.display();
+    Sim_Display sim = Sim_Display(robot, robot.path);
+    sim.display();
     //
     // CloseWindow();
 
