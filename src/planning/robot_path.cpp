@@ -1,5 +1,4 @@
 #include "robot_path.hpp"
-#include "EGM96.hpp"
 #include "cppmap3d.hh"
 #include "json.hpp"
 #include <fstream>
