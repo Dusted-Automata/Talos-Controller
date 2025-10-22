@@ -60,17 +60,12 @@ control_loop(T &robot, Path_Planner &path_planner, Linear_Controller &controller
             }
             // log() //poses and times
 
-
-            // Pose target_waypoint = path_planner.global_path.next();
-            Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
-
             Vector3d local_difference = frames_diff(robot.frames, path_planner.local_path.next().local_point);   //TODO: different function scheme for this.
-            Vector3d to_next_waypoint = frames_diff(robot.frames, path_planner.global_cursor->get_next_waypoint().local_point); //TODO: different function scheme for this.
-
             local_difference.z() = 0.0;
+            Vector3d to_next_waypoint = frames_diff(robot.frames, path_planner.global_cursor->get_next_waypoint().local_point); //TODO: different function scheme for this.
             to_next_waypoint.z() = 0.0;
 
-            cmd = controller.get_cmd(robot.pva, to_next_waypoint, path_planner.global_cursor->distance_to_target_stop(), timer.dt);
+            Velocity2d cmd = controller.get_cmd(robot.pva, to_next_waypoint, path_planner.global_cursor->distance_to_target_stop(), timer.dt);
             // if (local_difference.norm() > robot.config.goal_tolerance_in_meters) {
             //     cmd = controller.get_cmd(robot.pva, local_difference, path_planner.global_cursor->distance_to_target_stop(), dt);
             // } else {
