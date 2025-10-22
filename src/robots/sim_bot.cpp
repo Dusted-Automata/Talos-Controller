@@ -94,7 +94,6 @@ init_bot(Sim_Bot &robot)
     // }
 
     // robot.server.init(robot);
-    server_init(robot.server, robot);
     robot.paused = false;
     robot.running = true;
 }
@@ -128,72 +127,38 @@ main()
     load_config(robot, "robot_configs/sim_bot.json");
     turn_right_constraint = robot.config.kinematic_constraints.velocity_turning_right_max;
     turn_left_constraint = robot.config.kinematic_constraints.velocity_turning_left_max;
+    Server server;
+    server_init(server, robot);
+    // }
+    // {
+    Path_Planner p_planner;
+    Path_Cursor p_cursor; 
     Path path = read_json_latlon(robot.config.path_config.filepath); // NEW
     path.set_looping(true);
-    Path_Cursor p_cursor; // NEW
+    p_planner.global_cursor = &p_cursor;
+
     p_cursor.initialize(&path);
-
-    {
-        printf("---\n");
-        for (size_t i = 0; i < path.cumulative_distance.size(); ++i) {
-            printf("cumulative_distance i %zu: %f\n", i, path.segment_length(i));
-        }
-        printf("---\n");
-
-        printf("==================================\n");
-        print_cursor(p_cursor);
-        p_cursor.advance(4.0);
-        print_cursor(p_cursor);
-        p_cursor.advance(2.0);
-        print_cursor(p_cursor);
-        p_cursor.advance(1.2);
-        print_cursor(p_cursor);
-        p_cursor.advance(0.2);
-        print_cursor(p_cursor);
-        p_cursor.advance(4.0);
-        print_cursor(p_cursor);
-        p_cursor.advance(3.0);
-        print_cursor(p_cursor);
-        p_cursor.update_target_stop();
-        print_cursor(p_cursor);
-        p_cursor.update_target_stop();
-        print_cursor(p_cursor);
-        p_cursor.initialize(&path);
-        printf("==================================\n");
-
-
-            // if (robot.path.global_cursor->distance_to_target_stop() < robot.config.goal_tolerance_in_meters) {
-            //     robot.path.global_cursor->update_target_stop();
-
-
-                // cmd = controller.get_cmd(robot.pva, local_difference, robot.path.global_cursor->distance_to_target_stop(), dt);
-                        // controller.motion_profile.set_setpoint(
-                        //     robot.path.global_cursor->distance_to_target_stop());
-
-    }
-
-    robot.path.path_direction = robot.config.path_config.direction;
-    robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
-    robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
-
-    robot.path.global_cursor = &p_cursor; // NEW
+    p_planner.path_direction = robot.config.path_config.direction;
+    p_planner.global_path.read_json_latlon(robot.config.path_config.filepath);
+    p_planner.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
+    // }
 
     robot.read_pv = *read_state;
 
     { // Find out how to extract this.
 
+        frames_init(robot.frames, p_planner.local_path);
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
             robot.config.kinematic_constraints.acceleration_max,
             robot.config.kinematic_constraints.velocity_backward_max,
             robot.config.kinematic_constraints.deceleration_max);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
-        frames_init(robot.frames, robot.path.local_path);
         init_bot(robot);
-        std::thread control_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(traj_controller));
+        std::thread control_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
 
         // control_loop<Sim_Bot>(robot, traj_controller);
 
-        Sim_Display sim = Sim_Display(robot, robot.path);
+        Sim_Display sim = Sim_Display(robot, p_planner);
         sim.display();
         robot.running = false;
     }

@@ -41,6 +41,7 @@ target_include_directories(common_settings INTERFACE
     src/sensors
     src/planning
     src/control
+    src/communication
     ${Boost_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
     ${raylib_INCLUDE_DIRS}
@@ -61,8 +62,9 @@ set(COMMON_SOURCES
     src/utils/sim.cpp
     src/utils/frames.cpp
     src/utils/logger.cpp
-    src/utils/socket.cpp
-    src/utils/EGM96.cpp
+    src/utils/timer.c
+    src/communication/socket.cpp
+    src/communication/server.cpp
     src/utils/load_config.cpp
 )
 

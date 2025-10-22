@@ -76,7 +76,6 @@ Wheelchair::init()
         //     }
         // }
 
-        server_init(server, *this);
         paused = false;
         running = true;
     }
@@ -163,31 +162,36 @@ main(void)
 
     Wheelchair robot;
     load_config(robot, "robot_configs/wheelchair_profile_3_bar_3.json");
+    // {
+    Server server;
+    server_init(server, robot);
+    // }
+    // {
+    Path_Planner p_planner;
+    Path_Cursor p_cursor; 
     Path path = read_json_latlon(robot.config.path_config.filepath); // NEW
     path.set_looping(true);
-    Path_Cursor p_cursor; // NEW
-    p_cursor.initialize(&path);
-    robot.path.path_direction = robot.config.path_config.direction;
-    robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
-    robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
+    p_planner.global_cursor = &p_cursor;
 
-    robot.path.global_cursor = &p_cursor; // NEW
+    p_cursor.initialize(&path);
+    p_planner.path_direction = robot.config.path_config.direction;
+    p_planner.global_path.read_json_latlon(robot.config.path_config.filepath);
+    p_planner.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
+    // }
+
+    frames_init(robot.frames, p_planner.local_path);
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
         robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
         robot.config.kinematic_constraints.deceleration_max);
     Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-    frames_init(robot.frames, robot.path.local_path);
     robot.init();
 
-    std::thread control_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(traj_controller));
+    std::thread control_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
 
     // control_loop<Wheelchair>(robot, traj_controller);
-
-
-
-    Sim_Display sim = Sim_Display(robot, robot.path);
+    Sim_Display sim = Sim_Display(robot, p_planner);
     sim.display();
     //
     // CloseWindow();
