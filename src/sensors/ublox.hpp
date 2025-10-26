@@ -35,7 +35,6 @@ enum class gnss_fix {
 };
 
 
-double convert_to_positive_radians(double angle);
 using nlohmann::json;
 
 

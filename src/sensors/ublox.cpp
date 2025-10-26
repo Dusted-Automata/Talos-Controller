@@ -2,6 +2,7 @@
 #include "ublox.hpp"
 #include "cppmap3d.hh"
 #include "sensor.hpp"
+#include "math.hpp"
 #include <arpa/inet.h>
 #include <iostream>
 #include <netinet/in.h>
@@ -203,40 +204,19 @@ Ublox::start()
     return true;
 }
 
-inline bool
-above_epsilon(double lat, double lng, double alt)
-{
-    if (std::abs(lat) > 0.001 || std::abs(lng) > 0.001 || std::abs(alt) > 0.001) {
-        return true;
-    }
-    return false;
-}
 
 
-double
-convert_to_positive_radians(double angle)
-{
 
-    if (angle < 0) {
-        return angle + 2 * M_PI;
-    }
-    return angle;
-}
-
-double
-min_angle_difference(double angle1, double angle2)
-{
-    // https://stackoverflow.com/questions/1878907/how-can-i-find-the-smallest-difference-between-two-angles-around-a-point
-    // Angles must be subtracted differently than other values.
-    return atan2(sin(angle2 - angle1), cos(angle2 - angle1));
-}
 
 void
 update_position(Ublox &ublox, Frames &frames)
 {
     std::unique_lock<std::mutex> lock(ublox.mutex);
     if (ublox.gnss.has_value()) {
-        if (above_epsilon(ublox.gnss->llh.lat(), ublox.gnss->llh.lon(), ublox.gnss->llh.alt())) {
+        if (   above_epsilon(0.001, ublox.gnss->llh.lat()) 
+            || above_epsilon(0.001, ublox.gnss->llh.lon())
+            || above_epsilon(0.001, ublox.gnss->llh.alt())
+        ) {
             frames_update_based_on_measurement(frames, ublox.gnss->llh);
         }
         ublox.gnss.reset();

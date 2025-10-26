@@ -10,8 +10,8 @@ class Sim_Display
     Robot &robot;
     Path_Planner &path;
 
-    static constexpr int SCREEN_WIDTH = 1000;
-    static constexpr int SCREEN_HEIGHT = 800;
+    static constexpr int SCREEN_WIDTH = 3000;
+    static constexpr int SCREEN_HEIGHT = 2000;
     static constexpr float ROBOT_SIZE = 20.0;
     static constexpr int TARGET_FPS = 500;
 
@@ -27,7 +27,7 @@ class Sim_Display
 
         camera.target = { (float)robot.frames.local_frame.pos.north(), (float)robot.frames.local_frame.pos.east() };
         camera.offset = { .x = SCREEN_WIDTH / 2.0f, .y = SCREEN_HEIGHT / 2.0f };
-        camera.zoom = 30.0f;
+        camera.zoom = 60.0f;
     }
 
     void display();

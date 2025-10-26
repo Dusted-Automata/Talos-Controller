@@ -2,6 +2,7 @@
 #include "cppmap3d.hh"
 #include "transformations.hpp"
 #include "types.hpp"
+#include "math.hpp"
 #include "ublox.hpp"
 #include <iostream>
 
@@ -92,15 +93,3 @@ frames_diff(const Frames &frames, const ENU &goal) // fine with running every fr
     return position_diff;
 }
 
-double
-eucledean_xy_norm(const Vector3d &diff) // fine with running every frame
-{
-    return sqrt(diff.x() * diff.x() + diff.y() * diff.y());
-}
-
-
-double
-eucledean_xyz_norm(const Vector3d &diff) // fine with running every frame
-{
-    return sqrt(diff.x() * diff.x() + diff.y() * diff.y() + diff.z() * diff.z());
-}

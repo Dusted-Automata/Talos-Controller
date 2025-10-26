@@ -621,6 +621,7 @@ struct Pose {
     Ecef point;
     ENU local_point;
     Affine3d transformation_matrix; // Change this to Quaternion maybe
+    f64 heading;
 };
 
 struct LA {
