@@ -74,12 +74,12 @@ control_loop(T &robot, Path_Planner &path_planner, Linear_Controller &controller
 
             path_planner.global_cursor->advance(to_next_waypoint.norm());
             if (path_planner.global_cursor->at_target_stop(robot.config.goal_tolerance_in_meters)) {
-                printf("distance_to_target_stop is below goal_tolerance_in_meters");
-                for (u32 i = 1; i < (u32)server.socket.nfds; ++i){
-                    Client client = server.socket.clients[i];
-                    std::string success = "success\n";
-                    tcp_send(client.fd, success.data(), success.length());
-                }
+                printf("distance_to_target_stop is below goal_tolerance_in_meters\n");
+                // for (u32 i = 1; i < (u32)server.socket.nfds; ++i){
+                //     Client client = server.socket.clients[i];
+                //     std::string success = "success\n";
+                //     tcp_send(client.fd, success.data(), success.length());
+                // }
                 path_planner.global_cursor->update_target_stop();
                 controller.aligned_to_goal_waypoint = false; 
                 controller.motion_profile.reset();

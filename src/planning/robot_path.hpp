@@ -84,7 +84,7 @@ public:
 
     size_t num_segments() const {
         if (waypoints.size() < 2) return 0;
-        if (is_loop_) {
+        if (looping) {
             return waypoints.size();
         } else {
             return waypoints.size() - 1;
@@ -124,7 +124,7 @@ public:
                 if (stop_wp_idx > current_idx) return stop_wp_idx;
             }
             // If looping, wrap to first stop
-            if (is_loop_) return stop_indices.front();
+            if (looping) return stop_indices.front();
 
         } else { // REVERSE
             // Find first stop before current_idx (search backward)
@@ -132,7 +132,7 @@ public:
                 if (*it < current_idx) return *it;
             }
             // If looping, wrap to last stop
-            if (is_loop_) return stop_indices.back();
+            if (looping) return stop_indices.back();
         }
 
         printf("next_stop_waypoint GONNA RETURN NULLOPT\n");
@@ -146,11 +146,11 @@ public:
 
         if (dir == Direction::FORWARD) {
             stop_idx = (stop_idx+ 1) % stop_indices.size();
-            if (!is_loop_ && stop_idx == 0) return std::nullopt; // Reached end
+            if (!looping && stop_idx == 0) return std::nullopt; // Reached end
             return stop_idx;
         } else {
             if (stop_idx == 0) {
-                if (!is_loop_) return std::nullopt; // Reached start
+                if (!looping) return std::nullopt; // Reached start
                 return stop_indices.size() - 1;
             } else {
                 return --stop_idx;
@@ -170,7 +170,7 @@ public:
     {
         if (from_idx >= waypoints.size()) return 0.0;
 
-        if (is_loop_ && from_idx == waypoints.size() - 1) {
+        if (looping && from_idx == waypoints.size() - 1) {
             return loop_closure_distance_; // Last -> First segment
         }
 
@@ -187,7 +187,7 @@ public:
         if (dir == Direction::FORWARD) {
             if (to_idx > from_idx) {
                 return cumulative_distance[to_idx] - cumulative_distance[from_idx];
-            } else if (is_loop_) {
+            } else if (looping) {
                 // Wrapped around: from -> end -> start -> to
                 return (cumulative_distance.back() - cumulative_distance[from_idx]) + loop_closure_distance_
                 + cumulative_distance[to_idx];
@@ -195,7 +195,7 @@ public:
         } else { // REVERSE
             if (to_idx < from_idx) {
                 return cumulative_distance[from_idx] - cumulative_distance[to_idx];
-            } else if (is_loop_) {
+            } else if (looping) {
                 // Wrapped backward: from -> start -> end -> to
                 return cumulative_distance[from_idx] + loop_closure_distance_
                 + (cumulative_distance.back() - cumulative_distance[to_idx]);
@@ -209,16 +209,16 @@ public:
     {
         if (waypoints.size() < 2) return 0.0;
         f64 len = cumulative_distance.back();
-        if (is_loop_) len += loop_closure_distance_;
+        if (looping) len += loop_closure_distance_;
         return len;
     }
 
     void set_looping(bool loop) {
-        is_loop_ = loop;
+        looping = loop;
         update_distances();
     }
 
-    bool is_looping() const { return is_loop_; }
+    bool is_looping() const { return looping; }
 
 
     void
@@ -239,7 +239,7 @@ public:
         }
 
         // Compute loop closure distance
-        if (is_loop_ && waypoints.size() >= 2) {
+        if (looping && waypoints.size() >= 2) {
             loop_closure_distance_ = calculate_distance(waypoints.back(), waypoints.front());
         } else {
             loop_closure_distance_ = 0.0;
@@ -256,7 +256,7 @@ private:
     std::vector<Pose> waypoints;
     std::vector<bool> stops;
     f64 loop_closure_distance_{ 0.0 };
-    bool is_loop_{ false };
+    bool looping = false;
 };
 
 struct Path_Cursor {
@@ -405,6 +405,42 @@ struct Path_Cursor {
             }
         } else { // REVERSE
             next_waypoint = current_waypoint;
+
+            if (current_waypoint == 0) {
+                if (path->is_looping()) {
+                    current_waypoint = path->num_waypoints() - 1;
+                    return Advance_Result::WRAPPED;
+                } else {
+                    return Advance_Result::REACHED_END;
+                }
+            } else {
+                current_waypoint--;
+            }
+        }
+        progress = 0.0;
+
+        return Advance_Result::OK;
+    }
+
+    Advance_Result
+    set_current_waypoint(size_t waypoint_idx)
+    {
+        if (dir == Direction::FORWARD) {
+            current_waypoint = waypoint_idx;
+            next_waypoint = current_waypoint + 1;
+
+            if (next_waypoint >= path->num_waypoints()) {
+                if (path->is_looping()) {
+                    next_waypoint = 0;
+                    return Advance_Result::WRAPPED;
+                } else {
+                    next_waypoint = current_waypoint;
+                    return Advance_Result::REACHED_END;
+                }
+            }
+        } else { // REVERSE
+            next_waypoint = waypoint_idx;
+            current_waypoint = waypoint_idx;
 
             if (current_waypoint == 0) {
                 if (path->is_looping()) {

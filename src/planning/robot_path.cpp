@@ -1,6 +1,7 @@
 #include "robot_path.hpp"
 #include "cppmap3d.hh"
 #include "json.hpp"
+#include "math.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -217,6 +218,23 @@ Robot_Path::read_json_latlon(std::filesystem::path file_path)
     return 0;
 }
 
+std::vector<f64> get_angles_between_waypoints(Path path) {
+    std::vector<f64> angles;
+    for (size_t i = 0; i < path.num_waypoints() - 1; i++) {
+        Pose l = path.waypoint(i);
+        Pose t = path.waypoint(i+1);
+        Vector3d v = t.local_point - l.local_point;
+        f64 theta = to_degrees(convert_to_positive_radians(atan2(v.y(), v.x())));
+        angles.push_back(theta);
+    }
+    Pose l = path.waypoint(path.num_waypoints() - 1);
+    Pose t = path.waypoint(0);
+    Vector3d v = t.local_point - l.local_point;
+    f64 theta = to_degrees(convert_to_positive_radians(atan2(v.y(), v.x())));
+    angles.push_back(theta);
+    return angles;
+}
+
 Path
 read_json_latlon(std::filesystem::path file_path)
 {
@@ -262,7 +280,17 @@ read_json_latlon(std::filesystem::path file_path)
             } else {
                 path.add_waypoint(pose, false);
             }
+            f64 bearing = point["bearing"];
+            if (bearing) {
+                pose.heading = bearing;
+            } 
         }
     } 
+    auto v = get_angles_between_waypoints(path);
+    for (auto a : v){
+        printf("angle: %f\n", a);
+    }
+    // double goal_theta = to_degrees(convert_to_positive_radians(atan2(local.north(), local.east())));
     return path;
 }
+

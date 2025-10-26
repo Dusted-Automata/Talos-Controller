@@ -1,6 +1,8 @@
+#include "cppmap3d.hh"
 #include "frames.hpp"
 #include "linear_controller.hpp"
 #include "load_config.hpp"
+#include "math.hpp"
 #include "path_planner.hpp"
 #include "pid.hpp"
 #include "transformations.hpp"
@@ -98,27 +100,6 @@ init_bot(Sim_Bot &robot)
     robot.running = true;
 }
 
-void print_cursor(Path_Cursor p_cursor) {
-        if (!p_cursor.target_stop_idx.has_value()) {
-            printf("waypoint: %zu | next_waypoint: %zu | target_stop_waypoint: %zu | target_stop_idx: NULL | distance_to_next_waypoint: %f | distance_to_target_stop: %f\n",
-                   p_cursor.current_waypoint,
-                   p_cursor.next_waypoint,
-                   p_cursor.target_stop_waypoint,
-                   p_cursor.distance_to_next_waypoint(),
-                   p_cursor.distance_to_target_stop()
-               );
-        } else {
-            printf("waypoint: %zu | next_waypoint: %zu | target_stop_waypoint: %zu | target_stop_idx: %zu | distance_to_next_waypoint: %f | distance_to_target_stop: %f\n",
-                   p_cursor.current_waypoint,
-                   p_cursor.next_waypoint,
-                   p_cursor.target_stop_waypoint,
-                   p_cursor.target_stop_idx.value(),
-                   p_cursor.distance_to_next_waypoint(),
-                   p_cursor.distance_to_target_stop()
-               );
-        }
-}
-
 int
 main()
 {
@@ -148,6 +129,15 @@ main()
     { // Find out how to extract this.
 
         frames_init(robot.frames, p_planner.local_path);
+        {
+            // robot.ublox.start();
+            // robot.frames.local_frame.pos = {0, -5, 0};
+            // robot.frames.global_frame.pos = cppmap3d::enu2ecef(robot.frames.local_frame.pos, robot.frames.local_frame.origin);
+            // update_position(robot.ublox, robot.frames);
+            // update_heading(robot.ublox, robot.frames);
+            // p_planner.re_identify_position(robot.frames.local_frame.pos);
+        }
+
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
             robot.config.kinematic_constraints.acceleration_max,
             robot.config.kinematic_constraints.velocity_backward_max,
