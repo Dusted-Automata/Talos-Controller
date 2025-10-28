@@ -45,9 +45,9 @@ control_loop(T &robot, Path_Planner &path_planner, Linear_Controller &controller
             {
                 {
                     // robot.pva = robot.read_state();
-                    LA la = robot.read_pv();
-                    robot.pva.linear = la.linear;
-                    robot.pva.angular = la.angular;
+                    // LA la = robot.read_pv();
+                    // robot.pva.linear = la.linear;
+                    // robot.pva.angular = la.angular;
                     // update_pv(robot.frames);
                     frames_move_in_local_frame(robot.frames, robot.pva.linear, robot.pva.angular, timer.dt);
                     robot.pva.pose.local_point = robot.frames.local_frame.pos;

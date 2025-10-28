@@ -186,8 +186,9 @@ main(void)
         std::cout << "ROBOT INIT!" << std::endl;
         bool ublox_start = robot.ublox.start();
         std::cout << "UBLOX: " << ublox_start << std::endl;
-        while (!robot.ublox.gnss.has_value()) {
+        while (!robot.ublox.imu.has_value()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            if (robot.ublox.imu.has_value()) break;
         }
         update_position(robot.ublox, robot.frames);
         update_heading(robot.ublox, robot.frames);
