@@ -14,7 +14,7 @@ Sim_Display::draw_absolute_grid(Camera2D camera, float gridStep)
 {
     Vector2 zero = { 0, 0 };
     Vector2 topLeft = GetScreenToWorld2D(zero, camera);
-    Vector2 screen = { SCREEN_WIDTH, SCREEN_HEIGHT };
+    Vector2 screen = { static_cast<float>(screenWidth), static_cast<float>(screenHeight) };
     Vector2 bottomRight = GetScreenToWorld2D(screen, camera);
 
     for (float x = floorf(topLeft.x / gridStep) * gridStep; x < bottomRight.x; x += gridStep) {
@@ -92,6 +92,8 @@ Sim_Display::display()
         Vector2 pos = { static_cast<float>(robot.frames.local_frame.pos.east()),
             static_cast<float>(-robot.frames.local_frame.pos.north()) };
         camera.target = pos;
+        camera.offset = { GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f };
+
 
         // if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         //     Vector2 delta = GetMouseDelta();
