@@ -60,9 +60,9 @@ Wheelchair::init()
 
     {
 
-        std::cout << "ROBOT INIT!" << std::endl;
-        bool ublox_start = ublox.start();
-        std::cout << "UBLOX: " << ublox_start << std::endl;
+        // std::cout << "ROBOT INIT!" << std::endl;
+        // bool ublox_start = ublox.start();
+        // std::cout << "UBLOX: " << ublox_start << std::endl;
         // while (true && ublox_start) {
         //     std::optional<Nav_Pvat> msg = ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
         //     if (msg.has_value()) {
@@ -180,6 +180,22 @@ main(void)
     // }
 
     frames_init(robot.frames, p_planner.local_path);
+
+    {
+
+        std::cout << "ROBOT INIT!" << std::endl;
+        bool ublox_start = robot.ublox.start();
+        std::cout << "UBLOX: " << ublox_start << std::endl;
+        while (!robot.ublox.gnss.has_value()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+        update_position(robot.ublox, robot.frames);
+        update_heading(robot.ublox, robot.frames);
+        p_planner.re_identify_position(robot.frames.local_frame.pos);
+        if (!ublox_start) {
+            return -1;
+        }
+    }
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
         robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,

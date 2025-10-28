@@ -131,11 +131,11 @@ main()
         frames_init(robot.frames, p_planner.local_path);
         {
             // robot.ublox.start();
-            // robot.frames.local_frame.pos = {0, -5, 0};
-            // robot.frames.global_frame.pos = cppmap3d::enu2ecef(robot.frames.local_frame.pos, robot.frames.local_frame.origin);
-            // update_position(robot.ublox, robot.frames);
-            // update_heading(robot.ublox, robot.frames);
-            // p_planner.re_identify_position(robot.frames.local_frame.pos);
+            robot.frames.local_frame.pos = {45, -6, 0};
+            robot.frames.global_frame.pos = cppmap3d::enu2ecef(robot.frames.local_frame.pos, robot.frames.local_frame.origin);
+            update_position(robot.ublox, robot.frames);
+            update_heading(robot.ublox, robot.frames);
+            p_planner.re_identify_position(robot.frames.local_frame.pos);
         }
 
         Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
