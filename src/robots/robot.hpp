@@ -80,6 +80,7 @@ control_loop(T &robot, Path_Planner &path_planner, Linear_Controller &controller
                 //     std::string success = "success\n";
                 //     tcp_send(client.fd, success.data(), success.length());
                 // }
+                path_planner.global_cursor->consume_target();
                 path_planner.global_cursor->update_target_stop();
                 controller.aligned_to_goal_waypoint = false; 
                 controller.motion_profile.reset();

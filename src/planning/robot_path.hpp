@@ -266,6 +266,8 @@ struct Path_Cursor {
     f64 progress = 0.0;          // [0.0, 1.0] progress toward next_waypoint
     Direction dir = Direction::FORWARD;
     Path *path;
+    bool target_latched = false;
+
 
     // Goal tracking - which stop we're ultimately heading toward
     size_t target_stop_waypoint{ 0 };         // Waypoint index of the target stop
@@ -357,8 +359,16 @@ struct Path_Cursor {
         // Check if we've reached the target stop
     bool at_target_stop(f64 goal_tolerance) const
     {
+        if (!target_stop_idx) return false;
+        if (target_latched)   return false;
         f64 distance = path->distance_between(current_waypoint, target_stop_waypoint, dir);
         return distance < goal_tolerance ;
+    }
+
+    void clear_target_latch() { target_latched = false; }
+    void consume_target() {
+        target_latched = true;
+        target_stop_idx.reset();
     }
 
     Advance_Result
@@ -418,7 +428,7 @@ struct Path_Cursor {
             }
         }
         progress = 0.0;
-
+        clear_target_latch();
         return Advance_Result::OK;
     }
 
