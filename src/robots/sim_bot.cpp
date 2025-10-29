@@ -2,11 +2,11 @@
 #include "frames.hpp"
 #include "linear_controller.hpp"
 #include "load_config.hpp"
-#include "math.hpp"
 #include "path_planner.hpp"
-#include "pid.hpp"
+#include "server.hpp"
 #include "transformations.hpp"
 #include "sim.hpp"
+#include "control_loop.cpp"
 
 struct Config : public Robot_Config {
     PIDGains linear_gains;
@@ -120,15 +120,14 @@ main()
 
     p_cursor.initialize(&path);
     p_planner.path_direction = robot.config.path_config.direction;
-    p_planner.global_path.read_json_latlon(robot.config.path_config.filepath);
-    p_planner.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
     // }
 
     robot.read_pv = *read_state;
 
     { // Find out how to extract this.
 
-        frames_init(robot.frames, p_planner.local_path);
+        frames_init(robot.frames, p_planner.global_cursor->path->waypoint(p_planner.global_cursor->current_waypoint),
+            p_planner.global_cursor->get_next_waypoint());
         {
             // robot.ublox.start();
             robot.frames.local_frame.pos = {45, -6, 0};
@@ -144,7 +143,7 @@ main()
             robot.config.kinematic_constraints.deceleration_max);
         Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
         init_bot(robot);
-        std::thread control_thread(control_loop<Sim_Bot>, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
+        std::thread control_thread(control_loop, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
 
         // control_loop<Sim_Bot>(robot, traj_controller);
 
