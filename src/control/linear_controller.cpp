@@ -28,7 +28,7 @@ void log_data(double sp, double heading_error, double control_output) {
 }
 
 Velocity2d
-Linear_Controller::get_cmd(PVA robot_pva, Vector3d diff, f64 motion_profile_diff, double dt)
+Linear_Controller::get_cmd(Vector3d diff, f64 motion_profile_diff, double dt)
 {
     Velocity2d cmd = { .linear_vel = Linear_Velocity().setZero(), .angular_vel = Angular_Velocity().setZero() };
 

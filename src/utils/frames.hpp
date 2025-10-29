@@ -25,7 +25,7 @@ struct Frames {
     Ecef_Frame global_frame;
 };
 
-void frames_init(Frames &frames, Robot_Path &path);
+void frames_init(Frames &frames, Pose current, Pose next);
 void frames_move_in_local_frame(Frames &frames, Linear linear_movement, Angular angular_movement, const double dt);
 // void frames_move_in_global_frame(Velocity2d velocity, const double dt);
 

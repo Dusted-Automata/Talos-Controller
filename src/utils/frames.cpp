@@ -3,7 +3,6 @@
 #include "transformations.hpp"
 #include "types.hpp"
 #include "math.hpp"
-#include "ublox.hpp"
 #include <iostream>
 
 void
@@ -16,8 +15,8 @@ frames_move_in_local_frame(Frames &frames, Linear linear_movement, Angular angul
     frames.local_frame.pos += frames.local_frame.orientation.rotation() * position_update;
 
     {
-        double new_local_orientation = convert_to_positive_radians(
-            atan2(frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
+        // double new_local_orientation = convert_to_positive_radians(
+        //     atan2(frames.local_frame.orientation.rotation()(1, 0), frames.local_frame.orientation.rotation()(0, 0)));
         // std::cout << "move_in_local_frame: " << new_local_orientation << std::endl;
     }
 
@@ -45,16 +44,16 @@ frames_update_based_on_measurement(Frames &frames, const LLH &llh)
     frames.global_frame.pos = measured_ecef;
 }
 void
-frames_init(Frames &frames, Robot_Path &path)
+frames_init(Frames &frames, Pose current, Pose next)
 {
-    if (path.size() < 1) {
-        return;
-    }
+    // if (!current) {
+    //     return;
+    // }
 
-    LLH llh = cppmap3d::ecef2geodetic(path.current().point);
+    LLH llh = cppmap3d::ecef2geodetic(current.point);
     frames.local_frame.origin = llh;
-    frames.global_frame.pos = path.current().point;
-    frames.global_frame.start_pos = path.current().point;
+    frames.global_frame.pos = current.point;
+    frames.global_frame.start_pos = current.point;
 
     const double sL = std::sin(llh.lon());
     const double cL = std::cos(llh.lon());
@@ -73,11 +72,11 @@ frames_init(Frames &frames, Robot_Path &path)
     // Eigen::AngleAxisd rot_yaw(theta, Vector3d::UnitZ());
     // frames.local_frame.orientation = rot_yaw.toRotationMatrix();
 
-    if (path.size() < 2) {
-        return;
-    }
+    // if (!next) {
+    //     return;
+    // }
 
-    ENU goal = path.next().local_point;
+    ENU goal = next.local_point;
     double goal_theta = convert_to_positive_radians(atan2(goal.north(), goal.east()));
     // double goal_theta = convert_to_positive_radians(3.45575);
     Eigen::AngleAxisd rot_yaw_goal(goal_theta, Vector3d::UnitZ());

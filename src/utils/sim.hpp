@@ -1,4 +1,5 @@
 #pragma once
+#include "path_planner.hpp"
 #include "robots/robot.hpp"
 #include "types.hpp"
 #include <raylib.h>
