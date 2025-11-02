@@ -1,6 +1,10 @@
+#include "linear_controller.hpp"
 #include "load_config.hpp"
+#include "motion_profile.hpp"
+#include "server.hpp"
 #include "sim.hpp"
 #include "wheelchair.hpp"
+#include "control_loop.cpp"
 
 int
 main(int argc, char* argv[])
@@ -24,12 +28,11 @@ main(int argc, char* argv[])
 
     p_cursor.initialize(&path);
     p_planner.path_direction = robot.config.path_config.direction;
-    p_planner.global_path.read_json_latlon(robot.config.path_config.filepath);
     p_planner.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
     // }
 
-    frames_init(robot.frames, p_planner.local_path);
-
+    frames_init(robot.frames, p_planner.global_cursor->path->waypoint(p_planner.global_cursor->current_waypoint),
+                p_planner.global_cursor->get_next_waypoint());
     {
 
         std::cout << "ROBOT INIT!" << std::endl;
@@ -54,7 +57,7 @@ main(int argc, char* argv[])
 
     robot.init();
 
-    std::thread control_thread(control_loop<Wheelchair>, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
+    std::thread control_thread(control_loop, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
 
     // control_loop<Wheelchair>(robot, traj_controller);
     Sim_Display sim = Sim_Display(robot, p_planner);
