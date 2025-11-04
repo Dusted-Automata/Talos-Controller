@@ -19,6 +19,7 @@ if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64.*" OR "${CMAKE_SYSTEM_PROCESSOR}
 endif()
 
 
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/third_party/raylib/")
 find_package(raylib REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
