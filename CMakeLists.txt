@@ -18,9 +18,9 @@ if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64.*" OR "${CMAKE_SYSTEM_PROCESSOR}
     set(ARCH arm64)
 endif()
 
-
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/third_party/raylib/")
 find_package(raylib REQUIRED)
+
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
 
@@ -86,11 +86,11 @@ set(COMMON_SOURCES
 )
 
 add_library(controller_core STATIC ${COMMON_SOURCES})
-target_link_libraries(controller_core PUBLIC common_settings)
+target_link_libraries(controller_core PUBLIC common_settings raylib)
 
 function(add_controller_executable target_name source_file)
     add_executable(${target_name} ${source_file})
-    target_link_libraries(${target_name} PRIVATE controller_core raylib)
+    target_link_libraries(${target_name} PRIVATE controller_core)
 endfunction()
 
 add_controller_executable(sim src/robots/sim_bot.cpp)
