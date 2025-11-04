@@ -2,9 +2,13 @@
 #include "frames.hpp"
 #include "linear_controller.hpp"
 #include "load_config.hpp"
+#include "path_planner.hpp"
+#include "server.hpp"
+#include "sim.hpp"
 #include <iostream>
 #include <math.h>
 #include <stdint.h>
+#include "control_loop.cpp"
 
 void
 Go1::UDPRecv()
@@ -38,16 +42,17 @@ Go1::send_velocity_command(Velocity2d &velocity)
     udp.SetSend(cmd);
 };
 
-Pose_State
-Go1::read_state()
+LA
+read_state(void* ctx)
 {
-    const uint8_t *stateBytes = reinterpret_cast<const uint8_t *>(&state);
-    udp.GetRecv(state);
-    Pose_State ps;
+    Go1* go1 = (Go1*)ctx;
+    const uint8_t *stateBytes = reinterpret_cast<const uint8_t *>(&go1->state);
+    go1->udp.GetRecv(go1->state);
+    LA ps;
 
-    ps.velocity.linear_vel.x() = readFromStruct<float>(stateBytes, HighStateOffset::VelocityX);
+    ps.linear.velocity.x() = readFromStruct<float>(stateBytes, HighStateOffset::VelocityX);
     // ps.velocity.linear.y() = readFromStruct<float>(stateBytes, HighStateOffset::VelocityY);
-    ps.velocity.angular_vel.z() = readFromStruct<float>(stateBytes, HighStateOffset::YawSpeed);
+    ps.angular.velocity.z() = readFromStruct<float>(stateBytes, HighStateOffset::YawSpeed);
     // UT::IMU imu = readFromStruct<UT::IMU>(stateBytes, HighStateOffset::IMU);
     // UT::MotorState ms = readFromStruct<UT::MotorState>(stateBytes, HighStateOffset::MotorState);
     // std::array<int16_t, 4> footForce = readFromStruct<std::array<int16_t, 4>>(stateBytes,
@@ -80,10 +85,24 @@ main(void)
     std::cin.ignore();
 
     Go1 robot;
-    load_config(robot, "robot_configs/sim_bot.json");
-    robot.path.path_direction = robot.config.path_config.direction;
-    robot.path.global_path.read_json_latlon(robot.config.path_config.filepath);
-    robot.path.gen_local_path(robot.config.path_config.interpolation_distances_in_meters);
+    load_config(robot, "robot_configs/go1.json");
+    robot.read_pv = *read_state;
+
+    Server server;
+    server_init(server, robot);
+
+    Path_Planner p_planner;
+    Path_Cursor p_cursor; 
+    Path path = read_json_latlon(robot.config.path_config.filepath); // NEW
+    path.set_looping(true);
+    p_planner.global_cursor = &p_cursor;
+
+    p_cursor.initialize(&path);
+    p_planner.path_direction = robot.config.path_config.direction;
+    // }
+
+    frames_init(robot.frames, p_planner.global_cursor->path->waypoint(p_planner.global_cursor->current_waypoint),
+                p_planner.global_cursor->get_next_waypoint());
 
     UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.config.control_loop_hz), 3,
         boost::bind(&Go1::UDPRecv, &robot));
@@ -91,23 +110,35 @@ main(void)
         boost::bind(&Go1::UDPSend, &robot));
 
     {
-        Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
-            robot.config.kinematic_constraints.acceleration_max,
-            robot.config.kinematic_constraints.velocity_backward_max,
-            robot.config.kinematic_constraints.deceleration_max);
-        Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
 
-        frames_init(robot.frames, robot.path.local_path);
-
-        loop_udpSend.start();
-        loop_udpRecv.start();
-
-        control_loop(robot, traj_controller);
-        std::thread control_thread(control_loop<Go1>, std::ref(robot), std::ref(traj_controller));
-        // Sim_Display sim = Sim_Display(robot, robot.path);
-        // sim.display();
+        std::cout << "ROBOT INIT!" << std::endl;
+        bool ublox_start = robot.ublox.start();
+        std::cout << "UBLOX: " << ublox_start << std::endl;
+        while (!robot.ublox.imu.has_value()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            if (robot.ublox.imu.has_value()) break;
+        }
+        update_position(robot.ublox, robot.frames);
+        update_heading(robot.ublox, robot.frames);
+        p_planner.re_identify_position(robot.frames.local_frame.pos);
+        if (!ublox_start) {
+            return -1;
+        }
     }
 
+    Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
+        robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
+        robot.config.kinematic_constraints.deceleration_max);
+    Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
+
+    // robot.init();
+
+    std::thread control_thread(control_loop, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
+
+    // control_loop<Wheelchair>(robot, traj_controller);
+    Sim_Display sim = Sim_Display(robot, p_planner);
+    sim.display();
+    //
     // CloseWindow();
 
     return 0;

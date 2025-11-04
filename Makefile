@@ -15,4 +15,7 @@ controller:
 wheelchair:
 	./build/wheelchair
 
+go1:
+	./build/go1
+
 .PHONY : run

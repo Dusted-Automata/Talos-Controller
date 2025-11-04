@@ -43,12 +43,12 @@ class Go1 : public Robot
           // udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
           udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082))
     {
-        udp.InitCmdData(cmd);
-
-        pose_state.position = Eigen::Vector3d(0, 0, 0.5); // Starting position with z=0.5 (standing)
-        pose_state.orientation = Eigen::Affine3d::Identity();
-        pose_state.velocity.linear_vel = Vector3d::Zero();
-        pose_state.velocity.angular_vel = Vector3d::Zero();
+        pva.pose.local_point = Eigen::Vector3d(0, 0, 0);
+        pva.pose.transformation_matrix = Eigen::Affine3d::Identity();
+        pva.linear.velocity = Vector3d::Zero();
+        pva.linear.acceleration = Vector3d::Zero();
+        pva.angular.velocity = Vector3d::Zero();
+        pva.angular.acceleration = Vector3d::Zero();
     };
 
     ~Go1() = default;
@@ -68,7 +68,7 @@ class Go1 : public Robot
     void UDPRecv();
     void UDPSend();
     void send_velocity_command(Velocity2d &velocity) override;
-    Pose_State read_state() override;
+    LA read_state();
 };
 
 namespace HighCmdOffset
