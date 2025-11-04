@@ -17,9 +17,10 @@ control_loop(Robot &robot, Path_Planner &path_planner, Linear_Controller &contro
             {
                 {
                     // robot.pva = robot.read_state();
-                    LA la = robot.read_pv();
+                    LA la = robot.read_pv(robot.ctx);
                     robot.pva.linear = la.linear;
                     robot.pva.angular = la.angular;
+                    printf("LA: lin %f | ang %f\n", robot.pva.linear.velocity.x(), robot.pva.angular.velocity.z());
                     // update_pv(robot.frames);
                     frames_move_in_local_frame(robot.frames, robot.pva.linear, robot.pva.angular, timer.dt);
                     robot.pva.pose.local_point = robot.frames.local_frame.pos;

@@ -21,7 +21,6 @@ double dt = 0.01;
 double turn_left_constraint = 0.1;
 double turn_right_constraint = -0.1;
 
-LA sim_velocity = {};
 
 class Sim_Bot : public Robot
 {
@@ -59,20 +58,23 @@ class Sim_Bot : public Robot
         velocity.linear_vel *= dt;
         velocity.angular_vel *= dt;
     };
+    LA sim_velocity = {};
 
 };
 
 LA
-read_state() 
+read_state(void* ctx) 
 {
+
+    Sim_Bot* sim = (Sim_Bot*)ctx;
     // sim_pose.dt = GetFrameTime(); // TODO: Figure out a way to get frame time
-    double angular_acceleration = (sim_velocity.angular.velocity.z() - damping * angular_velocity) / inertia;
+    double angular_acceleration = (sim->sim_velocity.angular.velocity.z() - damping * angular_velocity) / inertia;
     angular_velocity += angular_acceleration * dt;
     // angular_velocity = std::clamp(angular_velocity, config.kinematic_constraints.velocity_turning_right_max, config.kinematic_constraints.velocity_turning_left_max);
     angular_velocity = std::clamp(angular_velocity, turn_right_constraint, turn_left_constraint );
-    sim_velocity.angular.velocity.z()  = angular_velocity;
+    sim->sim_velocity.angular.velocity.z()  = angular_velocity;
 
-    return sim_velocity;
+    return sim->sim_velocity;
 };
 
 void
@@ -105,7 +107,7 @@ main()
 {
 
     Sim_Bot robot;
-    load_config(robot, "robot_configs/sim_bot.json");
+    load_config(robot, "robot_configs/go1.json");
     turn_right_constraint = robot.config.kinematic_constraints.velocity_turning_right_max;
     turn_left_constraint = robot.config.kinematic_constraints.velocity_turning_left_max;
     Server server;

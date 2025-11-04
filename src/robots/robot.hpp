@@ -23,7 +23,8 @@ class Robot
 
     PVA get_PVA();
     void get_path();
-    LA (*read_pv)() = nullptr;
+    LA (*read_pv)(void*) = nullptr;
+    void* ctx = this;
 
     virtual void send_velocity_command(Velocity2d &cmd) = 0;
 };

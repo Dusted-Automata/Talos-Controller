@@ -1,9 +1,9 @@
 {
     "version" : 1,
-    "control_loop_hz": 500,
-    "goal_tolerance_in_meters" : 0.75,
+    "control_loop_hz": 100,
+    "goal_tolerance_in_meters" : 0.35,
     "path_config": {
-        "direction" : "reverse",
+        "direction" : "loop",
         "filepath" : "waypoints/PT_ping_pong.json",
         "interpolation_distances_in_meters" : 2.5
     },
