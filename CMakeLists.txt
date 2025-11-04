@@ -33,6 +33,11 @@ target_compile_options(common_settings INTERFACE
 target_link_options(common_settings INTERFACE
     -fsanitize=undefined
 )
+
+target_link_libraries(common_settings INTERFACE
+    Eigen3::Eigen
+)
+
 target_include_directories(common_settings INTERFACE
     include
     src
@@ -42,10 +47,21 @@ target_include_directories(common_settings INTERFACE
     src/planning
     src/control
     src/communication
-    ${Boost_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
-    ${raylib_INCLUDE_DIRS}
 )
+
+get_target_property(EIGEN3_INC Eigen3::Eigen INTERFACE_INCLUDE_DIRECTORIES)
+if(EIGEN3_INC)
+  target_include_directories(common_settings SYSTEM INTERFACE ${EIGEN3_INC})
+endif()
+
+# If you still add Boost/raylib include dirs manually, make them SYSTEM too
+if(Boost_INCLUDE_DIRS)
+  target_include_directories(common_settings SYSTEM INTERFACE ${Boost_INCLUDE_DIRS})
+endif()
+if(raylib_INCLUDE_DIRS)
+  target_include_directories(common_settings SYSTEM INTERFACE ${raylib_INCLUDE_DIRS})
+endif()
+
 target_link_directories(common_settings INTERFACE
     lib/cpp/${ARCH}
 )
