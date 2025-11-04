@@ -28,10 +28,6 @@ enum class Go1_mode : uint8_t {
                       //  1 first
 };
 
-struct Config : public Robot_Config {
-    PIDGains linear_gains;
-    PIDGains angular_gains;
-};
 
 class Go1 : public Robot
 {
@@ -53,7 +49,6 @@ class Go1 : public Robot
 
     ~Go1() = default;
 
-    Config config;
     UT::Safety safe;
     UT::UDP udp;
     UT::HighState state = {};
