@@ -12,23 +12,28 @@ using json = nlohmann::json;
 void
 Sim_Display::draw_absolute_grid(Camera2D camera, float gridStep)
 {
-    Vector2 zero = { 0, 0 };
-    Vector2 topLeft = GetScreenToWorld2D(zero, camera);
-    Vector2 screen = { static_cast<float>(screenWidth), static_cast<float>(screenHeight) };
-    Vector2 bottomRight = GetScreenToWorld2D(screen, camera);
+    const Vector2 topLeft     = GetScreenToWorld2D({0, 0}, camera);
+    const Vector2 screenSize  = { (float)GetScreenWidth(), (float)GetScreenHeight() };
+    const Vector2 bottomRight = GetScreenToWorld2D(screenSize, camera);
 
-    for (float x = floorf(topLeft.x / gridStep) * gridStep; x < bottomRight.x; x += gridStep) {
-        Vector2 start = { x, topLeft.y };
-        Vector2 end = { x, bottomRight.y };
-        DrawLineV(start, end, (x == 0) ? RED : LIGHTGRAY);
+    // Expand a bit so we cover the edges after rounding
+    const float left   = floorf(topLeft.x  / gridStep) * gridStep - gridStep;
+    const float right  = floorf(bottomRight.x / gridStep) * gridStep + gridStep;
+    const float top    = floorf(topLeft.y  / gridStep) * gridStep - gridStep;
+    const float bottom = floorf(bottomRight.y / gridStep) * gridStep + gridStep;
+
+    auto isAxis = [&](float v) {
+        // treat values very close to 0 as the axis to avoid float-equality traps
+        return fabsf(v) <= (0.5f * gridStep);
+    };
+
+    for (float x = left; x <= right; x += gridStep) {
+        DrawLineV({ x, top }, { x, bottom }, isAxis(x) ? RED : LIGHTGRAY);
     }
 
-    for (float y = floorf(topLeft.y / gridStep) * gridStep; y < bottomRight.y; y += gridStep) {
-        Vector2 start = { topLeft.x, y };
-        Vector2 end = { bottomRight.x, y };
-        DrawLineV(start, end, (y == 0) ? RED : LIGHTGRAY);
-    }
-}
+    for (float y = top; y <= bottom; y += gridStep) {
+        DrawLineV({ left, y }, { right, y }, isAxis(y) ? RED : LIGHTGRAY);
+    }}
 
 
 void
@@ -91,7 +96,7 @@ Sim_Display::display()
 
         BeginMode2D(camera);
 
-        float gridStep = 5.0f;
+        float gridStep = 1.0f;
         draw_absolute_grid(camera, gridStep);
 
         for (size_t i = 0; i < path.global_cursor->path->num_waypoints(); i++) {

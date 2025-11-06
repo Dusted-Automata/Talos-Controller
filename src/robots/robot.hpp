@@ -6,6 +6,7 @@
 
 
 
+// Could use a template instead for the ctx. Not sure yet! 
 class Robot
 {
 
@@ -16,7 +17,6 @@ class Robot
     Frames frames = {};
     Robot_Config config = {};
     Ublox ublox = {};
-    Robot_Type type;
 
     bool stop();
     bool pause();
@@ -25,10 +25,11 @@ class Robot
 
     PVA get_PVA();
     void get_path();
-    LA (*read_pv)(void*) = nullptr;
     void* ctx;
 
-    // virtual void send_velocity_command(Velocity2d &cmd) = 0;
-    void (*send_velocity_command)(Velocity2d &cmd);
+    LA (*read_pv)(void* ctx) = nullptr;
+    void (*send_velocity_command)(void* ctx, Velocity2d &cmd) = nullptr;
+    void init(void (*init_ctx)(void*,const Robot* robot));
+    void (*deinit)(void* ctx) = nullptr;
 };
 

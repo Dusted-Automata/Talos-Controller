@@ -47,31 +47,18 @@ struct Joystick {
     uint8_t y;
 };
 
-class Wheelchair : public Robot
+struct Wheelchair
 {
-  private:
-    int tty_acm_fd = -1;
-    Joystick scale_to_joystick(const Velocity2d &vel);
-    bool joystick_to_hex(std::array<char, 10> &buffer, Joystick stick_pos);
-    // std::array<char, 128> tty_read_buf;
 
-  public:
-    Wheelchair()
-    {
-        pva.pose.local_point = Eigen::Vector3d(0, 0, 0);
-        pva.pose.transformation_matrix = Eigen::Affine3d::Identity();
-        pva.linear.velocity = Vector3d::Zero();
-        pva.linear.acceleration = Vector3d::Zero();
-        pva.angular.velocity = Vector3d::Zero();
-        pva.angular.acceleration = Vector3d::Zero();
-    }
+    int fd = -1;
+    Kinematic_Constraints kc;
+    LA current_velocity = {};
 
-    ~Wheelchair()
-    {
-        std::string cmd = create_command_string(Command_Action::SET, Command_Target::JOYSTICK, "0");
-        ::write(tty_acm_fd, cmd.data(), cmd.size());
-    };
-
-    void send_velocity_command(Velocity2d &velocity);
-    void init();
 };
+Joystick scale_to_joystick(const Robot& robot, const Velocity2d &vel);
+bool joystick_to_hex(std::array<char, 10> &buffer, Joystick stick_pos);
+
+void wheelchair_send_velocity_command(void* ctx, Velocity2d &velocity);
+void wheelchair_init(void* ctx, const Robot* robot);
+void wheelchair_deinit(void* ctx);
+LA wheelchair_read_state(void* ctx);

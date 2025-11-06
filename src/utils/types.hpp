@@ -90,7 +90,7 @@ struct buffer {
     u8 *Data;
 };
 
-typedef struct buffer string;
+// typedef struct buffer string;
 
 // typedef union v2 {
 //     struct {

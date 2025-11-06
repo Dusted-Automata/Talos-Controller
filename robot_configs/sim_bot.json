@@ -1,5 +1,6 @@
 {
     "version" : 1,
+    "robot": "sim_bot",
     "control_loop_hz": 100,
     "goal_tolerance_in_meters" : 0.30,
     "path_config": {

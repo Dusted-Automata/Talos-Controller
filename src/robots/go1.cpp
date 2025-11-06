@@ -1,14 +1,6 @@
 #include "go1.hpp"
-#include "frames.hpp"
-#include "linear_controller.hpp"
-#include "load_config.hpp"
-#include "path_planner.hpp"
-#include "server.hpp"
-#include "sim.hpp"
-#include <iostream>
 #include <math.h>
 #include <stdint.h>
-#include "control_loop.cpp"
 
 void
 Go1::UDPRecv()
@@ -36,14 +28,15 @@ Go1::moveCmd(const Velocity2d &velocity)
 }
 
 void
-Go1::send_velocity_command(Velocity2d &velocity)
+go1_send_velocity_command(void* ctx, Velocity2d &velocity)
 {
-    moveCmd(velocity);
-    udp.SetSend(cmd);
+    Go1* go1 = (Go1*)ctx;
+    go1->moveCmd(velocity);
+    go1->udp.SetSend(go1->cmd);
 };
 
 LA
-read_state(void* ctx)
+go1_read_state(void* ctx)
 {
     Go1* go1 = (Go1*)ctx;
     const uint8_t *stateBytes = reinterpret_cast<const uint8_t *>(&go1->state);
@@ -76,70 +69,17 @@ read_state(void* ctx)
     return ps;
 }
 
-int
-main(void)
-{
-    std::cout << "Robot level set to: HIGH" << std::endl
-              << "WARNING: Make sure the robot is standing on the ground." << std::endl
-              << "Press Enter to continue..." << std::endl;
-    std::cin.ignore();
-
-    Go1 robot;
-    load_config(robot, "robot_configs/go1.json");
-    robot.read_pv = *read_state;
-
-    Server server;
-    server_init(server, robot);
-
-    Path_Planner p_planner;
-    Path_Cursor p_cursor; 
-    Path path = read_json_latlon(robot.config.path_config.filepath); // NEW
-    path.set_looping(true);
-    p_planner.global_cursor = &p_cursor;
-
-    p_cursor.initialize(&path);
-    p_planner.path_direction = robot.config.path_config.direction;
-    // }
-
-    frames_init(robot.frames, p_planner.global_cursor->path->waypoint(p_planner.global_cursor->current_waypoint),
-                p_planner.global_cursor->get_next_waypoint());
-
-    UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot.config.control_loop_hz), 3,
-        boost::bind(&Go1::UDPRecv, &robot));
-    UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot.config.control_loop_hz), 3,
-        boost::bind(&Go1::UDPSend, &robot));
-
-    {
-
-        std::cout << "ROBOT INIT!" << std::endl;
-        bool ublox_start = robot.ublox.start();
-        std::cout << "UBLOX: " << ublox_start << std::endl;
-        while (!robot.ublox.imu.has_value()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            if (robot.ublox.imu.has_value()) break;
-        }
-        update_position(robot.ublox, robot.frames);
-        update_heading(robot.ublox, robot.frames);
-        p_planner.re_identify_position(robot.frames.local_frame.pos);
-        if (!ublox_start) {
-            return -1;
-        }
-    }
-
-    Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
-        robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
-        robot.config.kinematic_constraints.deceleration_max);
-    Linear_Controller traj_controller(robot.config.linear_gains, robot.config.angular_gains, linear_profile);
-
-    // robot.init();
-
-    std::thread control_thread(control_loop, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
-
-    // control_loop<Wheelchair>(robot, traj_controller);
-    Sim_Display sim = Sim_Display(robot, p_planner);
-    sim.display();
-    //
-    // CloseWindow();
-
-    return 0;
-}
+// void
+// go1_init(void* ctx, const Robot* robot){
+//     Go1* go1 = (Go1*)ctx;
+//
+//     std::cout << "Robot level set to: HIGH" << std::endl
+//               << "WARNING: Make sure the robot is standing on the ground." << std::endl
+//               << "Press Enter to continue..." << std::endl;
+//     std::cin.ignore();
+//
+//     UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot->config.control_loop_hz), 3,
+//         boost::bind(&Go1::UDPRecv, &robot));
+//     UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot->config.control_loop_hz), 3,
+//         boost::bind(&Go1::UDPSend, &robot));
+// }

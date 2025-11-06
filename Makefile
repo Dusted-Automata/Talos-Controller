@@ -7,7 +7,7 @@ build:
 .PHONY : build
 
 run:
-	./build/sim
+	./build/main --robot ./robot_configs/sim_bot.json --waypoints ./waypoints/PT_ping_pong.json
 
 controller:
 	./build/controller

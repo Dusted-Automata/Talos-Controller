@@ -6,7 +6,7 @@
 void 
 parse_msgs(Server &server) {
     std::cout << "parsing" << std::endl;
-    while(true) {
+    while(server.socket.running) {
         for (u32 i = 0; i < (u32)server.socket.nfds; ++i){
             Client* client = &server.socket.clients[i];
             printf("Client: %d | count : %zu\n", client->fd, client->buf.count());
@@ -124,6 +124,14 @@ server_init(Server &server, Robot &r)
     server.socket_thread = std::thread(&tcp_server_loop, std::ref(server.socket));
     server.msg_parse_thread = std::thread(&parse_msgs, std::ref(server));
     server.socket.running = true;
+    return true;
+}
+
+bool
+server_deinit(Server &server){
+    server.socket.running = false;
+    server.socket_thread.join();
+    server.msg_parse_thread.join();
     return true;
 }
 

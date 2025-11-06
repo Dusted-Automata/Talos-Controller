@@ -1,6 +1,5 @@
 #pragma once
 #include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
-#include "pid.hpp"
 #include "robot.hpp"
 #include "ublox.hpp"
 #include "unitree_legged_sdk/comm.h"
@@ -29,26 +28,7 @@ enum class Go1_mode : uint8_t {
 };
 
 
-class Go1 : public Robot
-{
-    UT::HighCmd moveCmd(const Velocity2d &trajectory);
-
-  public:
-    Go1()
-        : safe(UT::LeggedType::Go1),
-          // udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
-          udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082))
-    {
-        pva.pose.local_point = Eigen::Vector3d(0, 0, 0);
-        pva.pose.transformation_matrix = Eigen::Affine3d::Identity();
-        pva.linear.velocity = Vector3d::Zero();
-        pva.linear.acceleration = Vector3d::Zero();
-        pva.angular.velocity = Vector3d::Zero();
-        pva.angular.acceleration = Vector3d::Zero();
-    };
-
-    ~Go1() = default;
-
+struct Go1 {
     UT::Safety safe;
     UT::UDP udp;
     UT::HighState state = {};
@@ -59,12 +39,45 @@ class Go1 : public Robot
 
     Go1_mode mode = Go1_mode::Force_stand;
     GaitType gait_type = GaitType::Trot;
-
     void UDPRecv();
     void UDPSend();
-    void send_velocity_command(Velocity2d &velocity) override;
-    LA read_state();
+    UT::HighCmd moveCmd(const Velocity2d &trajectory);
 };
+
+// class Go1
+// {
+//
+//   public:
+//     Go1()
+//         : safe(UT::LeggedType::Go1),
+//           // udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
+//           udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082))
+//     {
+//         pva.pose.local_point = Eigen::Vector3d(0, 0, 0);
+//         pva.pose.transformation_matrix = Eigen::Affine3d::Identity();
+//         pva.linear.velocity = Vector3d::Zero();
+//         pva.linear.acceleration = Vector3d::Zero();
+//         pva.angular.velocity = Vector3d::Zero();
+//         pva.angular.acceleration = Vector3d::Zero();
+//     };
+//
+//     ~Go1() = default;
+//
+//     UT::Safety safe;
+//     UT::UDP udp;
+//     UT::HighState state = {};
+//     UT::LowState low_state = {};
+//
+//     UT::HighCmd cmd = {};
+//     Ublox ublox = {};
+//
+//     Go1_mode mode = Go1_mode::Force_stand;
+//     GaitType gait_type = GaitType::Trot;
+//
+//     void UDPRecv();
+//     void UDPSend();
+//     UT::HighCmd moveCmd(const Velocity2d &trajectory);
+// };
 
 namespace HighCmdOffset
 {
@@ -163,3 +176,9 @@ readFromStruct(const uint8_t *bytes, size_t offset)
     memcpy(&result, bytes + offset, sizeof(T));
     return result;
 }
+
+
+LA go1_read_state(void* ctx);
+void go1_send_velocity_command(void* ctx, Velocity2d &velocity);
+void go1_init(void* ctx, const Robot* robot);
+// void go1_deinit(void* ctx);

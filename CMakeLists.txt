@@ -69,6 +69,10 @@ target_link_directories(common_settings INTERFACE
 
 set(COMMON_SOURCES
     src/robots/robot.cpp
+    src/robots/go1.cpp
+    src/robots/sim_bot.cpp
+    src/robots/wheelchair.cpp
+    src/robots/robot.cpp
     src/control/pid.cpp
     # src/control/mppi.cpp
     src/control/linear_controller.cpp

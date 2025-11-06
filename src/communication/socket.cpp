@@ -188,7 +188,7 @@ tcp_server_setup(TCP_Server &server)
 void
 tcp_server_loop(TCP_Server &server) {
     while (server.running) {
-        int nready = poll(server.fds, server.nfds, -1); // block until something happens
+        int nready = poll(server.fds, server.nfds, 1000); // block until something happens
         if (nready < 0) {
             if (errno == EINTR) continue; // interrupted by signal
             perror("TCP_Server poll failed");

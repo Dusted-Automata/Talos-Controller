@@ -14,9 +14,9 @@ class Server
     Robot *robot;
     std::vector<int> subscribers;
 
-    bool init(Robot &robot);
     void loop();
 };
 
 void parse_msgs(Server &server); 
 bool server_init(Server &server, Robot &r);
+bool server_deinit(Server &server);

@@ -11,20 +11,21 @@ control_loop(Robot &robot, Path_Planner &path_planner, Linear_Controller &contro
     (void) server; // TODO: use the Server
     Timer timer;
     timer_init(&timer, robot.config.control_loop_hz);
-    while (robot.running) {               // Control loop
+    while (robot.running) {
         if (!robot.paused) {
             timer_tick(&timer);
             {
                 {
                     // robot.pva = robot.read_state();
-                    LA la = robot.read_pv(robot.ctx);
-                    robot.pva.linear = la.linear;
-                    robot.pva.angular = la.angular;
-                    printf("LA: lin %f | ang %f\n", robot.pva.linear.velocity.x(), robot.pva.angular.velocity.z());
-                    // update_pv(robot.frames);
-                    frames_move_in_local_frame(robot.frames, robot.pva.linear, robot.pva.angular, timer.dt);
-                    robot.pva.pose.local_point = robot.frames.local_frame.pos;
-                    robot.pva.pose.point = robot.frames.global_frame.pos;
+                    if (robot.read_pv) {
+                        LA la = robot.read_pv(robot.ctx);
+                        robot.pva.linear = la.linear;
+                        robot.pva.angular = la.angular;
+                        // update_pv(robot.frames);
+                        frames_move_in_local_frame(robot.frames, robot.pva.linear, robot.pva.angular, timer.dt);
+                        robot.pva.pose.local_point = robot.frames.local_frame.pos;
+                        robot.pva.pose.point = robot.frames.global_frame.pos;
+                    }
 
 
                 }
@@ -58,7 +59,7 @@ control_loop(Robot &robot, Path_Planner &path_planner, Linear_Controller &contro
 
             }
             Velocity2d cmd = controller.get_cmd(to_next_waypoint, path_planner.global_cursor->distance_to_target_stop(), timer.dt);
-            robot.send_velocity_command(cmd);
+            robot.send_velocity_command(robot.ctx, cmd);
         } else {
             timer_reset(&timer);
         }
