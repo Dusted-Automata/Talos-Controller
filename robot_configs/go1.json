@@ -1,5 +1,6 @@
 {
     "version" : 1,
+    "robot": "go1",
     "control_loop_hz": 100,
     "goal_tolerance_in_meters" : 0.35,
     "path_config": {

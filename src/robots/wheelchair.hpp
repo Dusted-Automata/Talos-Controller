@@ -72,6 +72,6 @@ class Wheelchair : public Robot
         ::write(tty_acm_fd, cmd.data(), cmd.size());
     };
 
-    void send_velocity_command(Velocity2d &velocity) override;
+    void send_velocity_command(Velocity2d &velocity);
     void init();
 };

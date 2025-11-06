@@ -5,6 +5,7 @@
 #include "ublox.hpp"
 
 
+
 class Robot
 {
 
@@ -15,6 +16,7 @@ class Robot
     Frames frames = {};
     Robot_Config config = {};
     Ublox ublox = {};
+    Robot_Type type;
 
     bool stop();
     bool pause();
@@ -24,8 +26,9 @@ class Robot
     PVA get_PVA();
     void get_path();
     LA (*read_pv)(void*) = nullptr;
-    void* ctx = this;
+    void* ctx;
 
-    virtual void send_velocity_command(Velocity2d &cmd) = 0;
+    // virtual void send_velocity_command(Velocity2d &cmd) = 0;
+    void (*send_velocity_command)(Velocity2d &cmd);
 };
 

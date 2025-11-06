@@ -131,11 +131,25 @@ from_json(const json &j, PIDGains &obj)
     }
 }
 
+Robot_Type
+get_robot_type_from_string(std::string& robot) {
+    if (robot == "go1")
+        return GO1;
+    else if (robot == "wheelchair")
+        return WHEELCHAIR;
+    else if (robot == "g1")
+        return G1;
+    else
+        return SIM;
+}
+
 void
 from_json(const json &j, Robot_Config &obj)
 {
-    VALIDATE_FIELDS(j, "Robot_Config", "version", "control_loop_hz", "goal_tolerance_in_meters", "path_config",
+    VALIDATE_FIELDS(j, "Robot_Config", "version", "robot", "control_loop_hz", "goal_tolerance_in_meters", "path_config",
         "kinematic_constraints", "PID");
+
+    obj.type = get_robot_type_from_string(j.at("robot").get<std::string>());
 
     obj.control_loop_hz = j.at("control_loop_hz").get<int>();
     if (obj.control_loop_hz <= 0) {

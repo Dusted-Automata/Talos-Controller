@@ -687,11 +687,19 @@ struct PID_Terms {
 
 };
 
+enum Robot_Type {
+    GO1,
+    G1,
+    WHEELCHAIR,
+    SIM
+};
+
 struct Robot_Config {
     Kinematic_Constraints kinematic_constraints;
     PIDGains linear_gains;
     PIDGains angular_gains;
     Path_Config path_config;
+    Robot_Type type;
     double goal_tolerance_in_meters;
     int control_loop_hz;
 };

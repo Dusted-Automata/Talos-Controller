@@ -18,4 +18,7 @@ wheelchair:
 go1:
 	./build/go1
 
-.PHONY : run
+main:
+	./build/main
+
+# .PHONY : run
