@@ -69,17 +69,27 @@ go1_read_state(void* ctx)
     return ps;
 }
 
-// void
-// go1_init(void* ctx, const Robot* robot){
-//     Go1* go1 = (Go1*)ctx;
-//
-//     std::cout << "Robot level set to: HIGH" << std::endl
-//               << "WARNING: Make sure the robot is standing on the ground." << std::endl
-//               << "Press Enter to continue..." << std::endl;
-//     std::cin.ignore();
-//
-//     UT::LoopFunc loop_udpSend("udp_send", (float)(1.0 / robot->config.control_loop_hz), 3,
-//         boost::bind(&Go1::UDPRecv, &robot));
-//     UT::LoopFunc loop_udpRecv("udp_recv", (float)(1.0 / robot->config.control_loop_hz), 3,
-//         boost::bind(&Go1::UDPSend, &robot));
-// }
+void
+go1_init(void* ctx, const Robot* robot){
+    Go1* go1 = (Go1*)ctx;
+    std::cout << "Robot level set to: HIGH" << std::endl
+              << "WARNING: Make sure the robot is standing on the ground." << std::endl
+              << "Press Enter to continue..." << std::endl;
+    std::cin.ignore();
+
+    go1->loop_udpSend = new UT::LoopFunc("udp_send", (float)(1.0 / robot->config.control_loop_hz), 3,
+        boost::bind(&Go1::UDPRecv, (Go1*)ctx));
+    go1->loop_udpRecv = new UT::LoopFunc("udp_recv", (float)(1.0 / robot->config.control_loop_hz), 3,
+        boost::bind(&Go1::UDPSend, (Go1*)ctx));
+
+    go1->loop_udpSend->start();
+    go1->loop_udpRecv->start();
+}
+
+void
+go1_deinit(void* ctx){
+    Go1* go1 = (Go1*)ctx;
+
+    go1->loop_udpSend->shutdown();
+    go1->loop_udpRecv->shutdown();
+}

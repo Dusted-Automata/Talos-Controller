@@ -29,6 +29,12 @@ enum class Go1_mode : uint8_t {
 
 
 struct Go1 {
+    Go1(UT::UDP udp)
+        : safe(UT::LeggedType::Go1),
+          // udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
+          udp(udp)
+    {
+    }
     UT::Safety safe;
     UT::UDP udp;
     UT::HighState state = {};
@@ -42,6 +48,8 @@ struct Go1 {
     void UDPRecv();
     void UDPSend();
     UT::HighCmd moveCmd(const Velocity2d &trajectory);
+    UT::LoopFunc* loop_udpSend;
+    UT::LoopFunc* loop_udpRecv;
 };
 
 // class Go1
@@ -181,4 +189,4 @@ readFromStruct(const uint8_t *bytes, size_t offset)
 LA go1_read_state(void* ctx);
 void go1_send_velocity_command(void* ctx, Velocity2d &velocity);
 void go1_init(void* ctx, const Robot* robot);
-// void go1_deinit(void* ctx);
+void go1_deinit(void* ctx);

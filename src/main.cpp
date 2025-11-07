@@ -20,10 +20,11 @@ init(Robot& robot) {
     printf("robot.type = %d\n", robot.config.type);
     switch (robot.config.type) {
         case GO1:
-            // robot.ctx = new Go1;
-            // robot.read_pv = *go1_read_state;
-            // robot.send_velocity_command = *go1_send_velocity_command;
-            // robot.init(&go1_init);
+            robot.ctx = new Go1(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082));
+            robot.read_pv = *go1_read_state;
+            robot.send_velocity_command = *go1_send_velocity_command;
+            robot.deinit = *go1_deinit;
+            robot.init(&go1_init);
             break;
         case G1:
             // ro.t->read_pv = *g1_read_state;
