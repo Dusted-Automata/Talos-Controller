@@ -102,6 +102,7 @@ endfunction()
 # add_controller_executable(wheelchair src/robots/wheelchair.cpp)
 # target_link_libraries(go1 PRIVATE pthread unitree_legged_sdk)
 add_controller_executable(main src/main.cpp)
+target_link_libraries(main PRIVATE pthread unitree_legged_sdk)
 
 message(STATUS "=== Configuration Summary ===")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
