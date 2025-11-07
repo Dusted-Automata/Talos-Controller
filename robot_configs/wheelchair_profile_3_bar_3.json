@@ -1,5 +1,6 @@
 {
 "version" : 1,
+"robot": "wheelchair",
 "control_loop_hz": 15,
 "goal_tolerance_in_meters" : 0.35,
 "path_config": {

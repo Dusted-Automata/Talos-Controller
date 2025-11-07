@@ -105,16 +105,16 @@ main(int argc, char* argv[])
         std::cout << "ROBOT INIT!" << std::endl;
         bool ublox_start = robot.ublox.start();
         std::cout << "UBLOX: " << ublox_start << std::endl;
-        // while (!robot.ublox.imu.has_value()) {
-        //     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        //     if (robot.ublox.imu.has_value()) break;
-        // }
-        // update_position(robot.ublox, robot.frames);
-        // update_heading(robot.ublox, robot.frames);
-        // p_planner.re_identify_position(robot.frames.local_frame.pos);
-        // if (!ublox_start) {
-        //     return -1;
-        // }
+        while (!robot.ublox.imu.has_value()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            if (robot.ublox.imu.has_value()) break;
+        }
+        update_position(robot.ublox, robot.frames);
+        update_heading(robot.ublox, robot.frames);
+        p_planner.re_identify_position(robot.frames.local_frame.pos);
+        if (!ublox_start) {
+            return -1;
+        }
 
     }
 
