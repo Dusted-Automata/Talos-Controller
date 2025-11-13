@@ -95,10 +95,11 @@ from_json(const json &j, imu_msg &msg){
         std::cout << "angle: " << angle_heading
                   << " | radian: " << radian_heading
                   << " | positive_radian: " << positive_radian << '\n';
-    } else {
-        msg.heading = -1; // because heading needs to be positive radians, then this is an error but
-        // I have no other way to hint it.
     }
+    // } else {
+    //     msg.heading = -1; // because heading needs to be positive radians, then this is an error but
+    //     // I have no other way to hint it.
+    // }
 
     if (auto it = j.find("motHeading"); it != j.end() && it->is_number()) {
         double m = it->get<double>();
@@ -204,7 +205,6 @@ update_position(Ublox &ublox, Frames &frames)
     if (ublox.gnss.has_value()) {
         if (   above_epsilon(0.001, ublox.gnss->llh.lat()) 
             && above_epsilon(0.001, ublox.gnss->llh.lon())
-            && above_epsilon(0.001, ublox.gnss->llh.alt())
         ) {
             frames_update_based_on_measurement(frames, ublox.gnss->llh);
         }
