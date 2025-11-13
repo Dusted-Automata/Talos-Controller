@@ -9,10 +9,10 @@
 using nlohmann::json;
 
 struct UTC_Time {
-    uint8_t hh;
-    uint8_t mm;
-    uint8_t ss;
-    uint16_t ms;
+    uint8_t hh = 0;
+    uint8_t mm = 0;
+    uint8_t ss = 0;
+    uint16_t ms = 0;
 };
 
 enum class NMEA_Cmd {
@@ -53,15 +53,16 @@ struct gnss_msg {
 struct imu_msg {
     // LLH llh;
     UTC_Time time; // UTC time - hhmmss.ss
-    double heading;
-    double accHeading;
-    double accPitch;
-    double accRoll;
-    double veh_heading;
-    double mot_heading;
-    double pitch;
-    double roll;
-    double height;
+    double accHeading = 0.0;
+    double accPitch   = 0.0;
+    double accRoll    = 0.0;
+
+    double veh_heading = 0.0;
+    double heading     = 0.0;
+    double mot_heading = 0.0;
+    double pitch       = 0.0;
+    double roll        = 0.0;
+    double height      = 0.0;
 };
 
 

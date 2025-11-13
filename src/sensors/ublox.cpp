@@ -45,41 +45,30 @@ print_GGA(gnss_msg msg)
 
 void 
 from_json(const json &j, gnss_msg &msg) {
-    if (j["lat"] != ""){
-        double lat = j["lat"];
-        double lon = j["lon"];
-        if (j["HDOP"]) msg.hdop = j["HDOP"];
-        std::string lat_dir = j["NS"];
-        std::string lon_dir = j["EW"];
-        if (j["alt"]) msg.alt = j["alt"];
-        // diff_age = j["diffAge"];
-        if (!(j["diffStation"] == "")) {
-            msg.diff_station = j["diffStation"];
-        }
-        if (!(lat == 0.0 || lat_dir == "")) {
-            if (lat_dir == "S") {
-                lat *= -1.0;
-            }
-            lat = to_radian(lat);
-            msg.llh.lat() = lat;
-        }
+    double lat = j.value("lat", 0.0);
+    double lon = j.value("lon", 0.0);
 
-        if (!(lon == 0.0) && !(lon_dir == "")) {
-            if (lon_dir == "W") {
-                lon *= -1.0;
-            }
+    msg.hdop = j.value("HDOP", 0.0);
+    msg.alt  = j.value("alt", 0.0);
+    msg.geoid_seperation = j.value("sep", 0.0);
+    msg.num_satalites = j.value("numSV", 0);
 
-            lon = to_radian(lon);
-            msg.llh.lon() = lon;
-        }
+    std::string lat_dir = j.value("NS", "");
+    std::string lon_dir = j.value("EW", "");
+    msg.diff_station = j.value("diffStation", 0);
 
-        msg.num_satalites = j["numSV"];
-        // msg.fix = static_cast<gnss_fix>(j["quality"]);
-        msg.alt = j["alt"];
-        msg.geoid_seperation = j["sep"];
-        msg.llh.alt() = msg.alt + msg.geoid_seperation;
+    // GPS logic
+    if (lat != 0.0 && !lat_dir.empty()) {
+        if (lat_dir == "S") lat *= -1.0;
+        msg.llh.lat() = to_radian(lat);
     }
-}
+
+    if (lon != 0.0 && !lon_dir.empty()) {
+        if (lon_dir == "W") lon *= -1.0;
+        msg.llh.lon() = to_radian(lon);
+    }
+
+    msg.llh.alt() = msg.alt + msg.geoid_seperation;}
 
 bool
 parse_GGA(std::optional<gnss_msg>& msg, json j){
@@ -123,32 +112,39 @@ parse_GGA(std::optional<gnss_msg>& msg, json j){
 void
 from_json(const json &j, imu_msg &msg){
 
-    if (j["accHeading"]) msg.accHeading = j["accHeading"];
-    if (j["accPitch"]) msg.accPitch = j["accPitch"];
-    if (j["accRoll"]) msg.accRoll = j["accRoll"];
-    if (j["vehHeading"])
-    {
-        double angle_heading = j["vehHeading"];
-        double radian_heading = to_radian(angle_heading);
-        double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
-        // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
-        msg.veh_heading = positive_radian;
-        msg.heading = positive_radian;
-        std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
-                  << " | positive_radian: " << positive_radian << std::endl;
-    }
-    if (j["motHeading"]) {
-        msg.mot_heading = j["motHeading"];
-        msg.mot_heading = convert_to_positive_radians(to_radian(msg.mot_heading));
-    }
-    if (j["vehPitch"]) msg.pitch = j["vehPitch"];
-    if (j["vehRoll"]) msg.roll = j["vehRoll"];
+    // simple numbers
+    msg.accHeading = j.value("accHeading", msg.accHeading);
+    msg.accPitch   = j.value("accPitch",   msg.accPitch);
+    msg.accRoll    = j.value("accRoll",    msg.accRoll);
+    msg.pitch      = j.value("vehPitch",   msg.pitch);
+    msg.roll       = j.value("vehRoll",    msg.roll);
 
-    if (j["hour"]) msg.time.hh = j["hour"];
-    if (j["min"]) msg.time.mm = j["min"];
-    if (j["sec"]) msg.time.ss = j["sec"];
-    if (j["iTOW"]) msg.time.ms = j["iTOW"];
-}
+    // time
+    msg.time.hh = j.value("hour", msg.time.hh);
+    msg.time.mm = j.value("min",  msg.time.mm);
+    msg.time.ss = j.value("sec",  msg.time.ss);
+    msg.time.ms = j.value("iTOW", msg.time.ms);
+
+    // computed fields
+    if (auto it = j.find("vehHeading"); it != j.end() && it->is_number()) {
+        double angle_heading   = it->get<double>();
+        double radian_heading  = to_radian(angle_heading);
+        double positive_radian = convert_to_positive_radians(M_PI/2 - radian_heading);
+        msg.veh_heading = positive_radian;
+        msg.heading     = positive_radian;
+        std::cout << "angle: " << angle_heading
+                  << " | radian: " << radian_heading
+                  << " | positive_radian: " << positive_radian << '\n';
+    } else {
+        msg.heading = -1; // because heading needs to be positive radians, then this is an error but
+        // I have no other way to hint it.
+    }
+
+    if (auto it = j.find("motHeading"); it != j.end() && it->is_number()) {
+        double m = it->get<double>();
+        msg.mot_heading = convert_to_positive_radians(to_radian(m));
+    }}
+
 
 bool
 parse_Nav_PVAT(std::optional<imu_msg>& msg, json j){
@@ -231,16 +227,12 @@ Ublox::loop()
                 std::string id = j["identity"];
                 if (id == "GPGGA") {
                     std::unique_lock<std::mutex> lock(mutex);
-                    // gnss = parse_GGA(j);
-                    if (!parse_GGA(gnss, j)) gnss.reset();
-
-                    // gnss = j.get<gnss_msg>();
+                    gnss = j.get<gnss_msg>();
                 }
                 if (id == "NAV-PVAT") {
                     // std::cout << j.dump(4) << std::endl;
                     std::unique_lock<std::mutex> lock(mutex);
-                    if (!parse_Nav_PVAT(imu, j)) imu.reset();
-                    // imu = j.get<imu_msg>();
+                    imu = j.get<imu_msg>();
                 }
                 if (id == "refinePose") {
                     std::unique_lock<std::mutex> lock(mutex);
@@ -285,8 +277,8 @@ update_position(Ublox &ublox, Frames &frames)
     std::unique_lock<std::mutex> lock(ublox.mutex);
     if (ublox.gnss.has_value()) {
         if (   above_epsilon(0.001, ublox.gnss->llh.lat()) 
-            || above_epsilon(0.001, ublox.gnss->llh.lon())
-            || above_epsilon(0.001, ublox.gnss->llh.alt())
+            && above_epsilon(0.001, ublox.gnss->llh.lon())
+            && above_epsilon(0.001, ublox.gnss->llh.alt())
         ) {
             frames_update_based_on_measurement(frames, ublox.gnss->llh);
         }
@@ -299,7 +291,7 @@ update_heading(Ublox &ublox, Frames &frames)
 {
     std::unique_lock<std::mutex> lock(ublox.mutex);
     if (ublox.imu.has_value()) {
-        if (ublox.imu->accHeading < 30.0) { 
+        if (ublox.imu->accHeading < 30.0 && ublox.imu->heading >= 0.0) { 
             Eigen::Affine3d rotationMatrix;
             rotationMatrix = Eigen::AngleAxisd(ublox.imu->heading, Eigen::Vector3d::UnitZ());
             frames.local_frame.orientation = rotationMatrix; 
