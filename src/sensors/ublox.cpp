@@ -68,7 +68,8 @@ from_json(const json &j, gnss_msg &msg) {
         msg.llh.lon() = to_radian(lon);
     }
 
-    msg.llh.alt() = msg.alt + msg.geoid_seperation;}
+    msg.llh.alt() = msg.alt + msg.geoid_seperation;
+}
 
 
 void
@@ -91,6 +92,9 @@ from_json(const json &j, imu_msg &msg){
         double positive_radian = convert_to_positive_radians(M_PI/2 - radian_heading);
         msg.veh_heading = positive_radian;
         msg.heading     = positive_radian;
+        std::cout << "angle: " << angle_heading
+                  << " | radian: " << radian_heading
+                  << " | positive_radian: " << positive_radian << '\n';
     } else {
         msg.heading = -1; // because heading needs to be positive radians, then this is an error but
         // I have no other way to hint it.
