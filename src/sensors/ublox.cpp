@@ -150,38 +150,38 @@ from_json(const json &j, imu_msg &msg){
     if (j["iTOW"]) msg.time.ms = j["iTOW"];
 }
 
-imu_msg
-parse_Nav_PVAT(json j){
-    imu_msg msg = {};
-
-    msg.accHeading = j["accHeading"];
-    msg.accPitch = j["accPitch"];
-    msg.accRoll = j["accRoll"];
+bool
+parse_Nav_PVAT(std::optional<imu_msg>& msg, json j){
+    if (j["accHeading"] == "") {
+        return false;
+    }
+    msg->accHeading = j["accHeading"];
+    msg->accPitch = j["accPitch"];
+    msg->accRoll = j["accRoll"];
     double angle_heading = j["vehHeading"];
     double radian_heading = to_radian(angle_heading);
     double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
     // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
-    msg.veh_heading = positive_radian;
-    msg.heading = positive_radian;
+    msg->veh_heading = positive_radian;
+    msg->heading = positive_radian;
     std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
               << " | positive_radian: " << positive_radian << std::endl;
-    msg.mot_heading = j["motHeading"];
-    msg.mot_heading = convert_to_positive_radians(to_radian(msg.mot_heading));
-    msg.pitch = j["vehPitch"];
-    msg.roll = j["vehRoll"];
+    msg->mot_heading = j["motHeading"];
+    msg->mot_heading = convert_to_positive_radians(to_radian(msg->mot_heading));
+    msg->pitch = j["vehPitch"];
+    msg->roll = j["vehRoll"];
 
-    msg.time.hh = j["hour"];
-    msg.time.mm = j["min"];
-    msg.time.ss = j["sec"];
-    msg.time.ms = j["iTOW"];
+    msg->time.hh = j["hour"];
+    msg->time.mm = j["min"];
+    msg->time.ss = j["sec"];
+    msg->time.ms = j["iTOW"];
     // llh.lat() = j["lat"];
     // llh.lat() = to_radian(llh.lat());
     // llh.lon() = j["lon"];
     // llh.lon() = to_radian(llh.lon());
     // llh.alt() = j["height"];      // in mm
     // llh.alt() = llh.alt() / 1000; // in M
-    
-    return msg;
+    return true;
 }
 
 void
@@ -239,8 +239,8 @@ Ublox::loop()
                 if (id == "NAV-PVAT") {
                     // std::cout << j.dump(4) << std::endl;
                     std::unique_lock<std::mutex> lock(mutex);
-                    // imu = parse_Nav_PVAT(j);
-                    imu = j.get<imu_msg>();
+                    if (!parse_Nav_PVAT(imu, j)) imu.reset();
+                    // imu = j.get<imu_msg>();
                 }
                 if (id == "refinePose") {
                     std::unique_lock<std::mutex> lock(mutex);
