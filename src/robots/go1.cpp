@@ -43,9 +43,7 @@ void
 go1_send_velocity_command(void* ctx, Velocity2d &velocity)
 {
     Go1* go1 = (Go1*)ctx;
-    printf("before: x: %f | omega: %f\n", go1->cmd.velocity[0], go1->cmd.yawSpeed);
     write_move_cmd(go1->cmd, velocity);
-    printf("after : x: %f | omega: %f\n", go1->cmd.velocity[0], go1->cmd.yawSpeed);
     go1->udp.SetSend(go1->cmd);
 };
 
@@ -88,9 +86,8 @@ void
 go1_init(void* ctx, const Robot* robot){
     Go1* go1 = (Go1*)ctx;
     std::cout << "Robot level set to: HIGH" << std::endl
-              << "WARNING: Make sure the robot is standing on the ground." << std::endl
-              << "Press Enter to continue..." << std::endl;
-    std::cin.ignore();
+              << "WARNING: Make sure the robot is standing on the ground." << std::endl;
+
     go1->udp.InitCmdData(go1->cmd);
 
     go1->loop_udpSend = new UT::LoopFunc("udp_send", (float)(1.0 / robot->config.control_loop_hz), 3,

@@ -100,23 +100,23 @@ main(int argc, char* argv[])
     frames_init(robot.frames, p_planner.global_cursor->path->waypoint(p_planner.global_cursor->current_waypoint),
                 p_planner.global_cursor->get_next_waypoint());
 
-    // {
-    //
-    //     std::cout << "ROBOT INIT!" << std::endl;
-    //     bool ublox_start = robot.ublox.start();
-    //     std::cout << "UBLOX: " << ublox_start << std::endl;
-    //     while (!robot.ublox.imu.has_value()) {
-    //         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    //         if (robot.ublox.imu.has_value()) break;
-    //     }
-    //     update_position(robot.ublox, robot.frames);
-    //     update_heading(robot.ublox, robot.frames);
-    //     p_planner.re_identify_position(robot.frames.local_frame.pos);
-    //     if (!ublox_start) {
-    //         return -1;
-    //     }
-    //
-    // }
+    {
+
+        std::cout << "ROBOT INIT!" << std::endl;
+        bool ublox_start = robot.ublox.start();
+        std::cout << "UBLOX: " << ublox_start << std::endl;
+        while (!robot.ublox.imu.has_value()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            if (robot.ublox.imu.has_value()) break;
+        }
+        update_position(robot.ublox, robot.frames);
+        update_heading(robot.ublox, robot.frames);
+        p_planner.re_identify_position(robot.frames.local_frame.pos);
+        if (!ublox_start) {
+            return -1;
+        }
+
+    }
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
         robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
