@@ -43,6 +43,42 @@ print_GGA(gnss_msg msg)
 }
 
 
+void 
+from_json(const json &j, gnss_msg &msg) {
+    msg.hdop = j["HDOP"];
+    std::string lat_dir = j["NS"];
+    std::string lon_dir = j["EW"];
+    msg.alt = j["alt"];
+    // diff_age = j["diffAge"];
+    if (!(j["diffStation"] == "")) {
+        msg.diff_station = j["diffStation"];
+    }
+    double lat = j["lat"];
+    double lon = j["lon"];
+    if (!(lat == 0.0 || lat_dir == "")) {
+        if (lat_dir == "S") {
+            lat *= -1.0;
+        }
+        lat = to_radian(lat);
+        msg.llh.lat() = lat;
+    }
+
+    if (!(lon == 0.0) && !(lon_dir == "")) {
+        if (lon_dir == "W") {
+            lon *= -1.0;
+        }
+
+        lon = to_radian(lon);
+        msg.llh.lon() = lon;
+    }
+
+    msg.num_satalites = j["numSV"];
+    // msg.fix = static_cast<gnss_fix>(j["quality"]);
+    msg.alt = j["alt"];
+    msg.geoid_seperation = j["sep"];
+    msg.llh.alt() = msg.alt + msg.geoid_seperation;
+}
+
 gnss_msg
 parse_GGA(json j){
     gnss_msg msg = {};
@@ -81,6 +117,30 @@ parse_GGA(json j){
     msg.llh.alt() = msg.alt + msg.geoid_seperation;
 
     return msg;
+}
+
+void
+from_json(const json &j, imu_msg &msg){
+    msg.accHeading = j["accHeading"];
+    msg.accPitch = j["accPitch"];
+    msg.accRoll = j["accRoll"];
+    double angle_heading = j["vehHeading"];
+    double radian_heading = to_radian(angle_heading);
+    double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
+    // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
+    msg.veh_heading = positive_radian;
+    msg.heading = positive_radian;
+    std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
+              << " | positive_radian: " << positive_radian << std::endl;
+    msg.mot_heading = j["motHeading"];
+    msg.mot_heading = convert_to_positive_radians(to_radian(msg.mot_heading));
+    msg.pitch = j["vehPitch"];
+    msg.roll = j["vehRoll"];
+
+    msg.time.hh = j["hour"];
+    msg.time.mm = j["min"];
+    msg.time.ss = j["sec"];
+    msg.time.ms = j["iTOW"];
 }
 
 imu_msg
@@ -164,12 +224,14 @@ Ublox::loop()
                 std::string id = j["identity"];
                 if (id == "GPGGA") {
                     std::unique_lock<std::mutex> lock(mutex);
-                    gnss = parse_GGA(j);
+                    // gnss = parse_GGA(j);
+                    gnss = j.get<gnss_msg>();
                 }
                 if (id == "NAV-PVAT") {
                     // std::cout << j.dump(4) << std::endl;
                     std::unique_lock<std::mutex> lock(mutex);
-                    imu = parse_Nav_PVAT(j);
+                    // imu = parse_Nav_PVAT(j);
+                    imu = j.get<imu_msg>();
                 }
                 if (id == "refinePose") {
                     std::unique_lock<std::mutex> lock(mutex);
