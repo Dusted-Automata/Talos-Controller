@@ -45,60 +45,61 @@ print_GGA(gnss_msg msg)
 
 void 
 from_json(const json &j, gnss_msg &msg) {
-    msg.hdop = j["HDOP"];
-    std::string lat_dir = j["NS"];
-    std::string lon_dir = j["EW"];
-    msg.alt = j["alt"];
-    // diff_age = j["diffAge"];
-    if (!(j["diffStation"] == "")) {
-        msg.diff_station = j["diffStation"];
-    }
-    double lat = j["lat"];
-    double lon = j["lon"];
-    if (!(lat == 0.0 || lat_dir == "")) {
-        if (lat_dir == "S") {
-            lat *= -1.0;
+    if (j["lat"] != ""){
+        double lat = j["lat"];
+        double lon = j["lon"];
+        if (j["HDOP"]) msg.hdop = j["HDOP"];
+        std::string lat_dir = j["NS"];
+        std::string lon_dir = j["EW"];
+        if (j["alt"]) msg.alt = j["alt"];
+        // diff_age = j["diffAge"];
+        if (!(j["diffStation"] == "")) {
+            msg.diff_station = j["diffStation"];
         }
-        lat = to_radian(lat);
-        msg.llh.lat() = lat;
-    }
-
-    if (!(lon == 0.0) && !(lon_dir == "")) {
-        if (lon_dir == "W") {
-            lon *= -1.0;
+        if (!(lat == 0.0 || lat_dir == "")) {
+            if (lat_dir == "S") {
+                lat *= -1.0;
+            }
+            lat = to_radian(lat);
+            msg.llh.lat() = lat;
         }
 
-        lon = to_radian(lon);
-        msg.llh.lon() = lon;
-    }
+        if (!(lon == 0.0) && !(lon_dir == "")) {
+            if (lon_dir == "W") {
+                lon *= -1.0;
+            }
 
-    msg.num_satalites = j["numSV"];
-    // msg.fix = static_cast<gnss_fix>(j["quality"]);
-    msg.alt = j["alt"];
-    msg.geoid_seperation = j["sep"];
-    msg.llh.alt() = msg.alt + msg.geoid_seperation;
+            lon = to_radian(lon);
+            msg.llh.lon() = lon;
+        }
+
+        msg.num_satalites = j["numSV"];
+        // msg.fix = static_cast<gnss_fix>(j["quality"]);
+        msg.alt = j["alt"];
+        msg.geoid_seperation = j["sep"];
+        msg.llh.alt() = msg.alt + msg.geoid_seperation;
+    }
 }
 
-gnss_msg
-parse_GGA(json j){
-    gnss_msg msg = {};
-
-    msg.hdop = j["HDOP"];
-    std::string lat_dir = j["NS"];
-    std::string lon_dir = j["EW"];
-    msg.alt = j["alt"];
-    // diff_age = j["diffAge"];
-    if (!(j["diffStation"] == "")) {
-        msg.diff_station = j["diffStation"];
-    }
+bool
+parse_GGA(std::optional<gnss_msg>& msg, json j){
+    if (j["lat"] == "") return false;
     double lat = j["lat"];
     double lon = j["lon"];
+    if (j["HDOP"]) msg->hdop = j["HDOP"];
+    std::string lat_dir = j["NS"];
+    std::string lon_dir = j["EW"];
+    if (j["alt"]) msg->alt = j["alt"];
+    // diff_age = j["diffAge"];
+    if (!(j["diffStation"] == "")) {
+        msg->diff_station = j["diffStation"];
+    }
     if (!(lat == 0.0 || lat_dir == "")) {
         if (lat_dir == "S") {
             lat *= -1.0;
         }
         lat = to_radian(lat);
-        msg.llh.lat() = lat;
+        msg->llh.lat() = lat;
     }
 
     if (!(lon == 0.0) && !(lon_dir == "")) {
@@ -107,40 +108,46 @@ parse_GGA(json j){
         }
 
         lon = to_radian(lon);
-        msg.llh.lon() = lon;
+        msg->llh.lon() = lon;
     }
 
-    msg.num_satalites = j["numSV"];
+    msg->num_satalites = j["numSV"];
     // msg.fix = static_cast<gnss_fix>(j["quality"]);
-    msg.alt = j["alt"];
-    msg.geoid_seperation = j["sep"];
-    msg.llh.alt() = msg.alt + msg.geoid_seperation;
+    msg->alt = j["alt"];
+    msg->geoid_seperation = j["sep"];
+    msg->llh.alt() = msg->alt + msg->geoid_seperation;
 
-    return msg;
+    return true;
 }
 
 void
 from_json(const json &j, imu_msg &msg){
-    msg.accHeading = j["accHeading"];
-    msg.accPitch = j["accPitch"];
-    msg.accRoll = j["accRoll"];
-    double angle_heading = j["vehHeading"];
-    double radian_heading = to_radian(angle_heading);
-    double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
-    // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
-    msg.veh_heading = positive_radian;
-    msg.heading = positive_radian;
-    std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
-              << " | positive_radian: " << positive_radian << std::endl;
-    msg.mot_heading = j["motHeading"];
-    msg.mot_heading = convert_to_positive_radians(to_radian(msg.mot_heading));
-    msg.pitch = j["vehPitch"];
-    msg.roll = j["vehRoll"];
 
-    msg.time.hh = j["hour"];
-    msg.time.mm = j["min"];
-    msg.time.ss = j["sec"];
-    msg.time.ms = j["iTOW"];
+    if (j["accHeading"]) msg.accHeading = j["accHeading"];
+    if (j["accPitch"]) msg.accPitch = j["accPitch"];
+    if (j["accRoll"]) msg.accRoll = j["accRoll"];
+    if (j["vehHeading"])
+    {
+        double angle_heading = j["vehHeading"];
+        double radian_heading = to_radian(angle_heading);
+        double positive_radian = convert_to_positive_radians(M_PI / 2 - radian_heading);
+        // veh_heading = convert_to_positive_radians(to_radian(angle_heading);
+        msg.veh_heading = positive_radian;
+        msg.heading = positive_radian;
+        std::cout << "angle: " << angle_heading << " | radian: " << radian_heading
+                  << " | positive_radian: " << positive_radian << std::endl;
+    }
+    if (j["motHeading"]) {
+        msg.mot_heading = j["motHeading"];
+        msg.mot_heading = convert_to_positive_radians(to_radian(msg.mot_heading));
+    }
+    if (j["vehPitch"]) msg.pitch = j["vehPitch"];
+    if (j["vehRoll"]) msg.roll = j["vehRoll"];
+
+    if (j["hour"]) msg.time.hh = j["hour"];
+    if (j["min"]) msg.time.mm = j["min"];
+    if (j["sec"]) msg.time.ss = j["sec"];
+    if (j["iTOW"]) msg.time.ms = j["iTOW"];
 }
 
 imu_msg
@@ -225,7 +232,9 @@ Ublox::loop()
                 if (id == "GPGGA") {
                     std::unique_lock<std::mutex> lock(mutex);
                     // gnss = parse_GGA(j);
-                    gnss = j.get<gnss_msg>();
+                    if (!parse_GGA(gnss, j)) gnss.reset();
+
+                    // gnss = j.get<gnss_msg>();
                 }
                 if (id == "NAV-PVAT") {
                     // std::cout << j.dump(4) << std::endl;
