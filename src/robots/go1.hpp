@@ -29,10 +29,10 @@ enum class Go1_mode : uint8_t {
 
 
 struct Go1 {
-    Go1(UT::UDP udp)
+    Go1(uint16_t localPort, const char* targetIP, uint16_t targetPort)
         : safe(UT::LeggedType::Go1),
-          // udp(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
-          udp(udp)
+        // udp(UT::HIGHLEVEL, 8090, "192.168.123.161", 8082))
+        udp(UT::HIGHLEVEL, localPort, targetIP, targetPort)
     {
     }
     UT::Safety safe;

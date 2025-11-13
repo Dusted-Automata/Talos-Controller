@@ -20,11 +20,11 @@ init(Robot& robot) {
     printf("robot.type = %d\n", robot.config.type);
     switch (robot.config.type) {
         case GO1:
-            robot.ctx = new Go1(UT::UDP(UT::HIGHLEVEL, 8090, "192.168.12.1", 8082));
+            robot.ctx = new Go1(8090, "192.168.12.1", 8082);
             robot.read_pv = *go1_read_state;
             robot.send_velocity_command = *go1_send_velocity_command;
             robot.deinit = *go1_deinit;
-            robot.init(&go1_init);
+            robot.init(go1_init);
             break;
         case G1:
             // ro.t->read_pv = *g1_read_state;
@@ -35,7 +35,7 @@ init(Robot& robot) {
             robot.read_pv = *wheelchair_read_state;
             robot.send_velocity_command = *wheelchair_send_velocity_command;
             robot.deinit = *wheelchair_deinit;
-            robot.init(&wheelchair_init);
+            robot.init(wheelchair_init);
             break;
         case SIM:
             robot.ctx = new Sim_Bot;
@@ -100,23 +100,23 @@ main(int argc, char* argv[])
     frames_init(robot.frames, p_planner.global_cursor->path->waypoint(p_planner.global_cursor->current_waypoint),
                 p_planner.global_cursor->get_next_waypoint());
 
-    {
-
-        std::cout << "ROBOT INIT!" << std::endl;
-        bool ublox_start = robot.ublox.start();
-        std::cout << "UBLOX: " << ublox_start << std::endl;
-        while (!robot.ublox.imu.has_value()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            if (robot.ublox.imu.has_value()) break;
-        }
-        update_position(robot.ublox, robot.frames);
-        update_heading(robot.ublox, robot.frames);
-        p_planner.re_identify_position(robot.frames.local_frame.pos);
-        if (!ublox_start) {
-            return -1;
-        }
-
-    }
+    // {
+    //
+    //     std::cout << "ROBOT INIT!" << std::endl;
+    //     bool ublox_start = robot.ublox.start();
+    //     std::cout << "UBLOX: " << ublox_start << std::endl;
+    //     while (!robot.ublox.imu.has_value()) {
+    //         std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    //         if (robot.ublox.imu.has_value()) break;
+    //     }
+    //     update_position(robot.ublox, robot.frames);
+    //     update_heading(robot.ublox, robot.frames);
+    //     p_planner.re_identify_position(robot.frames.local_frame.pos);
+    //     if (!ublox_start) {
+    //         return -1;
+    //     }
+    //
+    // }
 
     Trapezoidal_Profile linear_profile(robot.config.kinematic_constraints.velocity_forward_max,
         robot.config.kinematic_constraints.acceleration_max, robot.config.kinematic_constraints.velocity_backward_max,
