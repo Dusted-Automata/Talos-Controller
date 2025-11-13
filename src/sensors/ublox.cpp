@@ -86,10 +86,10 @@ parse_GGA(std::optional<gnss_msg>& msg, json j){
     if (j["lat"] == "") return false;
     double lat = j["lat"];
     double lon = j["lon"];
-    if (j["HDOP"]) msg->hdop = j["HDOP"];
+    msg->hdop = j["HDOP"];
     std::string lat_dir = j["NS"];
     std::string lon_dir = j["EW"];
-    if (j["alt"]) msg->alt = j["alt"];
+    msg->alt = j["alt"];
     // diff_age = j["diffAge"];
     if (!(j["diffStation"] == "")) {
         msg->diff_station = j["diffStation"];
