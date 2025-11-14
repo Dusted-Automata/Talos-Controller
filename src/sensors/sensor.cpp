@@ -16,8 +16,9 @@ from_json(const json &j, navigation_msg &msg) {
     msg.time = j.at("time").get<f64>();
     msg.heading_roll = attitude[0];
     msg.heading_pitch = attitude[1];
-    double euler_angle_heading_yaw = attitude[2];
-    double radian_heading_yaw = to_radian(euler_angle_heading_yaw);
+    // double euler_angle_heading_yaw = attitude[2];
+    // double radian_heading_yaw = to_radian(euler_angle_heading_yaw);
+    double radian_heading_yaw = attitude[2];
     msg.heading_yaw = convert_to_positive_radians(M_PI / 2 - radian_heading_yaw); // Converting from
                                                                                   // NED to ENU
     msg.llh.lat() = position[0];
