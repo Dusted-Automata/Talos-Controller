@@ -101,20 +101,18 @@ main(int argc, char* argv[])
                 p_planner.global_cursor->get_next_waypoint());
 
     {
-
-        std::cout << "ROBOT INIT!" << std::endl;
-        bool ublox_start = robot.ublox.start();
-        std::cout << "UBLOX: " << ublox_start << std::endl;
-        while (!robot.ublox.imu.has_value()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            if (robot.ublox.imu.has_value()) break;
-        }
-        update_position(robot.ublox, robot.frames);
-        update_heading(robot.ublox, robot.frames);
-        p_planner.re_identify_position(robot.frames.local_frame.pos);
-        if (!ublox_start) {
+        std::cout << "SENSOR INIT!" << std::endl;
+        sensor_client_init(robot.sensor, "127.0.0.1", 55554); // Create config for ip and port;
+        bool _start = sensor_start(robot.sensor);
+        std::cout << "Sensor Start: " << _start << std::endl;
+        if (!_start) {
             return -1;
         }
+        while (!robot.sensor.msg.has_value()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+        update_pvat(robot.sensor, robot.frames);
+        p_planner.re_identify_position(robot.frames.local_frame.pos);
 
     }
 

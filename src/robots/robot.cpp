@@ -37,6 +37,7 @@ Robot::init(void (*init_ctx)(void*, const Robot* robot))
     pva.angular.velocity = Vector3d::Zero();
     pva.angular.acceleration = Vector3d::Zero();
 
+
     init_ctx(ctx, this);
     paused = false;
     running = true;

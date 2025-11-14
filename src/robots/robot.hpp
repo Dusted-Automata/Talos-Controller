@@ -16,7 +16,8 @@ class Robot
     PVA pva;
     Frames frames = {};
     Robot_Config config = {};
-    Ublox ublox = {};
+    // Ublox ublox = {};
+    Navigation_Sensor sensor = {};
 
     bool stop();
     bool pause();

@@ -17,20 +17,21 @@ control_loop(Robot &robot, Path_Planner &path_planner, Linear_Controller &contro
             {
                 {
                     // robot.pva = robot.read_state();
-                    if (robot.read_pv) {
-                        LA la = robot.read_pv(robot.ctx);
-                        robot.pva.linear = la.linear;
-                        robot.pva.angular = la.angular;
-                        // update_pv(robot.frames);
-                        frames_move_in_local_frame(robot.frames, robot.pva.linear, robot.pva.angular, timer.dt);
-                        robot.pva.pose.local_point = robot.frames.local_frame.pos;
-                        robot.pva.pose.point = robot.frames.global_frame.pos;
-                    }
+                    // if (robot.read_pv) {
+                    //     LA la = robot.read_pv(robot.ctx);
+                    //     robot.pva.linear = la.linear;
+                    //     robot.pva.angular = la.angular;
+                    //     // update_pv(robot.frames);
+                    //     frames_move_in_local_frame(robot.frames, robot.pva.linear, robot.pva.angular, timer.dt);
+                    //     robot.pva.pose.local_point = robot.frames.local_frame.pos;
+                    //     robot.pva.pose.point = robot.frames.global_frame.pos;
+                    // }
 
 
                 }
-                update_position(robot.ublox, robot.frames);
-                update_heading(robot.ublox, robot.frames);
+                // update_position(robot.ublox, robot.frames);
+                // update_heading(robot.ublox, robot.frames);
+                update_pvat(robot.sensor, robot.frames);
             }
             // log() //poses and times
 

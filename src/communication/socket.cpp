@@ -1,4 +1,5 @@
 #include "socket.hpp"
+#include "sensor.hpp"
 #include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
@@ -336,3 +337,4 @@ tcp_send(const int fd, const char *buf, size_t length)
     }
     return false;
 }
+

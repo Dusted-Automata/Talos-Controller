@@ -151,6 +151,7 @@ Ublox::loop()
                     break;
                 }
 
+                try {
                 std::string id = j["identity"];
                 if (id == "GPGGA") {
                     std::unique_lock<std::mutex> lock(mutex);
@@ -164,6 +165,16 @@ Ublox::loop()
                 if (id == "refinePose") {
                     std::unique_lock<std::mutex> lock(mutex);
                     parse_janik_msg(j, gnss, imu);
+                }
+
+                } catch (nlohmann::json::parse_error &e) {
+                    std::cerr << "Parse error at byte " << e.byte << ": " << e.what() << std::endl;
+                    std::cout << msg.size() << " | " << msg.substr((e.byte - 10), 20) << std::endl;
+                    std::cout << msg << std::endl;
+                    break;
+                } catch (nlohmann::json::exception &e) {
+                    std::cerr << "Other JSON error: " << e.what() << std::endl;
+                    break;
                 }
             }
         }
