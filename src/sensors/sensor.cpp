@@ -86,6 +86,7 @@ sensor_loop(Navigation_Sensor &sensor)
             continue;
         }
 
+        msg[bytesReceived] = '\0';
 
         try {
             // Parse JSON once
