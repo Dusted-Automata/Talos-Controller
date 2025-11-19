@@ -139,7 +139,7 @@ Sim_Display::display()
             // 1. Open the file for reading
             std::ifstream input_file(filename);
             json j;
-            // int id = 0;
+            int id = 0;
 
             if (input_file.is_open()) {
                 input_file >> j;
@@ -152,31 +152,31 @@ Sim_Display::display()
                 j["points"] = json::array();
             }
 
-            // if (!j["points"].empty() && j["points"].back().contains("id")) {
-            //     id = j["points"].back()["id"];
-            //     id += 1; // increment for new entry
-            // }
+            if (!j["points"].empty() && j["points"].back().contains("id")) {
+                id = j["points"].back()["id"];
+                id += 1; // increment for new entry
+            }
 
-            // auto nav = robot.ublox.get_latest<Nav_Pvat>(Msg_Type::NAV_PVAT);
-            // if (nav.has_value()) {
-            //     Nav_Pvat nav_pvat = nav.value();
-            //     Ecef ecef = cppmap3d::geodetic2ecef(nav_pvat.llh);
-            //     json new_entry = {
-            //         {      "id",                           id },
-            //         {       "x",                     ecef.x() },
-            //         {       "y",                     ecef.y() },
-            //         {       "z",                     ecef.z() },
-            //         {     "lat", nav_pvat.llh.lat() * RAD2DEG },
-            //         {     "lon", nav_pvat.llh.lon() * RAD2DEG },
-            //         {     "alt",           nav_pvat.llh.alt() },
-            //         { "bearing",         nav_pvat.veh_heading },
-            //     };
-            //     j["points"].push_back(new_entry);
-            //     ecef.x() /= 1000;
-            //     ecef.y() /= 1000;
-            //     ecef.z() /= 1000;
-            //     std::cout << "pushed new Ecef_Point: " << ecef.raw().transpose() << std::endl;
-            // }
+            auto nav = robot.sensor.msg;
+            if (nav.has_value()) {
+                navigation_msg msg = nav.value();
+                Ecef ecef = cppmap3d::geodetic2ecef(msg.llh);
+                json new_entry = {
+                    {      "id",                           id },
+                    {       "x",                     ecef.x() },
+                    {       "y",                     ecef.y() },
+                    {       "z",                     ecef.z() },
+                    {     "lat", msg.llh.lat() * RAD2DEG },
+                    {     "lon", msg.llh.lon() * RAD2DEG },
+                    {     "alt",           msg.llh.alt() },
+                    { "heading",         msg.heading_yaw },
+                };
+                j["points"].push_back(new_entry);
+                ecef.x() /= 1000;
+                ecef.y() /= 1000;
+                ecef.z() /= 1000;
+                std::cout << "pushed new Ecef_Point: " << ecef.raw().transpose() << std::endl;
+            }
 
             std::ofstream output_file(filename);
             if (output_file.is_open()) {
