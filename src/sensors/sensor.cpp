@@ -139,8 +139,8 @@ update_pvat(Navigation_Sensor &sensor, Frames &frames)
             rotationMatrix = Eigen::AngleAxisd(sensor.msg->heading_yaw, Eigen::Vector3d::UnitZ());
             frames.local_frame.orientation = rotationMatrix; 
         }
+        sensor.old_msg = *sensor.msg;
     }
-    sensor.old_msg = sensor.msg.value();
     sensor.msg.reset();
 }
 
