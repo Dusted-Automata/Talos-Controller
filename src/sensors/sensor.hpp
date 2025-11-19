@@ -24,6 +24,7 @@ struct navigation_msg {
 struct Navigation_Sensor {
     std::atomic_bool running = false;
     std::thread recv_thread;
+    navigation_msg old_msg;
     std::optional<navigation_msg> msg;
     sockaddr_in server_addr;
     // sockaddr_in local_addr;

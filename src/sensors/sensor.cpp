@@ -140,6 +140,7 @@ update_pvat(Navigation_Sensor &sensor, Frames &frames)
             frames.local_frame.orientation = rotationMatrix; 
         }
     }
+    sensor.old_msg = sensor.msg.value();
     sensor.msg.reset();
 }
 

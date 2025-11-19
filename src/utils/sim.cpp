@@ -157,26 +157,23 @@ Sim_Display::display()
                 id += 1; // increment for new entry
             }
 
-            auto nav = robot.sensor.msg;
-            if (nav.has_value()) {
-                navigation_msg msg = nav.value();
-                Ecef ecef = cppmap3d::geodetic2ecef(msg.llh);
-                json new_entry = {
-                    {      "id",                           id },
-                    {       "x",                     ecef.x() },
-                    {       "y",                     ecef.y() },
-                    {       "z",                     ecef.z() },
-                    {     "lat", msg.llh.lat() * RAD2DEG },
-                    {     "lon", msg.llh.lon() * RAD2DEG },
-                    {     "alt",           msg.llh.alt() },
-                    { "heading",         msg.heading_yaw },
-                };
-                j["points"].push_back(new_entry);
-                ecef.x() /= 1000;
-                ecef.y() /= 1000;
-                ecef.z() /= 1000;
-                std::cout << "pushed new Ecef_Point: " << ecef.raw().transpose() << std::endl;
-            }
+            auto msg = robot.sensor.old_msg;
+            Ecef ecef = cppmap3d::geodetic2ecef(msg.llh);
+            json new_entry = {
+                {      "id",                           id },
+                {       "x",                     ecef.x() },
+                {       "y",                     ecef.y() },
+                {       "z",                     ecef.z() },
+                {     "lat", msg.llh.lat() * RAD2DEG },
+                {     "lon", msg.llh.lon() * RAD2DEG },
+                {     "alt",           msg.llh.alt() },
+                { "heading",         msg.heading_yaw },
+            };
+            j["points"].push_back(new_entry);
+            ecef.x() /= 1000;
+            ecef.y() /= 1000;
+            ecef.z() /= 1000;
+            std::cout << "pushed new Ecef_Point: " << ecef.raw().transpose() << std::endl;
 
             std::ofstream output_file(filename);
             if (output_file.is_open()) {
