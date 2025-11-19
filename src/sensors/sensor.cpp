@@ -19,8 +19,8 @@ from_json(const json &j, navigation_msg &msg) {
     // double euler_angle_heading_yaw = attitude[2];
     // double radian_heading_yaw = to_radian(euler_angle_heading_yaw);
     double radian_heading_yaw = attitude[2];
-    msg.heading_yaw = convert_to_positive_radians(M_PI / 2 - radian_heading_yaw); // Converting from
-                                                                                  // NED to ENU
+    // msg.heading_yaw = convert_to_positive_radians(M_PI / 2 - radian_heading_yaw); // Converting from
+    msg.heading_yaw = convert_to_positive_radians(radian_heading_yaw); 
     msg.llh.lat() = position[0];
     msg.llh.lon() = position[1];
     msg.llh.alt() = position[2];
@@ -91,7 +91,7 @@ sensor_loop(Navigation_Sensor &sensor)
         try {
             // Parse JSON once
             nlohmann::json j = nlohmann::json::parse(msg);
-            std::cout << j.dump() << std::endl;
+            // std::cout << j.dump() << std::endl;
 
             // Convert to your typed message
             sensor.msg = j.get<navigation_msg>();
@@ -101,6 +101,7 @@ sensor_loop(Navigation_Sensor &sensor)
             } 
 
         } catch (const nlohmann::json::parse_error &e) {
+            std::cerr << std::string(msg) << std::endl;
             std::cerr << "JSON parse error at byte " << e.byte << ": " << e.what() << '\n';
             continue;
 
