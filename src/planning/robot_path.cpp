@@ -278,6 +278,7 @@ Path_Cursor::get_next_waypoint() const
 void
 Path_Cursor::update_target_stop()
 {
+    printf("at update_target_stop\n");
     std::optional<size_t> stop_wp = path->next_stop_waypoint(current_waypoint, dir);
     // if (target_stop_idx.has_value()) {
     //     printf("target_stop_waypoint: %zu | target_stop_number: %lu\n", target_stop_waypoint, target_stop_idx.value());
@@ -341,12 +342,14 @@ bool Path_Cursor::at_target_stop(f64 goal_tolerance) const
 {
     if (!target_stop_idx) return false;
     if (target_latched)   return false;
+    printf("at target stop\n");
     f64 distance = path->distance_between(current_waypoint, target_stop_waypoint, dir);
     return distance < goal_tolerance ;
 }
 
 void Path_Cursor::clear_target_latch() { target_latched = false; }
 void Path_Cursor::consume_target() {
+    printf("at consume target\n");
     target_latched = true;
     target_stop_idx.reset();
 }
@@ -358,7 +361,7 @@ Path_Cursor::advance(f64 ds)
 
     f64 remaining_distance_to_next_waypoint = ds;
 
-    if (remaining_distance_to_next_waypoint > 0.3) { // TODO: add padding
+    if (remaining_distance_to_next_waypoint > 0.35) { // TODO: add padding
         f64 seg_length = path->segment_length(dir == Direction::FORWARD ? current_waypoint : next_waypoint);
         progress = (seg_length - remaining_distance_to_next_waypoint) / seg_length;
 
@@ -387,9 +390,13 @@ Path_Cursor::advance_waypoint()
         if (next_waypoint >= path->num_waypoints()) {
             if (path->is_looping()) {
                 next_waypoint = 0;
+                progress = 0.0;
+                clear_target_latch();
                 return Advance_Result::WRAPPED;
             } else {
                 next_waypoint = current_waypoint;
+                progress = 0.0;
+                clear_target_latch();
                 return Advance_Result::REACHED_END;
             }
         }
@@ -399,8 +406,12 @@ Path_Cursor::advance_waypoint()
         if (current_waypoint == 0) {
             if (path->is_looping()) {
                 current_waypoint = path->num_waypoints() - 1;
+                progress = 0.0;
+                clear_target_latch();
                 return Advance_Result::WRAPPED;
             } else {
+                progress = 0.0;
+                clear_target_latch();
                 return Advance_Result::REACHED_END;
             }
         } else {

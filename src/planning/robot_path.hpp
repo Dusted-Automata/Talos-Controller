@@ -67,7 +67,7 @@ struct Path_Cursor {
     f64 progress = 0.0;          // [0.0, 1.0] progress toward next_waypoint
     Direction dir = Direction::FORWARD;
     Path *path;
-    bool target_latched = false;
+    bool target_latched = true;
 
 
     // Goal tracking - which stop we're ultimately heading toward
