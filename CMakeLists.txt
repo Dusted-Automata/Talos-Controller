@@ -79,14 +79,12 @@ set(COMMON_SOURCES
     src/planning/robot_path.cpp
     src/planning/motion_profile.cpp
     src/planning/path_planner.cpp
-    src/sensors/ublox.cpp
     src/sensors/sensor.cpp
     src/utils/sim.cpp
     src/utils/frames.cpp
     src/utils/logger.cpp
     src/utils/timer.c
-    src/communication/socket.cpp
-    src/communication/server.cpp
+    src/communication/brain.cpp
     src/utils/load_config.cpp
 )
 

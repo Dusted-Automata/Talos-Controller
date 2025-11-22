@@ -1,7 +1,6 @@
 #pragma once
 #include "../include/unitree_legged_sdk/unitree_legged_sdk.h"
 #include "robot.hpp"
-#include "ublox.hpp"
 #include "unitree_legged_sdk/comm.h"
 #include "utils/types.hpp"
 #include <stdint.h>
@@ -41,7 +40,6 @@ struct Go1 {
     UT::LowState low_state = {};
 
     UT::HighCmd cmd = {};
-    Ublox ublox = {};
 
     Go1_mode mode = Go1_mode::Force_stand;
     GaitType gait_type = GaitType::Trot;

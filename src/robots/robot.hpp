@@ -1,8 +1,8 @@
 #pragma once
 #include "frames.hpp"
 #include "logger.hpp"
+#include "sensor.hpp"
 #include "types.hpp"
-#include "ublox.hpp"
 
 
 

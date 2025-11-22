@@ -30,10 +30,6 @@ struct Navigation_Sensor {
     // sockaddr_in local_addr;
     int fd;
     std::mutex mutex;
-
-    // TCP_Client socket = TCP_Client("127.0.0.1", 50020);
-    // Ring_Buffer<char, TCP_BUFFER_LENGTH * 2> buf;
-
 };
 
 void sensor_client_init(Navigation_Sensor& sensor, const char* target_IP, u16 target_port );

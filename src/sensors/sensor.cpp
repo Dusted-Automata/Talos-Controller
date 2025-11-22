@@ -91,7 +91,7 @@ sensor_loop(Navigation_Sensor &sensor)
         try {
             // Parse JSON once
             nlohmann::json j = nlohmann::json::parse(msg);
-            // std::cout << j.dump() << std::endl;
+            std::cout << j.dump() << std::endl;
 
             // Convert to your typed message
             sensor.msg = j.get<navigation_msg>();

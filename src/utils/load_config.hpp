@@ -3,7 +3,11 @@
 #include "pid.hpp"
 #include "robot.hpp"
 #include "types.hpp"
+#include "json.hpp"
 #include <string>
+
+using json = nlohmann::json;
+
 
 bool load_config(Robot &robot, const std::string &path);
 void validate_fields(const json &j, const std::vector<std::string> &fields, const std::string &struct_name);

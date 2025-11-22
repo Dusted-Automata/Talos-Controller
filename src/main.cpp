@@ -1,13 +1,13 @@
+#include "brain.hpp"
+#include "control_loop.cpp"
+#include "go1.hpp"
+#include "load_config.hpp"
 #include "sim.hpp"
+#include "sim_bot.hpp"
 #include "types.hpp"
 #include "wheelchair.hpp"
-#include "go1.hpp"
-#include "sim_bot.hpp"
-#include "load_config.hpp"
 #include <getopt.h>
 #include <stdlib.h>
-#include <getopt.h>
-#include "control_loop.cpp"
 
 enum {
     ROBOT_CONFIG_FILEPATH = 1000,  // use values > 255 to avoid clashing with chars
@@ -21,7 +21,7 @@ init(Robot& robot) {
     switch (robot.config.type) {
         case GO1:
             robot.ctx = new Go1(8090, "192.168.12.1", 8082);
-            robot.read_pv = *go1_read_state;
+            // robot.read_pv = *go1_read_state;
             robot.send_velocity_command = *go1_send_velocity_command;
             robot.deinit = *go1_deinit;
             robot.init(go1_init);
@@ -32,14 +32,13 @@ init(Robot& robot) {
             break;
         case WHEELCHAIR:
             robot.ctx = new Wheelchair;
-            robot.read_pv = *wheelchair_read_state;
+            // robot.read_pv = *wheelchair_read_state;
             robot.send_velocity_command = *wheelchair_send_velocity_command;
             robot.deinit = *wheelchair_deinit;
             robot.init(wheelchair_init);
             break;
         case SIM:
             robot.ctx = new Sim_Bot;
-            robot.read_pv = *sim_read_state;
             robot.send_velocity_command = *sim_send_velocity_command;
             robot.init(sim_init);
             break;
@@ -88,8 +87,8 @@ main(int argc, char* argv[])
     //     return EXIT_FAILURE;
     // }
 
-    Server server;
-    server_init(server, robot);
+    Brain server;
+    server_init(server, robot, 55550);
 
     p_planner.global_cursor = &p_cursor;
 

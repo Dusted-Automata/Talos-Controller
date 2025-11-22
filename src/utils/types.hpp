@@ -17,6 +17,7 @@
 using Eigen::Affine3d;
 using Eigen::Matrix4d;
 using Eigen::Vector3d;
+using Eigen::Vector3f;
 typedef Vector3d Linear_Velocity;
 typedef Vector3d Angular_Velocity;
 typedef Vector3d Velocity;
