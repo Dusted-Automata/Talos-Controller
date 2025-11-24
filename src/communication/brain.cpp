@@ -2,6 +2,7 @@
 #include "brain.hpp"
 #include "robot.hpp"
 #include <iostream>
+#include <sys/socket.h>
 
 
 enum Command {
@@ -21,11 +22,11 @@ typedef struct {
 
 Command parse_command(const char *buf, size_t len) {
     static const CommandEntry table[] = {
-        { "start",  5, CMD_START  },
-        { "stop", 4, CMD_STOP },
-        { "pause", 5, CMD_PAUSE },
-        { "continue",  8, CMD_CONTINUE  },
-        { "path",  4, CMD_GETPATH  }
+        { "start\n",  6, CMD_START  },
+        { "stop\n", 5, CMD_STOP },
+        { "pause\n", 6, CMD_PAUSE },
+        { "continue\n",  9, CMD_CONTINUE  },
+        { "path\n",  5, CMD_GETPATH  }
     };
 
     const size_t tableSize = sizeof(table) / sizeof(table[0]);
@@ -56,22 +57,33 @@ parse_cmds(Brain &brain) {
             continue;
         }
 
+        buffer[n] = '\n';
         Command cmd = parse_command(buffer, n);
+        printf("brain cmd : %d\n", cmd);
 
         switch (cmd) {
-            case CMD_START:
+            case CMD_START: {
                 break;
-            case CMD_STOP:
+            }
+            case CMD_STOP: {
                 brain.robot->stop();
                 break;
-            case CMD_PAUSE:
+            }
+            case CMD_PAUSE: {
                 brain.robot->pause();
                 std::cout << "robot.pause : " << brain.robot->paused << std::endl;
                 break;
-            case CMD_CONTINUE:
+            }
+            case CMD_CONTINUE: {
                 brain.robot->resume();
                 break;
-            case CMD_GETPATH:
+            }
+            case CMD_GETPATH: {
+                if (!brain.robot->p_planner.global_cursor && !brain.robot->p_planner.global_cursor->path) break;
+                std::vector<std::uint8_t> poses = serializePoses(brain.robot->p_planner.global_cursor->path->waypoints);
+                sendto(brain.fd, poses.data(), poses.size(), 0, (sockaddr *)&cliaddr, sizeof(cliaddr));
+                break;
+            }
             case CMD_UNKNOWN: break;
         }
 

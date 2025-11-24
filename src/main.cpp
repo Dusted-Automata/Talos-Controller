@@ -50,7 +50,6 @@ main(int argc, char* argv[])
 {
 
     Robot robot;
-    Path_Planner p_planner;
     Path_Cursor p_cursor; 
     Path path;
             // read_json_latlon(robot.config.path_config.filepath); // NEW
@@ -90,14 +89,14 @@ main(int argc, char* argv[])
     Brain server;
     server_init(server, robot, 55550);
 
-    p_planner.global_cursor = &p_cursor;
+    robot.p_planner.global_cursor = &p_cursor;
 
     p_cursor.initialize(&path);
-    p_planner.path_direction = robot.config.path_config.direction;
+    robot.p_planner.path_direction = robot.config.path_config.direction;
     // }
 
-    frames_init(robot.frames, p_planner.global_cursor->path->waypoint(p_planner.global_cursor->current_waypoint),
-                p_planner.global_cursor->get_next_waypoint());
+    frames_init(robot.frames, robot.p_planner.global_cursor->path->waypoint(robot.p_planner.global_cursor->current_waypoint),
+                robot.p_planner.global_cursor->get_next_waypoint());
 
     {
         std::cout << "SENSOR INIT!" << std::endl;
@@ -111,7 +110,7 @@ main(int argc, char* argv[])
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
         update_pvat(robot.sensor, robot.frames);
-        p_planner.re_identify_position(robot.frames.local_frame.pos);
+        robot.p_planner.re_identify_position(robot.frames.local_frame.pos);
 
     }
 
@@ -122,10 +121,10 @@ main(int argc, char* argv[])
 
     init(robot);
 
-    std::thread control_thread(control_loop, std::ref(robot), std::ref(p_planner), std::ref(traj_controller), std::ref(server));
+    std::thread control_thread(control_loop, std::ref(robot), std::ref(robot.p_planner), std::ref(traj_controller), std::ref(server));
 
     // control_loop<Wheelchair>(robot, traj_controller);
-    Sim_Display sim = Sim_Display(robot, p_planner);
+    Sim_Display sim = Sim_Display(robot, robot.p_planner);
     sim.display();
 
     robot.running = false;

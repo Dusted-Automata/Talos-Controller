@@ -4,16 +4,16 @@
 #include "types.hpp"
 #include <iostream>
 
-inline double
-dist(const Pose &a, const Pose &b)
-{
-    double x = std::pow((b.local_point.east() - a.local_point.east()), 2);
-    double y = std::pow((b.local_point.north() - a.local_point.north()), 2);
-    double z = std::pow((b.local_point.up() - a.local_point.up()), 2);
-    double val = std::sqrt(x + y + z);
-    return val;
-};
-
+// inline double
+// dist(const Pose &a, const Pose &b)
+// {
+//     double x = std::pow((b.local_point.east() - a.local_point.east()), 2);
+//     double y = std::pow((b.local_point.north() - a.local_point.north()), 2);
+//     double z = std::pow((b.local_point.up() - a.local_point.up()), 2);
+//     double val = std::sqrt(x + y + z);
+//     return val;
+// };
+//
 
 size_t
 Path_Planner::re_identify_position(ENU position) {
@@ -30,6 +30,7 @@ Path_Planner::re_identify_position(ENU position) {
     size_t best_seg_end_idx = 1;
     f64 best_t = 0.0;
 
+    // TODO: Change from local_point to Ecef points
     for (size_t i = 1; i < N; ++i) {
         const ENU a = path->waypoint(i - 1).local_point;
         const ENU b = path->waypoint(i).local_point;

@@ -16,6 +16,54 @@
 //     std::cout << "-----------" << std::endl;
 // }
 
+inline void appendDouble(std::vector<std::uint8_t>& buf, double value)
+{
+    std::uint8_t bytes[sizeof(double)];
+    std::memcpy(bytes, &value, sizeof(double));
+    buf.insert(buf.end(), bytes, bytes + sizeof(double));
+}
+
+inline void appendUint32(std::vector<std::uint8_t>& buf, std::uint32_t value)
+{
+    // If you care about endianness, convert to network order here.
+    std::uint8_t bytes[4];
+    bytes[0] = static_cast<std::uint8_t>((value >> 24) & 0xFF);
+    bytes[1] = static_cast<std::uint8_t>((value >> 16) & 0xFF);
+    bytes[2] = static_cast<std::uint8_t>((value >>  8) & 0xFF);
+    bytes[3] = static_cast<std::uint8_t>((value      ) & 0xFF);
+    buf.insert(buf.end(), bytes, bytes + 4);
+}
+
+std::vector<std::uint8_t> serializePoses(const std::vector<Pose>& poses)
+{
+    std::vector<std::uint8_t> buf;
+    buf.reserve(4 + poses.size() * 7 * sizeof(double));
+
+    // 1) write count
+    appendUint32(buf, static_cast<std::uint32_t>(poses.size()));
+
+    // 2) write each pose
+    for (const auto& p : poses) {
+        const auto& pt = p.point;
+        // const auto& q  = p.rotation;
+        const auto& q  = p.heading;
+
+        appendDouble(buf, pt.x());
+        appendDouble(buf, pt.y());
+        appendDouble(buf, pt.z());
+
+        // Quaternion: w, x, y, z (choose an order and KEEP IT CONSISTENT)
+        appendDouble(buf, q);
+        // appendDouble(buf, q.x());
+        // appendDouble(buf, q.y());
+        // appendDouble(buf, q.z());
+        // appendDouble(buf, q.w());
+    }
+
+    return buf;
+}
+
+
 using json = nlohmann::json;
 
 Path
@@ -249,7 +297,9 @@ Path::update_distances()
 }
 
 f64 Path::calculate_distance(const Pose& a, const Pose& b) const {
-    return (a.local_point - b.local_point).norm();
+    // TODO: check if ENU - ENU is the same distance as ECEF - ECEF
+    // return (a.local_point - b.local_point).norm();
+    return (a.point - b.point).norm(); 
 }
 
 

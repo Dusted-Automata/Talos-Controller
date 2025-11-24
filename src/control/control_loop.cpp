@@ -17,6 +17,7 @@ control_loop(Robot &robot, Path_Planner &path_planner, Linear_Controller &contro
             update_pvat(robot.sensor, robot.frames);
             // log() //poses and times
 
+            // TODO change from local_point to an ecef point
             Vector3d to_next_waypoint = frames_diff(robot.frames, path_planner.global_cursor->get_next_waypoint().local_point); //TODO: different function scheme for this.
             to_next_waypoint.z() = 0.0;
 

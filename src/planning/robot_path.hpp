@@ -51,13 +51,17 @@ public:
     f64 calculate_distance(const Pose& a, const Pose& b) const;
 
     std::vector<double> cumulative_distance;
+    std::vector<Pose> waypoints;
 private:
     std::vector<size_t> stop_indices;
-    std::vector<Pose> waypoints;
     std::vector<bool> stops;
     f64 loop_closure_distance_{ 0.0 };
     bool looping = false;
 };
+ 
+std::vector<std::uint8_t> serializePoses(const std::vector<Pose>& poses);
+inline void appendUint32(std::vector<std::uint8_t>& buf, std::uint32_t value);
+inline void appendDouble(std::vector<std::uint8_t>& buf, double value);
 
 
 struct Path_Cursor {

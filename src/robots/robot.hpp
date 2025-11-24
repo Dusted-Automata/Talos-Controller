@@ -1,6 +1,7 @@
 #pragma once
 #include "frames.hpp"
 #include "logger.hpp"
+#include "path_planner.hpp"
 #include "sensor.hpp"
 #include "types.hpp"
 
@@ -14,6 +15,7 @@ class Robot
     std::atomic<bool> running = false;
     std::atomic<bool> paused = true;
     PVA pva;
+    Path_Planner p_planner;
     Frames frames = {};
     Robot_Config config = {};
     // Ublox ublox = {};
